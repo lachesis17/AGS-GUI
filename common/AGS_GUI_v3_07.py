@@ -8,7 +8,7 @@ import customtkinter as ct
 from customtkinter.windows.widgets.scaling import CTkScalingBaseClass
 import pyodbc
 import warnings
-from common.assets.splash import SplashWin
+#from common.assets.splash import SplashWin
 warnings.filterwarnings("ignore")
 
 def main():
@@ -179,7 +179,8 @@ def main():
                     
             for table in lab_tables:
                 if table in self.ags_tables:
-                    try:
+                    #try:
+                        print(table)
                         location = list(self.tables[table]['LOCA_ID'])
                         location.pop(0)
                         location.pop(0)
@@ -193,6 +194,17 @@ def main():
                         samp_depth.pop(0)
                         samp_depth.pop(0)
                         test_type = ""
+
+                        lab_field = [col for col in self.tables[table].columns if 'LAB' in col]
+                        if not lab_field == []:
+                            lab_field = str(lab_field[0])
+                        
+                        lab = self.tables[table][lab_field]
+                        if not lab.empty:
+                            lablist = list(lab)
+                            lablist.pop(0)
+                            lablist.pop(0)
+                            lab = pd.DataFrame.from_dict(lablist)
                         if 'GCHM' in table:
                             test_type = list(self.tables[table]['GCHM_CODE'])
                             test_type.pop(0)
@@ -222,22 +234,27 @@ def main():
                             test_type = list(self.tables[table]['GRAT_TYPE'])
                             test_type.pop(0)
                             test_type.pop(0)
-                            samp_with_table = list(zip(location,samp_id,samp_ref,samp_depth,test_type))
+                            self.tables[table]["LAB"] = self.tables[table]['GRAT_TYPE']
+                            lablist = self.tables[table]["LAB"]
+                            lablist = lablist.iloc[2:]
+                            lablist = list(lablist)
+                            samp_with_table = list(zip(location,samp_id,samp_ref,samp_depth,test_type,lablist))
+                            print(samp_with_table)
                             samp_with_table.pop(0)
                             samp_with_table.pop(0)
                             result_table = pd.DataFrame.from_dict(samp_with_table)
                             result_table.drop_duplicates(inplace=True)
-                            result_table.columns = ['POINT','ID','REF','DEPTH','TYPE']
+                            result_table.columns = ['POINT','ID','REF','DEPTH','TYPE','LAB']
                             tt = result_table['TYPE'].to_list()
                             test_type_df = pd.DataFrame.from_dict(tt)
 
-                        samples = list(zip(location,samp_id,samp_ref,samp_depth,test_type))
+                        samples = list(zip(location,samp_id,samp_ref,samp_depth,test_type,lab))
                         table_results = pd.DataFrame.from_dict(samples)
                         if table == 'GRAT':
                             table_results.drop_duplicates(inplace=True)
             
                         if not test_type == "":
-                            table_results.loc[-1] = [table,'','','','']
+                            table_results.loc[-1] = [table,'','','','','']
                             table_results.index = table_results.index + 1
                             table_results.sort_index(inplace=True)
                             num_test = test_type_df.value_counts()
@@ -264,12 +281,12 @@ def main():
                         type_list.append(str(table))
                         type_list.append(count)
                         all_results.append(type_list)
-                        print(str(table) + " - " + str(type_list))
+                        #print(str(table) + " - " + str(type_list))
 
                         self.results_with_samp_and_type = pd.concat([self.results_with_samp_and_type, table_results])
 
-                    except Exception as e:
-                        error_tables.append(str(e))
+                    #except Exception as e:
+                    #    error_tables.append(str(e))
 
             if error_tables != []:
                 print(f"Table(s) not found:  {str(error_tables)}")
@@ -322,11 +339,11 @@ def main():
             self.results_with_samp_and_type.sort_index(inplace=True)
 
             if len(self.results_with_samp_and_type.columns) == 5:
-                self.results_with_samp_and_type.loc[-1] = ['INDX','BH','ID','REF','DEPTH']
+                self.results_with_samp_and_type.loc[-1] = ['INDX','BH','ID','REF','DEPTH','LAB']
                 self.results_with_samp_and_type.index = self.results_with_samp_and_type.index + 1
                 self.results_with_samp_and_type.sort_index(inplace=True)
             else:
-                self.results_with_samp_and_type.loc[-1] = ['INDX','BH','ID','REF','DEPTH','TYPE']
+                self.results_with_samp_and_type.loc[-1] = ['INDX','BH','ID','REF','DEPTH','TYPE','LAB']
                 self.results_with_samp_and_type.index = self.results_with_samp_and_type.index + 1
                 self.results_with_samp_and_type.sort_index(inplace=True)
 
