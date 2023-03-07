@@ -797,6 +797,9 @@ def main():
                                 if self.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
                                     self.tables[table]['Depth'][tablerow] = format(self.get_spec()['Depth'][gintrow],'.2f')
 
+                                if "." in str(self.tables[table]['RPLT_FAIL'][tablerow]):
+                                    self.tables[table]['RPLT_FAIL'][tablerow] = float(self.tables[table]['RPLT_FAIL'][tablerow] * 1000) 
+
 
                     '''RDEN'''
                     if table == 'RDEN':
