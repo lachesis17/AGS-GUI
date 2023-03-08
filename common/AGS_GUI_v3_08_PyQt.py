@@ -293,14 +293,13 @@ Please select an AGS with "Open File..."''')
             print(f"Table(s) not found:  {str(error_tables)}")
 
         self.result_list = pd.DataFrame.from_dict(all_results, orient='columns')
-        print(self.result_list)
-
 
         if self.result_list.empty:
             df_list = ["Error: No laboratory test results found."]
             empty_df = pd.DataFrame.from_dict(df_list)
             self.result_list = empty_df
         result_list = self.result_list.to_string(col_space=30,justify="center",index=None, header=None)
+        print(result_list)
         self.listbox.setText(result_list)
 
         #self.button_export_results = ct.CTkButton(self, text="Export Results List", command=self.export_results, 
