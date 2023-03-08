@@ -61,11 +61,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.tables = None
         self.headings = None
         self.gui = None
-        self.box = False   
         self.result_list = []
         self.error_list = []
         self.ags_tables = []
-        self.export = False
         self.results_with_samp_and_type = ""
 
         self.core_tables = ["TRAN","PROJ","UNIT","ABBR","TYPE","DICT","LOCA"]
@@ -86,13 +84,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.text.setText('''Please insert AGS file.''')
         QApplication.processEvents()
-        if self.box == True:
-            self.listbox.pack_forget()
-            self.button_export_results.pack_forget()
-            self.box = False
-        if self.export == True:
-            self.button_export_error.pack_forget()
-            self.export = False
 
         self.file_location = filedialog.askopenfilename(filetypes=[('AGS Files', '*.ags')],title="Please insert AGS file...")
         
@@ -121,10 +112,6 @@ Please select an AGS with "Open File..."''')
 
     def count_lab_results(self):
         self.disable_buttons()
-
-        if self.export == True:
-            self.button_export_error.pack_forget()
-            self.export = False
 
         self.results_with_samp_and_type = pd.DataFrame()
 
@@ -308,30 +295,21 @@ Please select an AGS with "Open File..."''')
         self.result_list = pd.DataFrame.from_dict(all_results, orient='columns')
         print(self.result_list)
 
-        if self.box == False:
-            if self.result_list.empty:
-                df_list = ["Error: No laboratory test results found."]
-                empty_df = pd.DataFrame.from_dict(df_list)
-                self.result_list = empty_df
-            result_list = self.result_list.to_string(col_space=30,justify="center",index=None, header=None)
-            self.listbox.setText(result_list)
-            self.box = True
 
-            #self.button_export_results = ct.CTkButton(self, text="Export Results List", command=self.export_results, 
-            #corner_radius=10, fg_color="#2b4768", hover_color="#6bb7dd", text_color="#FFFFFF", text_color_disabled="#999999", font=("Tahoma",11), height=50, width=200)
-            #self.button_export_results.pack(pady=(8,8), side=tk.BOTTOM)
+        if self.result_list.empty:
+            df_list = ["Error: No laboratory test results found."]
+            empty_df = pd.DataFrame.from_dict(df_list)
+            self.result_list = empty_df
+        result_list = self.result_list.to_string(col_space=30,justify="center",index=None, header=None)
+        self.listbox.setText(result_list)
 
-            self.text.setText('''Results list ready to export.''')
-            QApplication.processEvents()
-        else:
-            if self.result_list.empty:
-                df_list = ["Error: No laboratory test results found."]
-                empty_df = pd.DataFrame.from_dict(df_list)
-                self.result_list = empty_df
-            result_list = self.result_list.to_string(col_space=30,justify="center",index=None, header=None)
-            self.listbox.setText(result_list)
-            self.box = True
-            pass
+        #self.button_export_results = ct.CTkButton(self, text="Export Results List", command=self.export_results, 
+        #corner_radius=10, fg_color="#2b4768", hover_color="#6bb7dd", text_color="#FFFFFF", text_color_disabled="#999999", font=("Tahoma",11), height=50, width=200)
+        #self.button_export_results.pack(pady=(8,8), side=tk.BOTTOM)
+
+        self.text.setText('''Results list ready to export.''')
+        QApplication.processEvents()
+
 
         self.enable_buttons()
         
@@ -369,13 +347,6 @@ Please select an AGS with "Open File..."''')
         self.text.setText('''PandasGUI loading, please wait...
 Close GUI to resume.''')
         QApplication.processEvents()
-        if self.box == True:
-            self.listbox.pack_forget()
-            self.button_export_results.pack_forget()
-            self.box = False
-        if self.export == True:
-            self.button_export_error.pack_forget()
-            self.export = False
         
         try:
             self.gui = show(**self.tables)
@@ -392,13 +363,6 @@ Close GUI to resume.''')
         
     def check_ags(self):
         self.disable_buttons()
-        if self.box == True:
-            self.listbox.pack_forget()
-            self.button_export_results.pack_forget()
-            self.box = False
-        if self.export == True:
-            self.button_export_error.pack_forget()
-            self.export = False
         self.text.setText('''Checking AGS for errors...''')
         QApplication.processEvents()
 
@@ -450,7 +414,6 @@ Please select an AGS with "Open File..."''')
             #self.button_export_error = ct.CTkButton(self, text="Export Error Log", command=self.export_errors, 
             #corner_radius=10, fg_color="#2b4768", hover_color="#6bb7dd", text_color="#FFFFFF", text_color_disabled="#999999", font=("Tahoma",11), height=50, width=200)
             #self.button_export_error.pack(pady=(8,8), side=tk.BOTTOM)
-            self.export = True
             self.text.setText('''Error(s) found, check output or click 'Export Error Log'.''')
             QApplication.processEvents()
         self.enable_buttons()
@@ -608,18 +571,20 @@ Did you select the correct gINT or AGS?''')
             self.error = True
             print("GCHM or ERES table(s) found.")
 
-        self.create_match_id()
+        self.get_spec()['Depth'] = self.get_spec()['Depth'].map('{:,.2f}'.format)
+        self.get_spec()['Depth'] = self.get_spec()['Depth'].astype(str)
+        self.get_spec()['match_id'] = self.get_spec()['PointID']
+        self.get_spec()['match_id'] += self.get_spec()['SPEC_REF']
+        self.get_spec()['match_id'] += self.get_spec()['Depth']
 
         for table in self.ags_tables:
             try:
                 gint_rows = self.get_spec().shape[0]
 
-                for row in range (0,gint_rows):
-                    self.get_spec()['match_id'][row] = str(self.get_spec()['PointID'][row]) + str(self.get_spec()['SPEC_REF'][row]) + str(format(self.get_spec()['Depth'][row],'.2f'))
-
-                for row in range (2,len(self.tables[table])):
-                    self.tables[table]['match_id'][row] = str(self.tables[table]['LOCA_ID'][row]) + str(self.tables[table]['SAMP_TYPE'][row]) + str(self.tables[table]['SAMP_TOP'][row])
-                    
+                self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
+                self.tables[table]['match_id'] += self.tables[table]['SAMP_TYPE']
+                self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
+                
                 if table == 'SPEC':
                     try:
                         for row in range (2,len(self.tables['SPEC'])):
