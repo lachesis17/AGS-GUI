@@ -193,6 +193,12 @@ def main():
                         samp_depth.pop(0)
                         samp_depth.pop(0)
                         test_type = ""
+
+                        lab_field = [col for col in self.tables[table].columns if 'LAB' in col]
+                        if not lab_field == []:
+                            lab_field = str(lab_field[0])
+                        lab = self.tables[table][lab_field].iloc[2:]
+
                         if 'GCHM' in table:
                             test_type = list(self.tables[table]['GCHM_CODE'])
                             test_type.pop(0)
@@ -230,14 +236,18 @@ def main():
                             result_table.columns = ['POINT','ID','REF','DEPTH','TYPE']
                             tt = result_table['TYPE'].to_list()
                             test_type_df = pd.DataFrame.from_dict(tt)
+                        if not type(lab) == list and lab.empty:
+                            lab = list(samp_id)
+                            for x in range(0,len(lab)):
+                                lab[x] = ""
 
-                        samples = list(zip(location,samp_id,samp_ref,samp_depth,test_type))
+                        samples = list(zip(location,samp_id,samp_ref,samp_depth,test_type,lab))
                         table_results = pd.DataFrame.from_dict(samples)
                         if table == 'GRAT':
                             table_results.drop_duplicates(inplace=True)
             
                         if not test_type == "":
-                            table_results.loc[-1] = [table,'','','','']
+                            table_results.loc[-1] = [table,'','','','','']
                             table_results.index = table_results.index + 1
                             table_results.sort_index(inplace=True)
                             num_test = test_type_df.value_counts()
@@ -249,39 +259,96 @@ def main():
                             for z in test_counts.values.tolist():
                                 val.append(z)
                             count = list(zip(head,val))
+                            lab_count_off = [x for x in lab if x == "Offshore"]
+                            lab_count_off = len(lab_count_off)
+                            lab_count_none = [x for x in lab if x == ""]
+                            lab_count_none = len(lab_count_none)
+                            lab_count_on = [x for x in lab if not x == "Offshore" and not x == ""]
+                            lab_count_on = len(lab_count_on)
+                            #print(f"{table} offshore: {lab_count_off} onshore: {lab_count_on} no lab: {lab_count_none}")
+                            if not lab_count_none == 0:
+                                if "GRAT" in table:
+                                    valcount = table_results.shape[0] - 1
+                                    count = [f"{count}, Onshore:{valcount}"]
+                                else:
+                                    count = [f"{count}, Offshore:{lab_count_off}, Onshore:{lab_count_on}, None:{lab_count_none}"]
+                            else:
+                                if lab_count_off == 0 and not lab_count_on == 0:
+                                    count = [f"{count}, Onshore:{lab_count_on}"]
+                                elif lab_count_on == 0 and not lab_count_off == 0:
+                                    count = [f"{count}, Offshore:{lab_count_off}"]
+                                else:
+                                    count = [f"{count}, Offshore:{lab_count_off}, Onshore:{lab_count_on}"]
                         else:
+                            test_type = list(samp_id)
+                            for x in range(0,len(test_type)):
+                                test_type[x] = ""
                             count = str(len(samp_id))
-                            sample = list(zip(location,samp_id,samp_ref,samp_depth))
+                            lab_count_off = [x for x in lab if x == "Offshore"]
+                            lab_count_off = len(lab_count_off)
+                            lab_count_none = [x for x in lab if x == ""]
+                            lab_count_none = len(lab_count_none)
+                            lab_count_on = [x for x in lab if not x == "Offshore" and not x == ""]
+                            lab_count_on = len(lab_count_on)
+                            #print(f"{table} offshore: {lab_count_off} onshore: {lab_count_on} no lab: {lab_count_none}")
+                            if not lab_count_none == 0:
+                                count = [f"Offshore:{lab_count_off}, Onshore:{lab_count_on}, None:{lab_count_none}"]
+                            else:
+                                if lab_count_off == 0 and not lab_count_on == 0:
+                                    count = [f"Onshore:{lab_count_on}"]
+                                elif lab_count_on == 0 and not lab_count_off == 0:
+                                    count = [f"Offshore:{lab_count_off}"]
+                                else:
+                                    count = [f"Offshore:{lab_count_off}, Onshore:{lab_count_on}"]
+                            sample = list(zip(location,samp_id,samp_ref,samp_depth,test_type,lab))
                             table_results_2 = pd.DataFrame.from_dict(sample)
                             if table == 'RPLT':
                                 table_results_2.drop_duplicates(inplace=True)
                                 count = table_results_2.shape[0]
-                            table_results_2.loc[-1] = [table,'','','']
+                                lab_count_off = [x for x in lab if x == "Offshore"]
+                                lab_count_off = len(lab_count_off)
+                                lab_count_none = [x for x in lab if x == ""]
+                                lab_count_none = len(lab_count_none)
+                                lab_count_on = [x for x in lab if not x == "Offshore" and not x == ""]
+                                lab_count_on = len(lab_count_on)
+                                #print(f"{table} offshore: {lab_count_off} onshore: {lab_count_on} no lab: {lab_count_none}")
+                                if not lab_count_none == 0:
+                                    count = [f"Offshore:{lab_count_off}, Onshore:{lab_count_on}, None:{lab_count_none}"]
+                                else:
+                                    if lab_count_off == 0 and not lab_count_on == 0:
+                                        count = [f"Onshore:{lab_count_on}"]
+                                    elif lab_count_on == 0 and not lab_count_off == 0:
+                                        count = [f"Offshore:{lab_count_off}"]
+                                    else:
+                                        count = [f"Offshore:{lab_count_off}, Onshore:{lab_count_on}"]
+                            table_results_2.loc[-1] = [table,'','','','','']
                             table_results_2.index = table_results_2.index + 1
                             table_results_2.sort_index(inplace=True)
                             table_results = pd.concat([table_results, table_results_2])
                         type_list = []
                         type_list.append(str(table))
-                        type_list.append(count)
+                        for x in range(0,len(count)):
+                            type_list.append(count[x])
                         all_results.append(type_list)
-                        print(str(table) + " - " + str(type_list))
+                        #print(str(table) + " - " + str(type_list))
 
                         self.results_with_samp_and_type = pd.concat([self.results_with_samp_and_type, table_results])
 
                     except Exception as e:
-                        error_tables.append(str(e))
+                       error_tables.append(str(e))
 
             if error_tables != []:
                 print(f"Table(s) not found:  {str(error_tables)}")
 
             self.result_list = pd.DataFrame.from_dict(all_results, orient='columns')
+            print(self.result_list)
 
             if self.box == False:
                 if self.result_list.empty:
                     df_list = ["Error: No laboratory test results found."]
                     empty_df = pd.DataFrame.from_dict(df_list)
                     self.result_list = empty_df
-                self.listbox = scrolledtext.ScrolledText(self, height=10, font=("Tahoma",11))
+                self.listbox = scrolledtext.ScrolledText(self, height=10, font=("Tahoma",8))
                 self.result_list.index.name = ' '
                 window.geometry('775x620')
                 self.listbox.tag_configure('tl', justify='left')
@@ -322,11 +389,11 @@ def main():
             self.results_with_samp_and_type.sort_index(inplace=True)
 
             if len(self.results_with_samp_and_type.columns) == 5:
-                self.results_with_samp_and_type.loc[-1] = ['INDX','BH','ID','REF','DEPTH']
+                self.results_with_samp_and_type.loc[-1] = ['INDX','BH','ID','REF','DEPTH','LAB']
                 self.results_with_samp_and_type.index = self.results_with_samp_and_type.index + 1
                 self.results_with_samp_and_type.sort_index(inplace=True)
             else:
-                self.results_with_samp_and_type.loc[-1] = ['INDX','BH','ID','REF','DEPTH','TYPE']
+                self.results_with_samp_and_type.loc[-1] = ['INDX','BH','ID','REF','DEPTH','TYPE','LAB']
                 self.results_with_samp_and_type.index = self.results_with_samp_and_type.index + 1
                 self.results_with_samp_and_type.sort_index(inplace=True)
 
@@ -334,7 +401,7 @@ def main():
             if not self.path_directory:
                 self.enable_buttons()
                 return
-            all_result_count = self.path_directory[:-4] + "_result_count.csv"
+            all_result_count = self.path_directory[:-4] + "_report_table.csv"
             self.result_list.to_csv(all_result_count, index=False, index_label=False, header=None)
             print(f"File saved in:  + {str(all_result_count)}")
             all_result_filename = self.path_directory[:-4] + "_all_results.csv"
