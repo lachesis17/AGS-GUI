@@ -30,7 +30,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.config = configparser.ConfigParser()
         self.config.read('common/assets/settings.ini')
         #self.dark_mode_button.setChecked(bool(self.config.get('Theme','dark')))
-
+        
+        self.move(200,200)
         self.cpt_value = ""
 
         #self.button_copy_actual.setIcon(QtGui.QIcon('assets/images/copy.png'))
@@ -101,7 +102,7 @@ class MainWindow(QtWidgets.QMainWindow):
 Please select an AGS with "Open File..."''')
             QApplication.processEvents()
             print("No AGS file selected! Please select an AGS with 'Open File...'")
-            self.button_open.configure(state=tk.NORMAL)
+            self.button_open.setEnabled(True)
             return
         else:
             self.text.setText('''AGS file loaded.''')
@@ -111,7 +112,7 @@ Please select an AGS with "Open File..."''')
             self.tables, self.headings = AGS4.AGS4_to_dataframe(self.file_location)
         except:
             print("Uh, something went wrong. Was that an AGS file? Send help.")
-            self.button_open.configure(state=tk.NORMAL)
+            self.button_open.setEnabled(True)
         finally:
             print(f"AGS file loaded: {self.file_location}")
             self.lab_select.removeItem(0)
@@ -312,34 +313,24 @@ Please select an AGS with "Open File..."''')
                 df_list = ["Error: No laboratory test results found."]
                 empty_df = pd.DataFrame.from_dict(df_list)
                 self.result_list = empty_df
-            self.listbox = scrolledtext.ScrolledText(self, height=10, font=("Tahoma",8))
-            self.result_list.index.name = ' '
-            self.listbox.tag_configure('tl', justify='left')
-            self.listbox.insert('end', self.result_list, 'tl')
-            self.listbox.delete(1.0,3.0)
+            result_list = self.result_list.to_string(col_space=30,justify="center",index=None, header=None)
+            self.listbox.setText(result_list)
             self.box = True
 
             #self.button_export_results = ct.CTkButton(self, text="Export Results List", command=self.export_results, 
             #corner_radius=10, fg_color="#2b4768", hover_color="#6bb7dd", text_color="#FFFFFF", text_color_disabled="#999999", font=("Tahoma",11), height=50, width=200)
             #self.button_export_results.pack(pady=(8,8), side=tk.BOTTOM)
-            self.listbox.pack(padx=20,pady=8, side=tk.BOTTOM)
 
             self.text.setText('''Results list ready to export.''')
             QApplication.processEvents()
         else:
-            self.listbox.pack_forget()
-            self.button_export_results.pack_forget()
-            self.listbox.delete(1.0,100.0)
             if self.result_list.empty:
                 df_list = ["Error: No laboratory test results found."]
                 empty_df = pd.DataFrame.from_dict(df_list)
                 self.result_list = empty_df
-            self.result_list.index.name = ' '
-            self.listbox.tag_configure('tl', justify='left')
-            self.listbox.insert('end', self.result_list, 'tl')
-            self.listbox.delete(1.0,3.0)
-            self.button_export_results.pack(pady=(8,8), side=tk.BOTTOM)
-            self.listbox.pack(padx=20,pady=8, side=tk.BOTTOM)
+            result_list = self.result_list.to_string(col_space=30,justify="center",index=None, header=None)
+            self.listbox.setText(result_list)
+            self.box = True
             pass
 
         self.enable_buttons()
