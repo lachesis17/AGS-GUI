@@ -4,6 +4,7 @@ common/assets/__pycache__
 *.ags
 *.gpj
 *.xlsx
+*.csv
 *.zip
 *.ldb
 *.bak

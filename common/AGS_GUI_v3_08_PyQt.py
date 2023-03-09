@@ -4,8 +4,6 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
-import tkinter as tk
-from tkinter import filedialog, scrolledtext, messagebox
 from python_ags4 import AGS4
 from pandasgui import show
 import sys
@@ -29,7 +27,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.player = QMediaPlayer()
         self.config = configparser.ConfigParser()
         self.config.read('common/assets/settings.ini')
-        #self.dark_mode_button.setChecked(bool(self.config.get('Theme','dark')))
         
         self.move(200,200)
         self.cpt_value = ""
@@ -38,14 +35,14 @@ class MainWindow(QtWidgets.QMainWindow):
         #self.button_copy_avg.setIcon(QtGui.QIcon('assets/images/copy.png'))
         #self.button_copy_actual.setIconSize(QtCore.QSize(25,25))
         #self.button_copy_avg.setIconSize(QtCore.QSize(25,25))
-        #self.actual_val.setReadOnly(True)
-        #self.average_val.setReadOnly(True)
-        #self.unit_textbox.setReadOnly(True)
 
         #self.dark_mode_button.clicked.connect(self.dark_toggle)
-
+        #self.dark_mode_button.setChecked(bool(self.config.get('Theme','dark')))
 
         #self.file_open.triggered.connect(self.test)   -menubar
+
+        self.text.setText('''Please insert AGS file.
+''')
 
         self.button_open.clicked.connect(self.get_ags_file)
         self.pandas_gui.clicked.connect(self.start_pandasgui)
@@ -56,6 +53,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.button_match_lab.clicked.connect(self.select_lab_match)
         self.button_cpt_only.clicked.connect(self.del_non_cpt_tables)
         self.button_lab_only.clicked.connect(self.export_lab_only)
+        self.button_export_results.clicked.connect(self.export_results)
+        self.button_export_error.clicked.connect(self.export_errors)
 
         self.temp_file_name = ''
         self.tables = None
@@ -81,24 +80,35 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def get_ags_file(self):
         self.disable_buttons()
+        self.listbox.clear()
 
-        self.text.setText('''Please insert AGS file.''')
+        self.text.setText('''Please insert AGS file.
+''')
         QApplication.processEvents()
 
-        self.file_location = filedialog.askopenfilename(filetypes=[('AGS Files', '*.ags')],title="Please insert AGS file...")
-        
-        '''If no file selected, '''
-        if not self.file_location:
+        if not self.config.get('LastFolder','dir') == "":
+            self.file_location = QtWidgets.QFileDialog.getOpenFileNames(self,'Please insert AGS file...', self.config.get('LastFolder','dir'), '*.ags')
+        else:
+            self.file_location = QtWidgets.QFileDialog.getOpenFileNames(self,'Please insert AGS file...', os.getcwd(), '*.ags')
+        try:
+            self.file_location = self.file_location[0][0]
+            last_dir = str(os.path.dirname(self.file_location))
+            self.config.set('LastFolder','dir',last_dir)
+            with open('common/assets/settings.ini', 'w') as configfile: 
+                self.config.write(configfile)
+            self.text.setText('''AGS file loaded.
+''')
+            QApplication.processEvents()
+        except Exception as e:
+            print(e)
             self.text.setText('''No AGS file selected!
 Please select an AGS with "Open File..."''')
             QApplication.processEvents()
             print("No AGS file selected! Please select an AGS with 'Open File...'")
+            self.disable_buttons()
             self.button_open.setEnabled(True)
             return
-        else:
-            self.text.setText('''AGS file loaded.''')
-            QApplication.processEvents()
-
+        
         try:
             self.tables, self.headings = AGS4.AGS4_to_dataframe(self.file_location)
         except:
@@ -106,8 +116,10 @@ Please select an AGS with "Open File..."''')
             self.button_open.setEnabled(True)
         finally:
             print(f"AGS file loaded: {self.file_location}")
-            self.lab_select.removeItem(0)
-            self.lab_select.setCurrentIndex(0)
+
+            if self.lab_select.currentText() == "Select a Lab":
+                self.lab_select.removeItem(0)
+                self.lab_select.setCurrentIndex(0)
             self.enable_buttons()
 
     def count_lab_results(self):
@@ -302,42 +314,49 @@ Please select an AGS with "Open File..."''')
         print(result_list)
         self.listbox.setText(result_list)
 
-        #self.button_export_results = ct.CTkButton(self, text="Export Results List", command=self.export_results, 
-        #corner_radius=10, fg_color="#2b4768", hover_color="#6bb7dd", text_color="#FFFFFF", text_color_disabled="#999999", font=("Tahoma",11), height=50, width=200)
-        #self.button_export_results.pack(pady=(8,8), side=tk.BOTTOM)
+        self.button_export_results.setEnabled(True)
 
-        self.text.setText('''Results list ready to export.''')
+        self.text.setText('''Results list ready to export.
+''')
         QApplication.processEvents()
-
-
         self.enable_buttons()
+
         
     def export_results(self):
         self.disable_buttons()
 
-        self.results_with_samp_and_type.reset_index(inplace=True)
-        self.results_with_samp_and_type.sort_index(inplace=True)
+        result_list = self.results_with_samp_and_type.copy(deep=True)
+        result_list.reset_index(inplace=True)
+        result_list.sort_index(inplace=True)
 
-        if len(self.results_with_samp_and_type.columns) == 5:
-            self.results_with_samp_and_type.loc[-1] = ['INDX','BH','ID','REF','DEPTH','LAB']
-            self.results_with_samp_and_type.index = self.results_with_samp_and_type.index + 1
-            self.results_with_samp_and_type.sort_index(inplace=True)
+        if len(result_list) == 5:
+            result_list.loc[-1] = ['INDX','BH','ID','REF','DEPTH','LAB']
+            result_list.index = result_list.index + 1
+            result_list.sort_index(inplace=True)
         else:
-            self.results_with_samp_and_type.loc[-1] = ['INDX','BH','ID','REF','DEPTH','TYPE','LAB']
-            self.results_with_samp_and_type.index = self.results_with_samp_and_type.index + 1
-            self.results_with_samp_and_type.sort_index(inplace=True)
-
-        self.path_directory = filedialog.asksaveasfilename(filetypes=[('CSV Files', '*.csv')],defaultextension="*.csv",title="Save results list as...")
-        if not self.path_directory:
+            result_list.loc[-1] = ['INDX','BH','ID','REF','DEPTH','TYPE','LAB']
+            result_list.index = result_list.index + 1
+            result_list.sort_index(inplace=True)
+        
+        if not self.config.get('LastFolder','dir') == "":
+            self.path_directory = QtWidgets.QFileDialog.getSaveFileName(self,'Save results list as...', self.config.get('LastFolder','dir'), '*.csv')
+        else:
+            self.path_directory = QtWidgets.QFileDialog.getSaveFileName(self,'Save results list as...', os.getcwd(), '*.csv')
+        try:
+            self.path_directory = self.path_directory[0]
+            if not self.path_directory == "":
+                all_result_count = self.path_directory[:-4] + "_report_table.csv"
+                self.result_list.to_csv(all_result_count, index=False, index_label=False, header=None)
+                print(f"File saved in:  + {str(all_result_count)}")
+                all_result_filename = self.path_directory[:-4] + "_all_results.csv"
+                result_list.to_csv(all_result_filename, index=False,  header=None)	
+                print(f"File saved in:  + {str(all_result_filename)}")
             self.enable_buttons()
+            self.button_export_results.setEnabled(True)
+        except:
+            self.enable_buttons()
+            self.button_export_results.setEnabled(True)
             return
-        all_result_count = self.path_directory[:-4] + "_report_table.csv"
-        self.result_list.to_csv(all_result_count, index=False, index_label=False, header=None)
-        print(f"File saved in:  + {str(all_result_count)}")
-        all_result_filename = self.path_directory[:-4] + "_all_results.csv"
-        self.results_with_samp_and_type.to_csv(all_result_filename, index=False,  header=None)	
-        print(f"File saved in:  + {str(all_result_filename)}")
-        self.enable_buttons()
 
 
     def start_pandasgui(self):
@@ -349,10 +368,17 @@ Close GUI to resume.''')
         
         try:
             self.gui = show(**self.tables)
+            self.gui.finished.connect(self.update_tables)
         except:
             pass
-        self.text.setText('''You can now save the edited AGS.''')
+
+        self.text.setText('''You can now save the edited AGS.
+''')
+
         QApplication.processEvents()
+
+        #need some way to check if pandasgui is open so that on close it calls the rest of the function so you're working with the updated edited tables
+        #unfortunately pandasgui is a custom class and doesnt have pyqt methods like exec(), finished.connect(), etc.
         updated_tables = self.gui.get_dataframes()
         self.tables = updated_tables
         for table in self.result_tables:
@@ -362,27 +388,19 @@ Close GUI to resume.''')
         
     def check_ags(self):
         self.disable_buttons()
-        self.text.setText('''Checking AGS for errors...''')
+        self.text.setText('''Checking AGS for errors...
+''')
         QApplication.processEvents()
 
         try:
-            if not self.file_location == '' and self.temp_file_name == '':
+            if not self.file_location == '':
                 errors = AGS4.check_file(self.file_location)
-            elif not self.temp_file_name == '':
-                errors = AGS4.check_file(self.temp_file_name)
             else:
                 if self.file_location == '':
                     self.text.setText('''No AGS file selected!
 Please select an AGS with "Open File..."''')
                     QApplication.processEvents()
                     print("No AGS file selected! Please select an AGS with 'Open File...'")
-                    self.button_ags_checker.configure(state=tk.DISABLED)
-                elif self.temp_file_name == '':
-                    self.text.setText('''No AGS file selected!
-Please select an AGS with "Open File..."''')
-                    QApplication.processEvents()
-                    print("No AGS file selected! Please select an AGS with 'Open File...'")
-                    self.button_ags_checker.configure(state=tk.DISABLED)
                 else:
                     errors = AGS4.check_file(self.file_location)
                     
@@ -392,7 +410,8 @@ Please select an AGS with "Open File..."''')
         
         if not errors:
             print("No errors found. Yay.")
-            self.text.setText("AGS file contains no errors!")
+            self.text.setText("""AGS file contains no errors!
+""")
             QApplication.processEvents()
             return
         
@@ -404,58 +423,85 @@ Please select an AGS with "Open File..."''')
                 continue
                     
             for error in items:
-                self.text.setText('''Error(s) found, check output or click 'Export Error Log'.''')
+                self.text.setText('''Error(s) found, check output or click 'Export Error Log'.
+''')
                 QApplication.processEvents()
                 print(f"Error in line: {error['line']}, group: {error['group']}, description: {error['desc']}")
                 self.error_list.append(f"Error in line: {error['line']}, group: {error['group']}, description: {error['desc']}")
 
         if errors:
-            #self.button_export_error = ct.CTkButton(self, text="Export Error Log", command=self.export_errors, 
-            #corner_radius=10, fg_color="#2b4768", hover_color="#6bb7dd", text_color="#FFFFFF", text_color_disabled="#999999", font=("Tahoma",11), height=50, width=200)
-            #self.button_export_error.pack(pady=(8,8), side=tk.BOTTOM)
-            self.text.setText('''Error(s) found, check output or click 'Export Error Log'.''')
+            self.button_export_error.setEnabled(True)
+            err_str = '\n'.join(str(x) for x in self.error_list)
+            self.listbox.setText(err_str)
+            self.text.setText('''Error(s) found, check output or click 'Export Error Log'.
+''')
             QApplication.processEvents()
         self.enable_buttons()
 
     def export_errors(self):
         self.disable_buttons()
         
-        self.log_path = filedialog.asksaveasfilename(filetypes=[('Text Files', '*.txt')],defaultextension="*.txt",title="Save error log as...")
-        if self.log_path == '': 
+        if not self.config.get('LastFolder','dir') == "":
+            self.log_path = QtWidgets.QFileDialog.getSaveFileName(self,'Save error log as...', self.config.get('LastFolder','dir'), '*.txt')
+        else:
+            self.log_path = QtWidgets.QFileDialog.getSaveFileName(self,'Save error log as...', os.getcwd(), '*.txt')
+        try:
+            self.log_path = self.log_path[0]
+            with open(self.log_path, "w") as f:
+                for item in self.error_list:
+                    f.write("%s\n" % item)
             self.enable_buttons()
+            self.button_export_error.setEnabled(True)
+        except:
+            self.enable_buttons()
+            self.button_export_error.setEnabled(True)
             return
-            
-        with open(self.log_path, "w") as f:
-            for item in self.error_list:
-                f.write("%s\n" % item)
 
         print(f"Error log exported to:  + {str(self.log_path)}")
         self.enable_buttons()
+        self.button_export_error.setEnabled(True)
 
 
     def save_ags(self):
         self.disable_buttons()
-        newFileName = filedialog.asksaveasfilename(filetypes=[('AGS Files', '*.ags')],defaultextension="*.ags",title="Save AGS file as...")
-        if not newFileName:
+
+        if not self.config.get('LastFolder','dir') == "":
+            newFileName = QtWidgets.QFileDialog.getSaveFileName(self,'Save AGS file as...', self.config.get('LastFolder','dir'), '*.ags')
+        else:
+            newFileName = QtWidgets.QFileDialog.getSaveFileName(self,'Save AGS file as...', os.getcwd(), '*.ags')
+        try:
+            newFileName = newFileName[0]
+            AGS4.dataframe_to_AGS4(self.tables, self.tables, newFileName)
+            print('Done.')
+            self.text.setText('''AGS saved.
+''')
+            QApplication.processEvents()
+            self.enable_buttons()
+        except:
             self.enable_buttons()
             return
-        AGS4.dataframe_to_AGS4(self.tables, self.tables, newFileName)
-        print('Done.')
-        self.text.setText('''AGS saved.''')
-        QApplication.processEvents()
-        self.enable_buttons()
 
     def get_gint(self):
         self.disable_buttons()
 
-        self.gint_location = filedialog.askopenfilename(filetypes=[('gINT Project', '*.gpj')], title="Please insert gINT database...")
-
-        if not self.gint_location:
-            messagebox.showwarning(title="Gimme a gINT!", message="You didn't select a gINT file.")
+        if not self.config.get('LastFolder','dir') == "":
+            self.gint_location = QtWidgets.QFileDialog.getOpenFileNames(self,'Open gINT Project', self.config.get('LastFolder','dir'), '*.gpj')
+        else:
+            self.gint_location = QtWidgets.QFileDialog.getOpenFileNames(self,'Open gINT Project', os.getcwd(), '*.gpj')
+        try:
+            self.gint_location = self.gint_location[0][0]
+        except:
+            msgBox = QMessageBox()
+            msgBox.setIcon(QMessageBox.Information)
+            msgBox.setText("You must select a gINT")
+            msgBox.setWindowTitle("No gINT selected")
+            msgBox.setStandardButtons(QMessageBox.Ok)
+            msgBox.exec()
             self.enable_buttons()
             return
 
-        self.text.setText('''Getting gINT, please wait...''')
+        self.text.setText('''Getting gINT, please wait...
+''')
         QApplication.processEvents()
 
         try:
@@ -533,7 +579,8 @@ Please select an AGS with "Open File..."''')
 
     def check_matched_to_gint(self):
         if self.matched:
-            self.text.setText('''Matching complete! Click: 'Save AGS file'.''')
+            self.text.setText('''Matching complete! Click: 'Save AGS file'.
+''')
             QApplication.processEvents()
             print("Matching complete!")
             self.enable_buttons()
@@ -556,11 +603,13 @@ Did you select the correct gINT or AGS?''')
         self.error = False
 
         if not self.gint_location or self.gint_location == '':
-            self.text.setText('''AGS file loaded.''')
+            self.text.setText('''AGS file loaded.
+''')
             QApplication.processEvents()
             return
 
-        self.text.setText('''Matching AGS to gINT, please wait...''')
+        self.text.setText('''Matching AGS to gINT, please wait...
+''')
         QApplication.processEvents()
         print(f"Matching GM Lab AGS to gINT... {self.gint_location}") 
 
@@ -583,13 +632,6 @@ Did you select the correct gINT or AGS?''')
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TYPE']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
-                
-                if table == 'SPEC':
-                    try:
-                        for row in range (2,len(self.tables['SPEC'])):
-                            self.tables['SPEC']['match_id'][row] = str(self.tables['SPEC']['LOCA_ID'][row]) + str(self.tables['SPEC']['SPEC_REF'][row]) + str(self.tables['SPEC']['SPEC_DPTH'][row])
-                    except:
-                        pass
 
                 try:
                     for tablerow in range(2,len(self.tables[table])):
@@ -615,7 +657,7 @@ Did you select the correct gINT or AGS?''')
                                     pass
 
                                 try:
-                                    self.tables[table]['SPEC_DPTH'][tablerow] = format(self.get_spec()['Depth'][gintrow],'.2f')
+                                    self.tables[table]['SPEC_DPTH'][tablerow] = self.get_spec()['Depth'][gintrow]
                                 except:
                                     pass
 
@@ -689,10 +731,11 @@ Did you select the correct gINT or AGS?''')
                     for tablerow in range(2,len(self.tables[table])):
                         if 'TRET_SHST' in self.tables[table].keys():
                             if self.tables[table]['TRET_SHST'][tablerow] == '' and self.tables[table]['TRET_DEVF'][tablerow] != '':
-                                if self.tables['TREG']['TREG_TYPE'][tablerow] != 'CD':
+                                if "cell" in str(self.tables['TRET']['TRET_SAT'][tablerow]).lower():
                                     self.tables[table]['TRET_SHST'][tablerow] = round(float(self.tables[table]['TRET_DEVF'][tablerow]) / 2)
                         if 'TRET_CELL' in self.tables[table].keys():
-                            self.tables[table]['TRET_CELL'][tablerow] = round(float(self.tables[table]['TRET_CELL'][tablerow]))
+                            if not self.tables[table]['TRET_CELL'][tablerow] == '':
+                                self.tables[table]['TRET_CELL'][tablerow] = round(float(self.tables[table]['TRET_CELL'][tablerow]))
 
                 '''LPDN'''
                 if table == 'LPDN':
@@ -711,6 +754,7 @@ Did you select the correct gINT or AGS?''')
                             self.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
                         if "oed" in str(self.tables[table]['CONG_TYPE'][tablerow].lower()):
                             self.tables[table]['CONG_TYPE'][tablerow] = "IL OEDOMETER"
+                            self.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
                         self.tables[table]['CONG_COND'][tablerow] = str(self.tables[table]['CONG_COND'][tablerow].upper())
 
 
@@ -728,9 +772,9 @@ Did you select the correct gINT or AGS?''')
                         for gintrow in range(0,gint_rows):
                             if self.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
                                 if self.tables['TRIG']['TRIG_COND'][tablerow] == 'REMOULDED':
-                                    self.tables[table]['Depth'][tablerow] = format(self.get_spec()['Depth'][gintrow] + 0.01,'.2f')
+                                    self.tables[table]['Depth'][tablerow] = float(self.get_spec()['Depth'][gintrow]) + 0.01
                                 else:
-                                    self.tables[table]['Depth'][tablerow] = format(self.get_spec()['Depth'][gintrow],'.2f')
+                                    self.tables[table]['Depth'][tablerow] = self.get_spec()['Depth'][gintrow]
 
 
                 '''RELD'''
@@ -740,7 +784,7 @@ Did you select the correct gINT or AGS?''')
                     for tablerow in range(2,len(self.tables[table])):
                         for gintrow in range(0,gint_rows):
                             if self.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
-                                self.tables[table]['Depth'][tablerow] = format(self.get_spec()['Depth'][gintrow],'.2f')
+                                self.tables[table]['Depth'][tablerow] = self.get_spec()['Depth'][gintrow]
 
 
 
@@ -751,10 +795,10 @@ Did you select the correct gINT or AGS?''')
                     for tablerow in range(2,len(self.tables[table])):
                         for gintrow in range(0,gint_rows):
                             if self.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
-                                self.tables[table]['Depth'][tablerow] = format(self.get_spec()['Depth'][gintrow],'.2f')
-
-                            if "." in str(self.tables[table]['RPLT_FAIL'][tablerow]):
-                                self.tables[table]['RPLT_FAIL'][tablerow] = float(self.tables[table]['RPLT_FAIL'][tablerow] * 1000) 
+                                self.tables[table]['Depth'][tablerow] = self.get_spec()['Depth'][gintrow]
+                            if "RPLT_FAIL" in self.tables[table]:
+                                if "." in str(self.tables[table]['RPLT_FAIL'][tablerow]):
+                                    self.tables[table]['RPLT_FAIL'][tablerow] = float(self.tables[table]['RPLT_FAIL'][tablerow] * 1000) 
 
 
                 '''RDEN'''
@@ -820,11 +864,13 @@ Did you select the correct gINT or AGS?''')
         self.error = False
 
         if not self.gint_location or self.gint_location == '':
-            self.text.setText('''AGS file loaded.''')
+            self.text.setText('''AGS file loaded.
+''')
             QApplication.processEvents()
             return
 
-        self.text.setText('''Matching AGS to gINT, please wait...''')
+        self.text.setText('''Matching AGS to gINT, please wait...
+''')
         QApplication.processEvents()
         print(f"Matching DETS AGS to gINT... {self.gint_location}") 
 
@@ -836,14 +882,14 @@ Did you select the correct gINT or AGS?''')
             self.error = True
             print("Cannot find GCHM or ERES - looks like this AGS is from GM Lab.")
 
-        self.create_match_id()
+        self.get_spec()['Depth'] = self.get_spec()['Depth'].map('{:,.2f}'.format)
+        self.get_spec()['Depth'] = self.get_spec()['Depth'].astype(str)
+        self.get_spec()['match_id'] = self.get_spec()['PointID']
+        self.get_spec()['match_id'] += self.get_spec()['Depth']
 
         for table in self.ags_tables:
             try:
                 gint_rows = self.get_spec().shape[0]
-
-                for row in range (0,gint_rows):
-                    self.get_spec()['match_id'][row] = str(self.get_spec()['PointID'][row]) + str(format(self.get_spec()['Depth'][row],'.2f'))
 
                 for row in range (2,len(self.tables[table])):
                     self.tables[table]['match_id'][row] = str(self.tables[table]['LOCA_ID'][row]).rsplit(' ', 2)[0] + str(self.tables[table]['SAMP_TOP'][row])
@@ -863,7 +909,7 @@ Did you select the correct gINT or AGS?''')
                                 self.tables[table]['SAMP_TYPE'][tablerow] = self.get_spec()['SAMP_TYPE'][gintrow]
                                 self.tables[table]['SPEC_REF'][tablerow] = self.get_spec()['SPEC_REF'][gintrow]
                                 self.tables[table]['SAMP_TOP'][tablerow] = format(self.get_spec()['SAMP_Depth'][gintrow],'.2f')
-                                self.tables[table]['SPEC_DPTH'][tablerow] = format(self.get_spec()['Depth'][gintrow],'.2f')
+                                self.tables[table]['SPEC_DPTH'][tablerow] = self.get_spec()['Depth'][gintrow]
                                 
                                 for x in self.tables[table].keys():
                                     if "LAB" in x:
@@ -925,28 +971,30 @@ Did you select the correct gINT or AGS?''')
         self.error = False
 
         if not self.gint_location or self.gint_location == '':
-            self.text.setText('''AGS file loaded.''')
+            self.text.setText('''AGS file loaded.
+''')
             QApplication.processEvents()
             return
 
-        self.text.setText('''Matching AGS to gINT, please wait...''')
+        self.text.setText('''Matching AGS to gINT, please wait...
+''')
         QApplication.processEvents()
         print(f"Matching Structural Soils AGS to gINT... {self.gint_location}") 
 
         self.get_ags_tables()
 
-        self.create_match_id()
+        self.get_spec()['Depth'] = self.get_spec()['Depth'].map('{:,.2f}'.format)
+        self.get_spec()['Depth'] = self.get_spec()['Depth'].astype(str)
+        self.get_spec()['match_id'] = self.get_spec()['PointID']
+        self.get_spec()['match_id'] += self.get_spec()['Depth']
 
 
         for table in self.ags_tables:
             try:
                 gint_rows = self.get_spec().shape[0]
 
-                for row in range (0,gint_rows):
-                    self.get_spec()['match_id'][row] = str(self.get_spec()['PointID'][row]) + str(format(self.get_spec()['Depth'][row],'.2f'))
-
-                for row in range (2,len(self.tables[table])):
-                    self.tables[table]['match_id'][row] = str(self.tables[table]['LOCA_ID'][row]) + str(self.tables[table]['SAMP_TOP'][row])
+                self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
+                self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
 
                 try:
                     for tablerow in range(2,len(self.tables[table])):
@@ -959,7 +1007,7 @@ Did you select the correct gINT or AGS?''')
                                 self.tables[table]['SAMP_TYPE'][tablerow] = self.get_spec()['SAMP_TYPE'][gintrow]
                                 self.tables[table]['SPEC_REF'][tablerow] = self.get_spec()['SPEC_REF'][gintrow]
                                 self.tables[table]['SAMP_TOP'][tablerow] = format(self.get_spec()['SAMP_Depth'][gintrow],'.2f')
-                                self.tables[table]['SPEC_DPTH'][tablerow] = format(self.get_spec()['Depth'][gintrow],'.2f')
+                                self.tables[table]['SPEC_DPTH'][tablerow] = self.get_spec()['Depth'][gintrow]
                                 
                                 for x in self.tables[table].keys():
                                     if "LAB" in x:
@@ -974,6 +1022,7 @@ Did you select the correct gINT or AGS?''')
                             self.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
                         if "oed" in str(self.tables[table]['CONG_TYPE'][tablerow].lower()):
                             self.tables[table]['CONG_TYPE'][tablerow] = "IL OEDOMETER"
+                            self.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
                         if "#" in str(self.tables[table]['CONG_PDEN'][tablerow].lower()):
                             self.tables[table]['CONG_PDEN'][tablerow] = str(self.tables[table]['CONG_PDEN'][tablerow]).rsplit('#', 2)[1]
 
@@ -993,27 +1042,29 @@ Did you select the correct gINT or AGS?''')
         self.error = False
 
         if not self.gint_location or self.gint_location == '':
-            self.text.setText('''AGS file loaded.''')
+            self.text.setText('''AGS file loaded.
+''')
             QApplication.processEvents()
             return
 
-        self.text.setText('''Matching AGS to gINT, please wait...''')
+        self.text.setText('''Matching AGS to gINT, please wait...
+''')
         QApplication.processEvents()
         print(f"Matching PSL AGS to gINT... {self.gint_location}") 
 
         self.get_ags_tables()
 
-        self.create_match_id()
+        self.get_spec()['Depth'] = self.get_spec()['Depth'].map('{:,.2f}'.format)
+        self.get_spec()['Depth'] = self.get_spec()['Depth'].astype(str)
+        self.get_spec()['match_id'] = self.get_spec()['PointID']
+        self.get_spec()['match_id'] += self.get_spec()['Depth']
 
         for table in self.ags_tables:
             try:
                 gint_rows = self.get_spec().shape[0]
 
-                for row in range (0,gint_rows):
-                    self.get_spec()['match_id'][row] = str(self.get_spec()['PointID'][row]) + str(format(self.get_spec()['Depth'][row],'.2f'))
-
-                for row in range (2,len(self.tables[table])):
-                    self.tables[table]['match_id'][row] = str(self.tables[table]['LOCA_ID'][row]) + str(self.tables[table]['SAMP_TOP'][row])
+                self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
+                self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
 
                 try:
                     for tablerow in range(2,len(self.tables[table])):
@@ -1026,7 +1077,7 @@ Did you select the correct gINT or AGS?''')
                                 self.tables[table]['SAMP_TYPE'][tablerow] = self.get_spec()['SAMP_TYPE'][gintrow]
                                 self.tables[table]['SPEC_REF'][tablerow] = self.get_spec()['SPEC_REF'][gintrow]
                                 self.tables[table]['SAMP_TOP'][tablerow] = format(self.get_spec()['SAMP_Depth'][gintrow],'.2f')
-                                self.tables[table]['SPEC_DPTH'][tablerow] = format(self.get_spec()['Depth'][gintrow],'.2f')
+                                self.tables[table]['SPEC_DPTH'][tablerow] = self.get_spec()['Depth'][gintrow]
                                 
                                 for x in self.tables[table].keys():
                                     if "LAB" in x:
@@ -1041,6 +1092,7 @@ Did you select the correct gINT or AGS?''')
                             self.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
                         if "oed" in str(self.tables[table]['CONG_TYPE'][tablerow].lower()):
                             self.tables[table]['CONG_TYPE'][tablerow] = "IL OEDOMETER"
+                            self.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
 
 
                 '''TREG'''
@@ -1085,29 +1137,30 @@ Did you select the correct gINT or AGS?''')
         self.error = False
 
         if not self.gint_location or self.gint_location == '':
-            self.text.setText('''AGS file loaded.''')
+            self.text.setText('''AGS file loaded.
+''')
             QApplication.processEvents()
             return
 
-        self.text.setText('''Matching AGS to gINT, please wait...''')
+        self.text.setText('''Matching AGS to gINT, please wait...
+''')
         QApplication.processEvents()
         print(f"Matching Geolabs AGS to gINT... {self.gint_location}") 
 
         self.get_ags_tables()
 
-        self.create_match_id()
+        self.get_spec()['Depth'] = self.get_spec()['Depth'].map('{:,.2f}'.format)
+        self.get_spec()['Depth'] = self.get_spec()['Depth'].astype(str)
+        self.get_spec()['match_id'] = self.get_spec()['PointID']
+        self.get_spec()['match_id'] += self.get_spec()['Depth']
 
         for table in self.ags_tables:
             try:
                 gint_rows = self.get_spec().shape[0]
 
-                for row in range (0,gint_rows):
-                    self.get_spec()['match_id'][row] = str(self.get_spec()['PointID'][row]) + str(format(self.get_spec()['Depth'][row],'.2f'))
+                self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
+                self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
 
-                for row in range (2,len(self.tables[table])):
-                    self.tables[table]['match_id'][row] = str(self.tables[table]['LOCA_ID'][row]) + str(self.tables[table]['SAMP_TOP'][row])
-
-        
                 try:
                     for tablerow in range(2,len(self.tables[table])):
                         for gintrow in range(0,gint_rows):
@@ -1119,7 +1172,7 @@ Did you select the correct gINT or AGS?''')
                                 self.tables[table]['SAMP_TYPE'][tablerow] = self.get_spec()['SAMP_TYPE'][gintrow]
                                 self.tables[table]['SPEC_REF'][tablerow] = self.get_spec()['SPEC_REF'][gintrow]
                                 self.tables[table]['SAMP_TOP'][tablerow] = format(self.get_spec()['SAMP_Depth'][gintrow],'.2f')
-                                self.tables[table]['SPEC_DPTH'][tablerow] = format(self.get_spec()['Depth'][gintrow],'.2f')
+                                self.tables[table]['SPEC_DPTH'][tablerow] = self.get_spec()['Depth'][gintrow]
                                 
                                 for x in self.tables[table].keys():
                                     if "LAB" in x:
@@ -1156,17 +1209,24 @@ Did you select the correct gINT or AGS?''')
         self.error = False
 
         if not self.gint_location or self.gint_location == '':
-            self.text.setText('''AGS file loaded.''')
+            self.text.setText('''AGS file loaded.
+''')
             QApplication.processEvents()
             return
 
-        self.text.setText('''Matching AGS to gINT, please wait...''')
+        self.text.setText('''Matching AGS to gINT, please wait...
+''')
         QApplication.processEvents()
         print(f"Matching Geolabs AGS to gINT... {self.gint_location}") 
 
         self.get_ags_tables()
-
-        self.create_match_id()
+        
+        '''Using for Fugro Boreholes (50HZ samples have different SAMP format including dupe depths)'''
+        self.get_spec()['SAMP_Depth'] = self.get_spec()['SAMP_Depth'].map('{:,.2f}'.format)
+        self.get_spec()['SAMP_Depth'] = self.get_spec()['SAMP_Depth'].astype(str)
+        self.get_spec()['match_id'] = self.get_spec()['PointID']
+        self.get_spec()['match_id'] += self.get_spec()['SAMP_Depth']
+        self.get_spec()['match_id'] += self.get_spec()['SAMP_REF']
 
         for table in self.ags_tables:
             try:                
@@ -1175,12 +1235,9 @@ Did you select the correct gINT or AGS?''')
 
                 gint_rows = self.get_spec().shape[0]
 
-                '''Using for Fugro Boreholes (50HZ samples have different SAMP format including dupe depths)'''
-                for row in range (0,gint_rows):
-                    self.get_spec()['match_id'][row] = str(self.get_spec()['PointID'][row]) + str(format(self.get_spec()['SAMP_Depth'][row],'.2f')) + str(self.get_spec()['SAMP_REF'][row])
-
-                for row in range (2,len(self.tables[table])):
-                    self.tables[table]['match_id'][row] = str(self.tables[table]['LOCA_ID'][row]) + str(self.tables[table]['SAMP_TOP'][row]) + str(self.tables[table]['SAMP_REF'][row])
+                self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
+                self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
+                self.tables[table]['match_id'] += self.tables[table]['SAMP_REF']
 
                 try:
                     for tablerow in range(2,len(self.tables[table])):
@@ -1193,7 +1250,7 @@ Did you select the correct gINT or AGS?''')
                                 self.tables[table]['SAMP_REF'][tablerow] = self.get_spec()['SAMP_REF'][gintrow]
                                 self.tables[table]['SAMP_TYPE'][tablerow] = self.get_spec()['SAMP_TYPE'][gintrow]
                                 self.tables[table]['SPEC_REF'][tablerow] = self.get_spec()['SPEC_REF'][gintrow]
-                                self.tables[table]['SAMP_TOP'][tablerow] = format(self.get_spec()['SAMP_Depth'][gintrow],'.2f')
+                                self.tables[table]['SAMP_TOP'][tablerow] = self.get_spec()['SAMP_Depth'][gintrow]
                                 self.tables[table]['SPEC_DPTH'][tablerow] = format(self.get_spec()['Depth'][gintrow],'.2f')
                                 
                                 # for x in self.tables[table].keys():
@@ -1246,11 +1303,13 @@ Did you select the correct gINT or AGS?''')
         self.error = False
 
         if not self.gint_location or self.gint_location == '':
-            self.text.setText('''AGS file loaded.''')
+            self.text.setText('''AGS file loaded.
+''')
             QApplication.processEvents()
             return
 
-        self.text.setText('''Matching AGS to gINT, please wait...''')
+        self.text.setText('''Matching AGS to gINT, please wait...
+''')
         QApplication.processEvents()
         print(f"Matching GM Lab AGS to gINT... {self.gint_location}") 
 
@@ -1260,25 +1319,26 @@ Did you select the correct gINT or AGS?''')
             self.error = True
             print("GCHM or ERES table(s) found.")
 
-        self.create_match_id()
+        self.get_spec()['Depth'] = self.get_spec()['Depth'].map('{:,.2f}'.format)
+        self.get_spec()['Depth'] = self.get_spec()['Depth'].astype(str)
+        self.get_spec()['match_id'] = self.get_spec()['PointID']
+        self.get_spec()['match_id'] += self.get_spec()['SPEC_REF']
+        self.get_spec()['match_id'] += self.get_spec()['Depth']
+        self.get_spec()['batched'] = self.get_spec()['SAMP_TYPE'].astype(str).str[0]
+        self.get_spec()['match_id'] += self.get_spec()['batched']
+        self.get_spec().drop(['batched'], axis=1, inplace=True)
 
         for table in self.ags_tables:
             try:
                 gint_rows = self.get_spec().shape[0]
 
-                for row in range (0,gint_rows):
-                    self.get_spec()['match_id'][row] = str(self.get_spec()['PointID'][row]) + str(self.get_spec()['SPEC_REF'][row]) + str(format(self.get_spec()['Depth'][row],'.2f')) + str(self.get_spec()['SAMP_TYPE'][row][0])
-
-                for row in range (2,len(self.tables[table])):
-                    self.tables[table]['match_id'][row] = str(self.tables[table]['LOCA_ID'][row]) + str(self.tables[table]['SAMP_TYPE'][row]) + str(self.tables[table]['SAMP_TOP'][row]) + str(self.tables[table]['SAMP_REF'][row][0])
+                self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
+                self.tables[table]['match_id'] += self.tables[table]['SAMP_TYPE']
+                self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
+                self.tables[table]['batched'] = self.tables[table]['SAMP_REF'].astype(str).str[0]
+                self.tables[table]['match_id'] += self.tables[table]['batched']
+                self.tables[table].drop(['batched'], axis=1, inplace=True)
                     
-                if table == 'SPEC':
-                    try:
-                        for row in range (2,len(self.tables['SPEC'])):
-                            self.tables['SPEC']['match_id'][row] = str(self.tables['SPEC']['LOCA_ID'][row]) + str(self.tables['SPEC']['SPEC_REF'][row]) + str(self.tables['SPEC']['SPEC_DPTH'][row])
-                    except:
-                        pass
-
                 try:
                     for tablerow in range(2,len(self.tables[table])):
                         for gintrow in range(0,gint_rows):
@@ -1304,7 +1364,7 @@ Did you select the correct gINT or AGS?''')
                                     pass
 
                                 try:
-                                    self.tables[table]['SPEC_DPTH'][tablerow] = format(self.get_spec()['Depth'][gintrow],'.2f')
+                                    self.tables[table]['SPEC_DPTH'][tablerow] = self.get_spec()['Depth'][gintrow]
                                 except:
                                     pass
 
@@ -1378,10 +1438,11 @@ Did you select the correct gINT or AGS?''')
                     for tablerow in range(2,len(self.tables[table])):
                         if 'TRET_SHST' in self.tables[table].keys():
                             if self.tables[table]['TRET_SHST'][tablerow] == '' and self.tables[table]['TRET_DEVF'][tablerow] != '':
-                                if self.tables['TREG']['TREG_TYPE'][tablerow] != 'CD':
+                                if "cell" in str(self.tables['TRET']['TRET_SAT'][tablerow]).lower():
                                     self.tables[table]['TRET_SHST'][tablerow] = round(float(self.tables[table]['TRET_DEVF'][tablerow]) / 2)
                         if 'TRET_CELL' in self.tables[table].keys():
-                            self.tables[table]['TRET_CELL'][tablerow] = round(float(self.tables[table]['TRET_CELL'][tablerow]))
+                            if not self.tables[table]['TRET_CELL'][tablerow] == '':
+                                self.tables[table]['TRET_CELL'][tablerow] = round(float(self.tables[table]['TRET_CELL'][tablerow]))
 
                 '''LPDN'''
                 if table == 'LPDN':
@@ -1400,6 +1461,7 @@ Did you select the correct gINT or AGS?''')
                             self.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
                         if "oed" in str(self.tables[table]['CONG_TYPE'][tablerow].lower()):
                             self.tables[table]['CONG_TYPE'][tablerow] = "IL OEDOMETER"
+                            self.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
                         self.tables[table]['CONG_COND'][tablerow] = str(self.tables[table]['CONG_COND'][tablerow].upper())
 
 
@@ -1417,9 +1479,9 @@ Did you select the correct gINT or AGS?''')
                         for gintrow in range(0,gint_rows):
                             if self.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
                                 if self.tables['TRIG']['TRIG_COND'][tablerow] == 'REMOULDED':
-                                    self.tables[table]['Depth'][tablerow] = format(self.get_spec()['Depth'][gintrow] + 0.01,'.2f')
+                                    self.tables[table]['Depth'][tablerow] = float(self.get_spec()['Depth'][gintrow]) + 0.01
                                 else:
-                                    self.tables[table]['Depth'][tablerow] = format(self.get_spec()['Depth'][gintrow],'.2f')
+                                    self.tables[table]['Depth'][tablerow] = self.get_spec()['Depth'][gintrow]
 
 
                 '''RELD'''
@@ -1429,7 +1491,7 @@ Did you select the correct gINT or AGS?''')
                     for tablerow in range(2,len(self.tables[table])):
                         for gintrow in range(0,gint_rows):
                             if self.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
-                                self.tables[table]['Depth'][tablerow] = format(self.get_spec()['Depth'][gintrow],'.2f')
+                                self.tables[table]['Depth'][tablerow] = self.get_spec()['Depth'][gintrow]
 
 
                 '''LDYN'''
@@ -1485,11 +1547,13 @@ Did you select the correct gINT or AGS?''')
         self.error = False
 
         if not self.gint_location or self.gint_location == '':
-            self.text.setText('''AGS file loaded.''')
+            self.text.setText('''AGS file loaded.
+''')
             QApplication.processEvents()
             return
 
-        self.text.setText('''Matching AGS to gINT, please wait...''')
+        self.text.setText('''Matching AGS to gINT, please wait...
+''')
         QApplication.processEvents()
         print(f"Matching DETS for PEZ AGS to gINT... {self.gint_location}") 
 
@@ -1849,6 +1913,8 @@ Check the AGS with "View data".''')
         self.button_lab_only.setEnabled(False)
         self.lab_select.setEnabled(False)
         self.button_match_lab.setEnabled(False)
+        self.button_export_results.setEnabled(False)
+        self.button_export_error.setEnabled(False)
 
 
     def enable_buttons(self):
@@ -1892,8 +1958,8 @@ Check the AGS with "View data".''')
         
         self.config['Window']['width'] = width
         self.config['Window']['height'] = height
-        with open('common/assets/settings.ini', 'w') as configfile: 
-            self.config.write(configfile)
+        # with open('common/assets/settings.ini', 'w') as configfile: 
+        #     self.config.write(configfile)
         self.resizing = False
     
     def set_size(self):
