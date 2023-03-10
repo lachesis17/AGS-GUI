@@ -82,6 +82,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.disable_buttons()
         self.listbox.clear()
 
+        self.gui = None
+
         self.text.setText('''Please insert AGS file.
 ''')
         QApplication.processEvents()
@@ -124,6 +126,9 @@ Please select an AGS with "Open File..."''')
 
     def count_lab_results(self):
         self.disable_buttons()
+
+        if not self.gui == None:
+            self.get_updated_tables()
 
         self.results_with_samp_and_type = pd.DataFrame()
 
@@ -325,6 +330,9 @@ Please select an AGS with "Open File..."''')
     def export_results(self):
         self.disable_buttons()
 
+        if not self.gui == None:
+            self.get_updated_tables()
+
         result_list = self.results_with_samp_and_type.copy(deep=True)
         result_list.reset_index(inplace=True)
         result_list.sort_index(inplace=True)
@@ -366,31 +374,38 @@ Please select an AGS with "Open File..."''')
 Close GUI to resume.''')
         QApplication.processEvents()
         
-        try:
-            self.gui = show(**self.tables)
-            self.gui.finished.connect(self.update_tables)
-        except:
-            pass
+        #try:
+        self.gui = show(**self.tables)
+        # except:
+        #     pass
 
         self.text.setText('''You can now save the edited AGS.
 ''')
 
         QApplication.processEvents()
+        self.enable_buttons()
 
         #need some way to check if pandasgui is open so that on close it calls the rest of the function so you're working with the updated edited tables
         #unfortunately pandasgui is a custom class and doesnt have pyqt methods like exec(), finished.connect(), etc.
+        #this was working with tkinter because tkinter and the pyqt QMainWindow of pandasgui were running in the same thread, causing the crash but keeeping the updated tables...
+        #as you couldn't resume the gui of tkinter until the pandasgui was closed, continuing the thread. with pyqt, opening the pandasgui QMainWindow doesn't stop the thread events from completing
+
+    def get_updated_tables(self):
         updated_tables = self.gui.get_dataframes()
         self.tables = updated_tables
         for table in self.result_tables:
             if table in list(self.tables):
                 self.ags_tables.append(table)
-        self.enable_buttons()
+
         
     def check_ags(self):
         self.disable_buttons()
         self.text.setText('''Checking AGS for errors...
 ''')
         QApplication.processEvents()
+
+        if not self.gui == None:
+            self.get_updated_tables()
 
         try:
             if not self.file_location == '':
@@ -440,6 +455,9 @@ Please select an AGS with "Open File..."''')
 
     def export_errors(self):
         self.disable_buttons()
+
+        if not self.gui == None:
+            self.get_updated_tables()
         
         if not self.config.get('LastFolder','dir') == "":
             self.log_path = QtWidgets.QFileDialog.getSaveFileName(self,'Save error log as...', self.config.get('LastFolder','dir'), '*.txt')
@@ -464,6 +482,9 @@ Please select an AGS with "Open File..."''')
 
     def save_ags(self):
         self.disable_buttons()
+
+        if not self.gui == None:
+            self.get_updated_tables()
 
         if not self.config.get('LastFolder','dir') == "":
             newFileName = QtWidgets.QFileDialog.getSaveFileName(self,'Save AGS file as...', self.config.get('LastFolder','dir'), '*.ags')
@@ -518,6 +539,9 @@ Please select an AGS with "Open File..."''')
 
     def get_ags_tables(self):
         self.ags_table_reset()
+
+        if not self.gui == None:
+            self.get_updated_tables()
 
         for table in self.result_tables:
             if table in list(self.tables):
@@ -587,6 +611,9 @@ Did you select the correct gINT or AGS?''')
         self.get_gint()
         self.matched = False
         self.error = False
+
+        if not self.gui == None:
+            self.get_updated_tables()
 
         if not self.gint_location or self.gint_location == '':
             self.text.setText('''AGS file loaded.
@@ -849,6 +876,9 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
 
+        if not self.gui == None:
+            self.get_updated_tables()
+
         if not self.gint_location or self.gint_location == '':
             self.text.setText('''AGS file loaded.
 ''')
@@ -957,6 +987,9 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
 
+        if not self.gui == None:
+            self.get_updated_tables()
+
         if not self.gint_location or self.gint_location == '':
             self.text.setText('''AGS file loaded.
 ''')
@@ -1027,6 +1060,9 @@ Did you select the correct gINT or AGS?''')
         self.get_gint()
         self.matched = False
         self.error = False
+
+        if not self.gui == None:
+            self.get_updated_tables()
 
         if not self.gint_location or self.gint_location == '':
             self.text.setText('''AGS file loaded.
@@ -1123,6 +1159,9 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
 
+        if not self.gui == None:
+            self.get_updated_tables()
+
         if not self.gint_location or self.gint_location == '':
             self.text.setText('''AGS file loaded.
 ''')
@@ -1194,6 +1233,9 @@ Did you select the correct gINT or AGS?''')
         self.get_gint()
         self.matched = False
         self.error = False
+
+        if not self.gui == None:
+            self.get_updated_tables()
 
         if not self.gint_location or self.gint_location == '':
             self.text.setText('''AGS file loaded.
@@ -1288,6 +1330,9 @@ Did you select the correct gINT or AGS?''')
         self.get_gint()
         self.matched = False
         self.error = False
+
+        if not self.gui == None:
+            self.get_updated_tables()
 
         if not self.gint_location or self.gint_location == '':
             self.text.setText('''AGS file loaded.
@@ -1533,6 +1578,9 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
 
+        if not self.gui == None:
+            self.get_updated_tables()
+
         if not self.gint_location or self.gint_location == '':
             self.text.setText('''AGS file loaded.
 ''')
@@ -1654,6 +1702,8 @@ Did you select the correct gINT or AGS?''')
     def del_non_lab_tables(self):
         self.get_ags_tables()
 
+        self.gui = None
+
         for table in self.result_tables:
             if table in list(self.tables):
                 self.ags_tables.append(table)
@@ -1668,9 +1718,12 @@ Did you select the correct gINT or AGS?''')
                     print(f"{str(table)} table deleted.")
             except:
                 pass
-
+            
 
     def get_cpt_tables(self):
+        if not self.gui == None:
+            self.get_updated_tables()
+
         self.ags_table_reset()
 
         self.cpt_tables = ["SCPG","SCPT","SCPP","SCCG","SCCT","SCDG","SCDT"]
