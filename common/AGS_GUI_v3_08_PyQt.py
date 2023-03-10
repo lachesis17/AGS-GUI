@@ -556,20 +556,6 @@ Please select an AGS with "Open File..."''')
             print('Geolabs (50HZ Fugro) AGS selected to match to gINT.')
             self.match_unique_id_geolabs_fugro()
 
-    def create_match_id(self):
-        self.get_ags_tables()
-
-        for table in self.ags_tables:
-            try:    
-                if 'match_id' not in self.get_spec():
-                    self.get_spec().insert(len(list(self.get_spec().columns)),'match_id','')
-            
-                if 'match_id' not in self.tables[table]:
-                    self.tables[table].insert(len(self.tables[table].keys()),'match_id','')
-            except Exception as e:
-                print(e)
-                pass
-
     def remove_match_id(self):
         self.get_ags_tables()
 
@@ -891,8 +877,9 @@ Did you select the correct gINT or AGS?''')
             try:
                 gint_rows = self.get_spec().shape[0]
 
-                for row in range (2,len(self.tables[table])):
-                    self.tables[table]['match_id'][row] = str(self.tables[table]['LOCA_ID'][row]).rsplit(' ', 2)[0] + str(self.tables[table]['SAMP_TOP'][row])
+                self.tables[table]['LOCA_ID'] = self.tables[table]['LOCA_ID'].str.split(" ", n=1, expand=True)[0]
+                self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
+                self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
 
                 try:
                     for tablerow in range(2,len(self.tables[table])):
@@ -1565,17 +1552,27 @@ Did you select the correct gINT or AGS?''')
             self.error = True
             print("Cannot find GCHM or ERES - looks like this AGS is from GM Lab.")
 
-        self.create_match_id()
+        self.get_spec()['Depth'] = self.get_spec()['Depth'].map('{:,.2f}'.format)
+        self.get_spec()['Depth'] = self.get_spec()['Depth'].astype(str)
+        self.get_spec()['match_id'] = self.get_spec()['PointID']
+        self.get_spec()['match_id'] += self.get_spec()['Depth']
+        self.get_spec()['batched'] = self.get_spec()['SAMP_TYPE'].astype(str).str[0]
+        self.get_spec()['match_id'] += self.get_spec()['batched']
+        self.get_spec().drop(['batched'], axis=1, inplace=True)
+        self.get_spec()['match_id'] += self.get_spec()['SPEC_REF']
 
         for table in self.ags_tables:
             try:
                 gint_rows = self.get_spec().shape[0]
 
-                for row in range (0,gint_rows):
-                    self.get_spec()['match_id'][row] = str(self.get_spec()['PointID'][row]) + str(format(self.get_spec()['Depth'][row],'.2f')) + str(self.get_spec()['SAMP_TYPE'][row][0]) + str(self.get_spec()['SPEC_REF'][row])
-
-                for row in range (2,len(self.tables[table])):
-                    self.tables[table]['match_id'][row] = str(self.tables[table]['LOCA_ID'][row]).rsplit(' ', 2)[0] + str(self.tables[table]['SAMP_TOP'][row]) + str(self.tables[table]['SAMP_REF'][row][0]) + str(self.tables[table]['SAMP_REF'][row]).split(' ')[1]
+                self.tables[table]['LOCA_ID'] = self.tables[table]['LOCA_ID'].str.split(" ", n=1, expand=True)[0]
+                self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
+                self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
+                self.tables[table]['batched'] = self.tables[table]['SAMP_REF'].astype(str).str[0]
+                self.tables[table]['match_id'] += self.tables[table]['batched']
+                self.tables[table].drop(['batched'], axis=1, inplace=True)
+                self.tables[table]['SAMP_REF'] = self.tables[table]['SAMP_REF'].str.split(" ", n=1, expand=True)[1]
+                self.tables[table]['match_id'] += self.tables[table]['SAMP_REF']
 
                 try:
                     for tablerow in range(2,len(self.tables[table])):
@@ -1592,7 +1589,7 @@ Did you select the correct gINT or AGS?''')
                                 self.tables[table]['SAMP_TYPE'][tablerow] = self.get_spec()['SAMP_TYPE'][gintrow]
                                 self.tables[table]['SPEC_REF'][tablerow] = self.get_spec()['SPEC_REF'][gintrow]
                                 self.tables[table]['SAMP_TOP'][tablerow] = format(self.get_spec()['SAMP_Depth'][gintrow],'.2f')
-                                self.tables[table]['SPEC_DPTH'][tablerow] = format(self.get_spec()['Depth'][gintrow],'.2f')
+                                self.tables[table]['SPEC_DPTH'][tablerow] = self.get_spec()['Depth'][gintrow]
                                 
                                 for x in self.tables[table].keys():
                                     if "LAB" in x:
