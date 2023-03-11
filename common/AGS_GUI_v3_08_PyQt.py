@@ -6,6 +6,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from python_ags4 import AGS4
 from pandasgui import show
+import numpy as np
 import sys
 import os
 import pandas as pd
@@ -27,19 +28,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.player = QMediaPlayer()
         self.config = configparser.ConfigParser()
         self.config.read('common/assets/settings.ini')
-        
         self.move(200,200)
-        self.cpt_value = ""
 
-        #self.button_copy_actual.setIcon(QtGui.QIcon('assets/images/copy.png'))
-        #self.button_copy_avg.setIcon(QtGui.QIcon('assets/images/copy.png'))
-        #self.button_copy_actual.setIconSize(QtCore.QSize(25,25))
-        #self.button_copy_avg.setIconSize(QtCore.QSize(25,25))
-
-        #self.dark_mode_button.clicked.connect(self.dark_toggle)
-        #self.dark_mode_button.setChecked(bool(self.config.get('Theme','dark')))
-
-        #self.file_open.triggered.connect(self.test)   -menubar
+        #self.file_open.triggered.connect(print())   -menubar
 
         self.text.setText('''Please insert AGS file.
 ''')
@@ -76,12 +67,13 @@ class MainWindow(QtWidgets.QMainWindow):
         #set window size
         self.installEventFilter(self)
         self.set_size()
-        #self.dark_mode()
 
     def get_ags_file(self):
         self.disable_buttons()
         self.listbox.clear()
 
+        #soft-resetting the pandasgui var (doesn't close window), since if the window is still open when a new file is loaded it will pull the data from the previous file when calling get_updated_tables()
+        #gui is defined again with a new object code when it is opened again with the new file after defining it as None here - would be great to override the onClose event of pandasgui
         self.gui = None
 
         self.text.setText('''Please insert AGS file.
@@ -118,6 +110,7 @@ Please select an AGS with "Open File..."''')
             self.button_open.setEnabled(True)
         finally:
             print(f"AGS file loaded: {self.file_location}")
+            self.play_coin()
 
             if self.lab_select.currentText() == "Select a Lab":
                 self.lab_select.removeItem(0)
@@ -145,6 +138,9 @@ Please select an AGS with "Open File..."''')
         for table in lab_tables:
             if table in list(self.tables):
                 self.ags_tables.append(table)
+
+        #this should probably be rewritten to dict of dfs instead of lists, it would make a lot of the operations is easier but it was tricky to get around certain tables without mismatching columns
+        #using lists to count number of records after popping off the unit and type rows, dataframes to concat results for output
                 
         for table in lab_tables:
             if table in self.ags_tables:
@@ -197,6 +193,7 @@ Please select an AGS with "Open File..."''')
                         test_type = list(self.tables[table]['GRAT_TYPE'])
                         test_type.pop(0)
                         test_type.pop(0)
+                        #turning into a dataframe to drop all the duplcicates per test type per sample, using the test type from that list as the count
                         samp_with_table = list(zip(location,samp_id,samp_ref,samp_depth,test_type))
                         samp_with_table.pop(0)
                         samp_with_table.pop(0)
@@ -234,7 +231,6 @@ Please select an AGS with "Open File..."''')
                         lab_count_none = len(lab_count_none)
                         lab_count_on = [x for x in lab if not x == "Offshore" and not x == ""]
                         lab_count_on = len(lab_count_on)
-                        #print(f"{table} offshore: {lab_count_off} onshore: {lab_count_on} no lab: {lab_count_none}")
                         if not lab_count_none == 0:
                             if "GRAT" in table:
                                 valcount = table_results.shape[0] - 1
@@ -259,7 +255,6 @@ Please select an AGS with "Open File..."''')
                         lab_count_none = len(lab_count_none)
                         lab_count_on = [x for x in lab if not x == "Offshore" and not x == ""]
                         lab_count_on = len(lab_count_on)
-                        #print(f"{table} offshore: {lab_count_off} onshore: {lab_count_on} no lab: {lab_count_none}")
                         if not lab_count_none == 0:
                             count = [f"Offshore:{lab_count_off}, Onshore:{lab_count_on}, None:{lab_count_none}"]
                         else:
@@ -280,7 +275,6 @@ Please select an AGS with "Open File..."''')
                             lab_count_none = len(lab_count_none)
                             lab_count_on = [x for x in lab if not x == "Offshore" and not x == ""]
                             lab_count_on = len(lab_count_on)
-                            #print(f"{table} offshore: {lab_count_off} onshore: {lab_count_on} no lab: {lab_count_none}")
                             if not lab_count_none == 0:
                                 count = [f"Offshore:{lab_count_off}, Onshore:{lab_count_on}, None:{lab_count_none}"]
                             else:
@@ -299,7 +293,6 @@ Please select an AGS with "Open File..."''')
                     for x in range(0,len(count)):
                         type_list.append(count[x])
                     all_results.append(type_list)
-                    #print(str(table) + " - " + str(type_list))
 
                     self.results_with_samp_and_type = pd.concat([self.results_with_samp_and_type, table_results])
 
@@ -315,7 +308,7 @@ Please select an AGS with "Open File..."''')
             df_list = ["Error: No laboratory test results found."]
             empty_df = pd.DataFrame.from_dict(df_list)
             self.result_list = empty_df
-        result_list = self.result_list.to_string(col_space=30,justify="center",index=None, header=None)
+        result_list = self.result_list.to_string(col_space=10,justify="center",index=None, header=None)
         print(result_list)
         self.listbox.setText(result_list)
 
@@ -374,10 +367,11 @@ Please select an AGS with "Open File..."''')
 Close GUI to resume.''')
         QApplication.processEvents()
         
-        #try:
-        self.gui = show(**self.tables)
-        # except:
-        #     pass
+        try:
+            self.gui = show(**self.tables)
+        except Exception as e:
+            print(e)
+            pass
 
         self.text.setText('''You can now save the edited AGS.
 ''')
@@ -389,6 +383,7 @@ Close GUI to resume.''')
         #unfortunately pandasgui is a custom class and doesnt have pyqt methods like exec(), finished.connect(), etc.
         #this was working with tkinter because tkinter and the pyqt QMainWindow of pandasgui were running in the same thread, causing the crash but keeeping the updated tables...
         #as you couldn't resume the gui of tkinter until the pandasgui was closed, continuing the thread. with pyqt, opening the pandasgui QMainWindow doesn't stop the thread events from completing
+        #at the moment, can't find gui in processes, has different object code than MainWindow so not in variable list, so checking if self.gui = None then calling get_updated_tables() where needed
 
     def get_updated_tables(self):
         updated_tables = self.gui.get_dataframes()
@@ -589,10 +584,11 @@ Please select an AGS with "Open File..."''')
 
     def check_matched_to_gint(self):
         if self.matched:
-            self.text.setText('''Matching complete! Click: 'Save AGS file'.
-''')
+            self.text.setText('''Matching complete! Check the data with 'View Data'
+Click: 'Save AGS file'.''')
             QApplication.processEvents()
             print("Matching complete!")
+            self.play_nice()
             self.enable_buttons()
             if self.error == True:
                 self.text.setText('''gINT matches, Lab doesn't.
@@ -1044,7 +1040,7 @@ Did you select the correct gINT or AGS?''')
                             self.tables[table]['CONG_TYPE'][tablerow] = "IL OEDOMETER"
                             self.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
                         if "#" in str(self.tables[table]['CONG_PDEN'][tablerow].lower()):
-                            self.tables[table]['CONG_PDEN'][tablerow] = str(self.tables[table]['CONG_PDEN'][tablerow]).rsplit('#', 2)[1]
+                            self.tables[table]['CONG_PDEN'][tablerow] = str(self.tables[table]['CONG_PDEN'][tablerow]).split('#')[1]
 
             except Exception as e:
                 print(f"Couldn't find table or field, skipping... {str(e)}")
@@ -1801,155 +1797,25 @@ Check the AGS with "View data".''')
             self.ags_table_reset()
 
       
-    # def play_coin(self):
-    #     coin_num = np.random.randint(77)
-    #     if coin_num == 17:
-    #         coin = ('assets/sounds/coin.mp3')
-    #         coin_url = QUrl.fromLocalFile(coin)
-    #         content = QMediaContent(coin_url)
-    #         self.player.setMedia(content)
-    #         self.player.setVolume(33)
-    #         self.player.play()
+    def play_coin(self):
+        coin_num = np.random.randint(100)
+        if coin_num == 17:
+            coin = ('common/assets/sounds/coin.mp3')
+            coin_url = QUrl.fromLocalFile(coin)
+            content = QMediaContent(coin_url)
+            self.player.setMedia(content)
+            self.player.setVolume(22)
+            self.player.play()
 
-    # def play_nice(self):
-    #     nice_num = np.random.randint(77)
-    #     if nice_num == 7:
-    #         nice = ('assets/sounds/nice.mp3')
-    #         nice_url = QUrl.fromLocalFile(nice)
-    #         content = QMediaContent(nice_url)
-    #         self.player.setMedia(content)
-    #         self.player.setVolume(33)
-    #         self.player.play()
-
-    # def dark_toggle(self):
-    #     self.play_nice()
-    #     self.dark_mode()
-
-    def dark_mode(self):
-        if self.dark_mode_button.isChecked() == False:
-            #LIGHT THEME
-            self.dark_mode_button.setChecked(False)
-            self.config.set('Theme','dark','')
-            with open('common/assets/settings.ini', 'w') as configfile: 
-                self.config.write(configfile)
-            self.plot_area.setBackground("#f0f0f0")
-            #self.button_copy_actual.setIcon(QtGui.QIcon('assets/images/copy.png'))
-            #self.button_copy_avg.setIcon(QtGui.QIcon('assets/images/copy.png'))
-            
-            light_palette = QPalette()
-            light_palette.setColor(QPalette.Window, QColor(240, 240, 240))
-            light_palette.setColor(QPalette.WindowText, Qt.black)
-            light_palette.setColor(QPalette.Base, QColor(240, 240, 240))
-            light_palette.setColor(QPalette.AlternateBase, QColor(240, 240, 240))
-            light_palette.setColor(QPalette.ToolTipBase, QColor(240, 240, 240))
-            light_palette.setColor(QPalette.ToolTipText, Qt.black)
-            light_palette.setColor(QPalette.Text, Qt.black)#
-            light_palette.setColor(QPalette.Button, QColor(240, 240, 240))
-            light_palette.setColor(QPalette.ButtonText, Qt.white)#
-            light_palette.setColor(QPalette.BrightText, Qt.red)
-            light_palette.setColor(QPalette.Link, QColor(42, 130, 218))
-            light_palette.setColor(QPalette.Highlight, QColor(42, 130, 218))
-            light_palette.setColor(QPalette.HighlightedText, QColor(240, 240, 240))
-            light_palette.setColor(QPalette.Active, QPalette.Button, QColor(240, 240, 240))
-            light_palette.setColor(QPalette.Disabled, QPalette.ButtonText, Qt.lightGray)
-            light_palette.setColor(QPalette.Disabled, QPalette.WindowText, Qt.lightGray)
-            light_palette.setColor(QPalette.Disabled, QPalette.Text, Qt.lightGray)
-            light_palette.setColor(QPalette.Disabled, QPalette.Light, QColor('#f0f0f0'))
-            self.left_spacer.setStyleSheet(f"{self.config.get('Theme','spacer_css_light')}")
-            self.top_spacer.setStyleSheet(f"{self.config.get('Theme','spacer_css_light')}")
-            self.top_spacer.setStyleSheet(f"{self.config.get('Theme','spacer_css_light')}")
-            self.right_spacer.setStyleSheet(f"{self.config.get('Theme','spacer_css_light')}")
-            self.bot_spacer.setStyleSheet(f"{self.config.get('Theme','spacer_css_light')}")
-            self.unit_textbox.setStyleSheet(f"{self.config.get('Theme','textbox_css_light')}")
-            self.actual_val.setStyleSheet(f"{self.config.get('Theme','textbox_dark_css_light')}")
-            self.average_val.setStyleSheet(f"{self.config.get('Theme','textbox_dark_css_light')}")
-            self.button_copy_actual.setStyleSheet(f"{self.config.get('Theme','button_transp_css_light')}")
-            self.button_copy_avg.setStyleSheet(f"{self.config.get('Theme','button_transp_css_light')}")
-            self.button_gint.setStyleSheet(f"{self.config.get('Theme','button_css_light')}")
-            self.button_depth.setStyleSheet(f"{self.config.get('Theme','button_css_light')}")
-            self.button_cpt_val.setStyleSheet(f"{self.config.get('Theme','button_css_light')}")
-            self.remove_before.setStyleSheet(f"{self.config.get('Theme','button_css_sml_light')}")
-            self.remove_after.setStyleSheet(f"{self.config.get('Theme','button_css_sml_light')}")
-            self.remove_at.setStyleSheet(f"{self.config.get('Theme','button_css_sml_light')}")
-            self.re_plot.setStyleSheet(f"{self.config.get('Theme','button_css_sml_light')}")
-            self.increment.setStyleSheet(f"{self.config.get('Theme','button_css_sml_light')}")
-            self.decrement.setStyleSheet(f"{self.config.get('Theme','button_css_sml_light')}")
-            self.cpt_table.setStyleSheet(f"{self.config.get('Theme','combo_css_light')}")
-            self.geol_layers.setStyleSheet(f"{self.config.get('Theme','combo_css_light')}")
-            self.avg_vals.setStyleSheet(f"{self.config.get('Theme','combo_css_light')}")
-            self.dark_mode_button.setStyleSheet(f"{self.config.get('Theme','checkbox_css_light')}")
-            self.full_bh.setStyleSheet(f"{self.config.get('Theme','checkbox_css_light')}")
-            self.menubar.setStyleSheet(f"font: 10pt 'Roboto'; background: #f0f0f0; color: black;")
-            self.point_table.setStyleSheet(f"{self.config.get('Theme','table_css_light')}")
-            self.depth_table.setStyleSheet(f"{self.config.get('Theme','table_css_light')}")
-
-            self.reset_graph()   
-            if not self.cpt_value == "":
-                self.plot_graph(x=self.x, y=self.y, cpt_value=self.cpt_value)
-            QApplication.setPalette(light_palette)
-
-
-        else:
-            #DARK THEME
-            self.dark_mode_button.setChecked(True)
-            self.config.set('Theme','dark','True')
-            with open('common/assets/settings.ini', 'w') as configfile: 
-                self.config.write(configfile)
-            self.plot_area.setBackground("#353535")
-            #self.button_copy_actual.setIcon(QtGui.QIcon('assets/images/copy_light.png'))
-            #self.button_copy_avg.setIcon(QtGui.QIcon('assets/images/copy_light.png'))
-
-            dark_palette = QPalette()
-            dark_palette.setColor(QPalette.Window, QColor(53, 53, 53))
-            dark_palette.setColor(QPalette.WindowText, Qt.black)
-            dark_palette.setColor(QPalette.Base, QColor(35, 35, 35))
-            dark_palette.setColor(QPalette.AlternateBase, QColor(53, 53, 53))
-            dark_palette.setColor(QPalette.ToolTipBase, QColor(25, 25, 25))
-            dark_palette.setColor(QPalette.ToolTipText, Qt.black)
-            dark_palette.setColor(QPalette.Text, Qt.white)
-            dark_palette.setColor(QPalette.Button, QColor(53, 53, 53))
-            dark_palette.setColor(QPalette.ButtonText, Qt.black)
-            dark_palette.setColor(QPalette.BrightText, Qt.red)
-            dark_palette.setColor(QPalette.Link, QColor(42, 130, 218))
-            dark_palette.setColor(QPalette.Highlight, Qt.darkGray)
-            dark_palette.setColor(QPalette.HighlightedText, QColor(35, 35, 35))
-            dark_palette.setColor(QPalette.Active, QPalette.Button, QColor(53, 53, 53))
-            dark_palette.setColor(QPalette.Disabled, QPalette.ButtonText, Qt.darkGray)
-            dark_palette.setColor(QPalette.Disabled, QPalette.WindowText, Qt.darkGray)
-            dark_palette.setColor(QPalette.Disabled, QPalette.Text, Qt.darkGray)
-            dark_palette.setColor(QPalette.Disabled, QPalette.Light, QColor(53, 53, 53))
-            self.left_spacer.setStyleSheet(f"{self.config.get('Theme','spacer_css')}")
-            self.top_spacer.setStyleSheet(f"{self.config.get('Theme','spacer_css')}")
-            self.top_spacer.setStyleSheet(f"{self.config.get('Theme','spacer_css')}")
-            self.right_spacer.setStyleSheet(f"{self.config.get('Theme','spacer_css')}")
-            self.bot_spacer.setStyleSheet(f"{self.config.get('Theme','spacer_css')}")
-            self.unit_textbox.setStyleSheet(f"{self.config.get('Theme','textbox_css')}")
-            self.actual_val.setStyleSheet(f"{self.config.get('Theme','textbox_dark_css')}")
-            self.average_val.setStyleSheet(f"{self.config.get('Theme','textbox_dark_css')}")
-            self.button_copy_actual.setStyleSheet(f"{self.config.get('Theme','button_transp_css')}")
-            self.button_copy_avg.setStyleSheet(f"{self.config.get('Theme','button_transp_css')}")
-            self.button_gint.setStyleSheet(f"{self.config.get('Theme','button_css')}")
-            self.button_depth.setStyleSheet(f"{self.config.get('Theme','button_css')}")
-            self.button_cpt_val.setStyleSheet(f"{self.config.get('Theme','button_css')}")
-            self.remove_before.setStyleSheet(f"{self.config.get('Theme','button_css_sml')}")
-            self.remove_after.setStyleSheet(f"{self.config.get('Theme','button_css_sml')}")
-            self.remove_at.setStyleSheet(f"{self.config.get('Theme','button_css_sml')}")
-            self.re_plot.setStyleSheet(f"{self.config.get('Theme','button_css_sml')}")
-            self.increment.setStyleSheet(f"{self.config.get('Theme','button_css_sml')}")
-            self.decrement.setStyleSheet(f"{self.config.get('Theme','button_css_sml')}")
-            self.cpt_table.setStyleSheet(f"{self.config.get('Theme','combo_css')}")
-            self.geol_layers.setStyleSheet(f"{self.config.get('Theme','combo_css')}")
-            self.avg_vals.setStyleSheet(f"{self.config.get('Theme','combo_css')}")
-            self.dark_mode_button.setStyleSheet(f"{self.config.get('Theme','checkbox_css')}")
-            self.full_bh.setStyleSheet(f"{self.config.get('Theme','checkbox_css')}")
-            self.menubar.setStyleSheet(f"font: 10pt 'Roboto'; background: #353535; color: white;")
-            self.point_table.setStyleSheet(f"{self.config.get('Theme','table_css')}")
-            self.depth_table.setStyleSheet(f"{self.config.get('Theme','table_css')}")
-
-            self.reset_graph()
-            if not self.cpt_value == "":
-                self.plot_graph(x=self.x, y=self.y, cpt_value=self.cpt_value)
-            QApplication.setPalette(dark_palette)
+    def play_nice(self):
+        nice_num = np.random.randint(100)
+        if nice_num == 7:
+            nice = ('common/assets/sounds/nice.mp3')
+            nice_url = QUrl.fromLocalFile(nice)
+            content = QMediaContent(nice_url)
+            self.player.setMedia(content)
+            self.player.setVolume(33)
+            self.player.play()
 
 
     def disable_buttons(self):       
