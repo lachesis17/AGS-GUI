@@ -87,7 +87,7 @@ QTabWidget::pane {
 }</string>
        </property>
        <attribute name="title">
-        <string>AGS</string>
+        <string>View and Edit</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_7">
         <item>
@@ -985,7 +985,7 @@ QPushButton:disabled {
 }</string>
        </property>
        <attribute name="title">
-        <string>Count Results</string>
+        <string>Count Results and Check Errors</string>
        </attribute>
        <layout class="QHBoxLayout" name="horizontalLayout_11">
         <item>
