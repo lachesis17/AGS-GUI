@@ -5,7 +5,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from python_ags4 import AGS4
-from pandasgui import show
+#from pandasgui import show
 import numpy as np
 import sys
 import os
@@ -22,7 +22,7 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
 
-        uic.loadUi("common/assets/ui/mainwindow.ui", self)
+        uic.loadUi("common/assets/ui/mainwindow_tableview.ui", self)
         self.setWindowIcon(QtGui.QIcon('common/images/geobig.ico'))
     
         self.player = QMediaPlayer()
@@ -47,6 +47,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.button_export_results.clicked.connect(self.export_results)
         self.button_export_error.clicked.connect(self.export_errors)
 
+        self.headings_table.clicked.connect(self.refresh_table)
+
         self.temp_file_name = ''
         self.tables = None
         self.headings = None
@@ -70,7 +72,7 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def get_ags_file(self):
         self.disable_buttons()
-        self.listbox.clear()
+        #self.listbox.clear()
 
         #soft-resetting the pandasgui var (doesn't close window), since if the window is still open when a new file is loaded it will pull the data from the previous file when calling get_updated_tables()
         #gui is defined again with a new object code when it is opened again with the new file after defining it as None here - would be great to override the onClose event of pandasgui
@@ -116,6 +118,31 @@ Please select an AGS with "Open File..."''')
                 self.lab_select.removeItem(0)
                 self.lab_select.setCurrentIndex(0)
             self.enable_buttons()
+
+            #set tablemodels
+            table_keys = [k for k in self.tables.keys()]
+            table_shapes = [str(f"({v.shape[0]} x {v.shape[1]})") for k,v in self.tables.items()]
+            headings_with_shapes = list(zip(table_keys,table_shapes))
+            headings_df = pd.DataFrame.from_dict(headings_with_shapes)
+            headings_df.columns = ["",""]
+            self._headings_model = pandasModel(headings_df)
+            self.headings_table.setModel(self._headings_model)
+            self.headings_table.resizeColumnsToContents()
+            self.headings_table.horizontalHeader().hide()
+
+            self._tables_model = pandasModel(self.tables[f"{table_keys[0]}"])
+            self.tables_table.setModel(self._tables_model)
+            self.tables_table.resizeColumnsToContents()
+
+    def refresh_table(self):
+        index = self.headings_table.selectionModel().currentIndex()
+        self.headings_table.selectRow(index.row())
+        QApplication.processEvents()
+        value = index.sibling(index.row(),0).data()
+        self._tables_model = pandasModel(self.tables[f"{value}"])
+        self.tables_table.setModel(self._tables_model)
+        self.tables_table.resizeColumnsToContents()
+
 
     def count_lab_results(self):
         self.disable_buttons()
@@ -308,9 +335,15 @@ Please select an AGS with "Open File..."''')
             df_list = ["Error: No laboratory test results found."]
             empty_df = pd.DataFrame.from_dict(df_list)
             self.result_list = empty_df
+
         result_list = self.result_list.to_string(col_space=10,justify="center",index=None, header=None)
         print(result_list)
-        self.listbox.setText(result_list)
+        # self.listbox.setText(result_list)
+
+        self._results_model = pandasModel(self.result_list)
+        self.listbox.setModel(self._results_model)
+        self.listbox.resizeColumnsToContents()
+        self.listbox.horizontalHeader().hide()
 
         self.button_export_results.setEnabled(True)
 
@@ -368,7 +401,8 @@ Close GUI to resume.''')
         QApplication.processEvents()
         
         try:
-            self.gui = show(**self.tables)
+            self.tabWidget.setCurrentIndex(1)
+            #self.gui = show(**self.tables)
         except Exception as e:
             print(e)
             pass
@@ -442,7 +476,16 @@ Please select an AGS with "Open File..."''')
         if errors:
             self.button_export_error.setEnabled(True)
             err_str = '\n'.join(str(x) for x in self.error_list)
-            self.listbox.setText(err_str)
+
+            err_df = pd.DataFrame.from_dict(self.error_list)
+            print(err_df)
+
+            self._error_model = pandasModel(err_df)
+            self.listbox.setModel(self._error_model)
+            self.listbox.resizeColumnsToContents()
+            self.listbox.horizontalHeader().hide()
+
+            #self.listbox.setText(err_str)
             self.text.setText('''Error(s) found, check output or click 'Export Error Log'.
 ''')
             QApplication.processEvents()
@@ -1714,6 +1757,16 @@ Did you select the correct gINT or AGS?''')
                     print(f"{str(table)} table deleted.")
             except:
                 pass
+
+        table_keys = [k for k in self.tables.keys()]
+        table_shapes = [str(f"({v.shape[0]} x {v.shape[1]})") for k,v in self.tables.items()]
+        headings_with_shapes = list(zip(table_keys,table_shapes))
+        headings_df = pd.DataFrame.from_dict(headings_with_shapes)
+        headings_df.columns = ["",""]
+        self._headings_model = pandasModel(headings_df)
+        self.headings_table.setModel(self._headings_model)
+        self.headings_table.resizeColumnsToContents()
+        self.headings_table.horizontalHeader().hide()
             
 
     def get_cpt_tables(self):
@@ -1892,6 +1945,29 @@ Check the AGS with "View data".''')
         height = self.config['Window']['height']
         self.resize(QSize(int(width),int(height)))
         self.resizing = False
+
+class pandasModel(QAbstractTableModel):
+
+    def __init__(self, data):
+        QAbstractTableModel.__init__(self)
+        self._data = data
+
+    def rowCount(self, parent=None):
+        return self._data.shape[0]
+
+    def columnCount(self, parent=None):
+        return self._data.shape[1]
+
+    def data(self, index, role=Qt.DisplayRole):
+        if index.isValid():
+            if role == Qt.DisplayRole:
+                return str(self._data.iloc[index.row(), index.column()])
+        return None
+
+    def headerData(self, col, orientation, role):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            return self._data.columns[col]
+        return None
         
 
 def main():
