@@ -5,7 +5,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from python_ags4 import AGS4
-#from pandasgui import show
+from pandasgui import show
 import numpy as np
 import sys
 import os
@@ -36,6 +36,7 @@ class MainWindow(QtWidgets.QMainWindow):
 ''')
 
         self.button_open.clicked.connect(self.get_ags_file)
+        self.view_data.clicked.connect(self.view_tableview)
         self.pandas_gui.clicked.connect(self.start_pandasgui)
         self.button_save_ags.clicked.connect(self.save_ags)
         self.button_count_results.clicked.connect(self.count_lab_results)
@@ -391,7 +392,9 @@ Please select an AGS with "Open File..."''')
             self.enable_buttons()
             self.button_export_results.setEnabled(True)
             return
-
+        
+    def view_tableview(self):
+        self.tabWidget.setCurrentIndex(1)
 
     def start_pandasgui(self):
         self.disable_buttons()
@@ -401,8 +404,7 @@ Close GUI to resume.''')
         QApplication.processEvents()
         
         try:
-            self.tabWidget.setCurrentIndex(1)
-            #self.gui = show(**self.tables)
+            self.gui = show(**self.tables)
         except Exception as e:
             print(e)
             pass
@@ -1873,6 +1875,7 @@ Check the AGS with "View data".''')
 
     def disable_buttons(self):       
         self.button_open.setEnabled(False)
+        self.view_data.setEnabled(False)
         self.pandas_gui.setEnabled(False)
         self.button_count_results.setEnabled(False)
         self.button_ags_checker.setEnabled(False)
@@ -1888,6 +1891,7 @@ Check the AGS with "View data".''')
 
     def enable_buttons(self):
         self.button_open.setEnabled(True)
+        self.view_data.setEnabled(True)
         self.pandas_gui.setEnabled(True)
         self.button_count_results.setEnabled(True)
         self.button_ags_checker.setEnabled(True)
