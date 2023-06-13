@@ -826,7 +826,7 @@ Did you select the correct gINT or AGS?''')
                         for gintrow in range(0,gint_rows):
                             if self.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
                                 if self.tables['TRIG']['TRIG_COND'][tablerow] == 'REMOULDED':
-                                    self.tables[table]['Depth'][tablerow] = float(self.get_spec()['Depth'][gintrow]) + 0.01
+                                    self.tables[table]['Depth'][tablerow] = round(float(self.get_spec()['Depth'][gintrow]) + 0.01,2)
                                 else:
                                     self.tables[table]['Depth'][tablerow] = self.get_spec()['Depth'][gintrow]
 
@@ -1552,7 +1552,7 @@ Did you select the correct gINT or AGS?''')
                         for gintrow in range(0,gint_rows):
                             if self.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
                                 if self.tables['TRIG']['TRIG_COND'][tablerow] == 'REMOULDED':
-                                    self.tables[table]['Depth'][tablerow] = float(self.get_spec()['Depth'][gintrow]) + 0.01
+                                    self.tables[table]['Depth'][tablerow] = round(float(self.get_spec()['Depth'][gintrow]) + 0.01,2)
                                 else:
                                     self.tables[table]['Depth'][tablerow] = self.get_spec()['Depth'][gintrow]
 
