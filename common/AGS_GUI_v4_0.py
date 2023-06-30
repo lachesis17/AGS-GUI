@@ -902,6 +902,13 @@ Did you select the correct gINT or AGS?''')
                             if self.tables[table]['LDYN_REM'][tablerow] == "":
                                 self.tables[table]['LDYN_REM'][tablerow] = "Bender Element"
 
+                '''LRES'''
+                if table == 'LRES':
+                    for tablerow in range(2,len(self.tables[table])):
+                        if self.tables[table]['LRES_TEMP'][tablerow] != '':
+                            self.tables[table]['LRES_TEMP'][tablerow] = int(round(float(self.tables[table]['LRES_TEMP'][tablerow]),0))
+
+
             except Exception as e:
                 print(f"Couldn't find table or field, skipping... {str(e)}")
                 pass
