@@ -572,6 +572,9 @@ Please select an AGS with "Open File..."''')
         except Exception as e:
             print(e)
             print("Uhh.... either that's the wrong gINT, or something went wrong.")
+            self.text.setText('''Uhh.... something went wrong.
+''')
+            QApplication.processEvents()
             return
 
     def get_spec(self):
@@ -793,6 +796,7 @@ Did you select the correct gINT or AGS?''')
                         if 'TRET_CELL' in self.tables[table].keys():
                             if not self.tables[table]['TRET_CELL'][tablerow] == '':
                                 self.tables[table]['TRET_CELL'][tablerow] = round(float(self.tables[table]['TRET_CELL'][tablerow]))
+                        self.tables[table]['TRET_DEVF'][tablerow] = int(round(float(self.tables[table]['TRET_DEVF'][tablerow]), 0))
 
                 '''LPDN'''
                 if table == 'LPDN':
