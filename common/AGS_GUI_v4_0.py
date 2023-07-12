@@ -610,6 +610,9 @@ Please select an AGS with "Open File..."''')
         elif self.get_selected_lab() == "Structural Soils":
             print('Structural Soils Soils AGS selected to match to gINT.')
             self.match_unique_id_soils()
+        elif self.get_selected_lab() == "Structural Soils PEZ":
+            print('Structural Soils Soils AGS for PEZ selected to match to gINT.')
+            self.match_unique_id_soils_pez()
         elif self.get_selected_lab() == "PSL":
             print('PSL AGS selected to match to gINT.')
             self.match_unique_id_psl()
@@ -1101,6 +1104,86 @@ Did you select the correct gINT or AGS?''')
         self.remove_match_id()
         self.check_matched_to_gint()
         self.enable_buttons()
+
+
+    def match_unique_id_soils_pez(self):
+        self.disable_buttons()
+        self.get_gint()
+        self.matched = False
+        self.error = False
+
+        if not self.gui == None:
+            self.get_updated_tables()
+
+        if not self.gint_location or self.gint_location == '':
+            self.text.setText('''AGS file loaded.
+''')
+            QApplication.processEvents()
+            return
+
+        self.text.setText('''Matching AGS to gINT, please wait...
+''')
+        QApplication.processEvents()
+        print(f"Matching Structural Soils AGS to gINT... {self.gint_location}") 
+
+        self.get_ags_tables()
+
+        self.get_spec()['Depth'] = self.get_spec()['Depth'].map('{:,.2f}'.format)
+        self.get_spec()['Depth'] = self.get_spec()['Depth'].astype(str)
+        self.get_spec()['match_id'] = self.get_spec()['PointID']
+        self.get_spec()['match_id'] += self.get_spec()['Depth']
+        self.get_spec()['batched'] = self.get_spec()['SAMP_TYPE'].astype(str).str[0]
+        self.get_spec()['match_id'] += self.get_spec()['batched']
+        self.get_spec().drop(['batched'], axis=1, inplace=True)
+
+        for table in self.ags_tables:
+            try:
+                gint_rows = self.get_spec().shape[0]
+
+                self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
+                self.tables[table]['match_id'] += self.tables[table]['SPEC_DPTH']
+                self.tables[table]['batched'] = self.tables[table]['SAMP_TYPE'].astype(str).str[0]
+                self.tables[table]['match_id'] += self.tables[table]['batched']
+                self.tables[table].drop(['batched'], axis=1, inplace=True)
+
+                try:
+                    for tablerow in range(2,len(self.tables[table])):
+                        for gintrow in range(0,gint_rows):
+                            if self.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
+                                self.matched = True
+                                self.tables[table]['LOCA_ID'][tablerow] = self.get_spec()['PointID'][gintrow]
+                                self.tables[table]['SAMP_ID'][tablerow] = self.get_spec()['SAMP_ID'][gintrow]
+                                self.tables[table]['SAMP_REF'][tablerow] = self.get_spec()['SAMP_REF'][gintrow]
+                                self.tables[table]['SAMP_TYPE'][tablerow] = self.get_spec()['SAMP_TYPE'][gintrow]
+                                self.tables[table]['SPEC_REF'][tablerow] = self.get_spec()['SPEC_REF'][gintrow]
+                                self.tables[table]['SAMP_TOP'][tablerow] = format(self.get_spec()['SAMP_Depth'][gintrow],'.2f')
+                                self.tables[table]['SPEC_DPTH'][tablerow] = self.get_spec()['Depth'][gintrow]
+                                
+                                for x in self.tables[table].keys():
+                                    if "LAB" in x:
+                                        self.tables[table][x][tablerow] = "Structural Soils"
+                except:
+                    pass
+
+                '''CONG'''
+                if table == 'CONG':
+                    for tablerow in range(2,len(self.tables[table])):
+                        if "undisturbed" in str(self.tables[table]['CONG_COND'][tablerow].lower()):
+                            self.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
+                        if "oed" in str(self.tables[table]['CONG_TYPE'][tablerow].lower()):
+                            self.tables[table]['CONG_TYPE'][tablerow] = "IL OEDOMETER"
+                            self.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
+                        if "#" in str(self.tables[table]['CONG_PDEN'][tablerow].lower()):
+                            self.tables[table]['CONG_PDEN'][tablerow] = str(self.tables[table]['CONG_PDEN'][tablerow]).split('#')[1]
+
+            except Exception as e:
+                print(f"Couldn't find table or field, skipping... {str(e)}")
+                pass
+
+        self.remove_match_id()
+        self.check_matched_to_gint()
+        self.enable_buttons()
+
 
     
     def match_unique_id_psl(self):

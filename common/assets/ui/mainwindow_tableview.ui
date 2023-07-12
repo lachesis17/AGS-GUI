@@ -871,6 +871,11 @@ QComboBox:enabled {
                      </item>
                      <item>
                       <property name="text">
+                       <string>Structural Soils PEZ</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
                        <string>PSL</string>
                       </property>
                      </item>
