@@ -1165,7 +1165,7 @@ Did you select the correct gINT or AGS?''')
                                 
                                 for x in self.tables[table].keys():
                                     if "LAB" in x:
-                                        self.tables[table][x][tablerow] = "Structural Soils"
+                                        self.tables[table][x][tablerow] = "Structural Soils Ltd - Bristol Geotech lab"
                 except:
                     pass
 
@@ -1179,6 +1179,26 @@ Did you select the correct gINT or AGS?''')
                             self.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
                         if "#" in str(self.tables[table]['CONG_PDEN'][tablerow].lower()):
                             self.tables[table]['CONG_PDEN'][tablerow] = str(self.tables[table]['CONG_PDEN'][tablerow]).split('#')[1]
+
+                '''IRSG'''
+                if table == 'IRSG':
+                    for tablerow in range(2,len(self.tables[table])):
+                        if 'IRSG_COND' in self.tables[table]:
+                            self.tables[table]['IRSG_COND'][tablerow] = str(self.tables[table]['IRSG_COND'][tablerow]).upper()
+
+                '''LDYN'''
+                if table == 'LDYN':
+                    for tablerow in range(2,len(self.tables[table])):
+                        self.tables[table]['LDYN_SG'][tablerow] = int(float(self.tables[table]['LDYN_SG'][tablerow]))
+
+                '''SHBT'''
+                if table == 'SHBT':
+                    for tablerow in range(2,len(self.tables[table])):
+                        if float(self.tables[table]['SHBT_PDIN'][tablerow]) < 0:
+                            self.tables[table]['SHBT_PDIN'][tablerow] = 0
+                        if "#" in str(self.tables[table]['SHBT_PDEN'][tablerow].lower()):
+                            self.tables[table]['SHBT_PDEN'][tablerow] = str(self.tables[table]['SHBT_PDEN'][tablerow]).split('#')[1]
+                        
 
             except Exception as e:
                 print(f"Couldn't find table or field, skipping... {str(e)}")
@@ -1265,7 +1285,7 @@ Did you select the correct gINT or AGS?''')
                     for tablerow in range(2,len(self.tables[table])):
                         if 'TRET_SHST' not in self.tables[table].keys():
                             self.tables[table].insert(len(self.tables[table].keys()),'TRET_SHST','')
-                        if self.tables[table]['TRET_SHST'][tablerow] == '' and self.tables[table]['TRET_DEVF'][tablerow] != '':
+                        if self.tables[table]['TRET_SHST'][tablerow] == self.tables[table]['TRET_DEVF'][tablerow]:
                             self.tables[table]['TRET_SHST'][tablerow] = round(float(self.tables[table]['TRET_DEVF'][tablerow]) / 2)
 
 
