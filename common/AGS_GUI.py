@@ -6,6 +6,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from python_ags4 import AGS4
 from pandasgui import show
+from common.pandas_model import PandasModel
 import numpy as np
 import sys
 import os
@@ -126,12 +127,12 @@ Please select an AGS with "Open File..."''')
             headings_with_shapes = list(zip(table_keys,table_shapes))
             headings_df = pd.DataFrame.from_dict(headings_with_shapes)
             headings_df.columns = ["",""]
-            self._headings_model = pandasModel(headings_df)
+            self._headings_model = PandasModel(headings_df)
             self.headings_table.setModel(self._headings_model)
             self.headings_table.resizeColumnsToContents()
             self.headings_table.horizontalHeader().hide()
 
-            self._tables_model = pandasModel(self.tables[f"{table_keys[0]}"])
+            self._tables_model = PandasModel(self.tables[f"{table_keys[0]}"])
             self.tables_table.setModel(self._tables_model)
             self.tables_table.resizeColumnsToContents()
 
@@ -140,9 +141,14 @@ Please select an AGS with "Open File..."''')
         self.headings_table.selectRow(index.row())
         QApplication.processEvents()
         value = index.sibling(index.row(),0).data()
-        self._tables_model = pandasModel(self.tables[f"{value}"])
+        self._tables_model = PandasModel(self.tables[f"{value}"])
         self.tables_table.setModel(self._tables_model)
         self.tables_table.resizeColumnsToContents()
+        
+        '''the sorting needs to be handled better before enabling, as it sorts before the column is clicked,
+        which messes up the unit and type rows, and always sorts on the first column'''
+        # self.tables_table.setSortingEnabled(True)
+        # self.tables_table.horizontalHeader().sectionPressed.connect(self.tables_table.selectColumn)
 
 
     def count_lab_results(self):
@@ -341,7 +347,7 @@ Please select an AGS with "Open File..."''')
         print(result_list)
         # self.listbox.setText(result_list)
 
-        self._results_model = pandasModel(self.result_list)
+        self._results_model = PandasModel(self.result_list)
         self.listbox.setModel(self._results_model)
         self.listbox.resizeColumnsToContents()
         self.listbox.horizontalHeader().hide()
@@ -482,7 +488,7 @@ Please select an AGS with "Open File..."''')
             err_df = pd.DataFrame.from_dict(self.error_list)
             print(err_df)
 
-            self._error_model = pandasModel(err_df)
+            self._error_model = PandasModel(err_df)
             self.listbox.setModel(self._error_model)
             self.listbox.resizeColumnsToContents()
             self.listbox.horizontalHeader().hide()
@@ -1879,7 +1885,7 @@ Did you select the correct gINT or AGS?''')
         headings_with_shapes = list(zip(table_keys,table_shapes))
         headings_df = pd.DataFrame.from_dict(headings_with_shapes)
         headings_df.columns = ["",""]
-        self._headings_model = pandasModel(headings_df)
+        self._headings_model = PandasModel(headings_df)
         self.headings_table.setModel(self._headings_model)
         self.headings_table.resizeColumnsToContents()
         self.headings_table.horizontalHeader().hide()
@@ -2063,29 +2069,6 @@ Check the AGS with "View data".''')
         height = self.config['Window']['height']
         self.resize(QSize(int(width),int(height)))
         self.resizing = False
-
-class pandasModel(QAbstractTableModel):
-
-    def __init__(self, data):
-        QAbstractTableModel.__init__(self)
-        self._data = data
-
-    def rowCount(self, parent=None):
-        return self._data.shape[0]
-
-    def columnCount(self, parent=None):
-        return self._data.shape[1]
-
-    def data(self, index, role=Qt.DisplayRole):
-        if index.isValid():
-            if role == Qt.DisplayRole:
-                return str(self._data.iloc[index.row(), index.column()])
-        return None
-
-    def headerData(self, col, orientation, role):
-        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
-            return self._data.columns[col]
-        return None
         
 
 def main():
