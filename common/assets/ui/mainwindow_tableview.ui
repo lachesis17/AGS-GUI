@@ -1083,7 +1083,7 @@ QPushButton:disabled {
                 <item>
                  <layout class="QHBoxLayout" name="horizontalLayout_21">
                   <item>
-                   <widget class="TableView" name="headings_table">
+                   <widget class="PandasView" name="headings_table">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
                       <horstretch>0</horstretch>
@@ -1120,7 +1120,7 @@ QPushButton:disabled {
               <widget class="QWidget" name="widget_2" native="true">
                <layout class="QVBoxLayout" name="verticalLayout_6">
                 <item>
-                 <widget class="TableView" name="tables_table">
+                 <widget class="PandasView" name="tables_table">
                   <property name="sizePolicy">
                    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
                     <horstretch>0</horstretch>
@@ -1540,7 +1540,7 @@ QPushButton:disabled {
                 </widget>
                </item>
                <item>
-                <widget class="TableView" name="listbox">
+                <widget class="PandasView" name="listbox">
                  <property name="sizePolicy">
                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
                    <horstretch>0</horstretch>
@@ -1759,7 +1759,7 @@ QPushButton:disabled {
      <x>0</x>
      <y>0</y>
      <width>555</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>
@@ -1767,9 +1767,9 @@ QPushButton:disabled {
  </widget>
  <customwidgets>
   <customwidget>
-   <class>TableView</class>
+   <class>PandasView</class>
    <extends>QTableView</extends>
-   <header>common.pandas_model</header>
+   <header>common.pandas_table</header>
   </customwidget>
  </customwidgets>
  <resources/>

@@ -6,7 +6,7 @@ from PyQt5.QtGui import *
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from python_ags4 import AGS4
 from pandasgui import show
-from common.pandas_model import PandasModel
+from common.pandas_table import PandasModel
 import numpy as np
 import sys
 import os
@@ -127,6 +127,7 @@ Please select an AGS with "Open File..."''')
             headings_with_shapes = list(zip(table_keys,table_shapes))
             headings_df = pd.DataFrame.from_dict(headings_with_shapes)
             headings_df.columns = ["",""]
+            self.tables_table.setSortingEnabled(True)   #sort
             self._headings_model = PandasModel(headings_df)
             self.headings_table.setModel(self._headings_model)
             self.headings_table.resizeColumnsToContents()
@@ -135,6 +136,7 @@ Please select an AGS with "Open File..."''')
             self._tables_model = PandasModel(self.tables[f"{table_keys[0]}"])
             self.tables_table.setModel(self._tables_model)
             self.tables_table.resizeColumnsToContents()
+            self.tables_table.horizontalHeader().sectionPressed.connect(self.tables_table.selectColumn)   #col sel
 
     def refresh_table(self):
         index = self.headings_table.selectionModel().currentIndex()
@@ -144,11 +146,6 @@ Please select an AGS with "Open File..."''')
         self._tables_model = PandasModel(self.tables[f"{value}"])
         self.tables_table.setModel(self._tables_model)
         self.tables_table.resizeColumnsToContents()
-        
-        '''the sorting needs to be handled better before enabling, as it sorts before the column is clicked,
-        which messes up the unit and type rows, and always sorts on the first column'''
-        # self.tables_table.setSortingEnabled(True)
-        # self.tables_table.horizontalHeader().sectionPressed.connect(self.tables_table.selectColumn)
 
 
     def count_lab_results(self):
