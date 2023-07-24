@@ -124,7 +124,7 @@ class PandasView(QTableView):
         self.installEventFilter(self)
 
     def eventFilter(self, source, event):
-        print(event.type())
+        #print(event.type())
         if event.type() == QEvent.KeyPress and event.matches(QKeySequence.Copy):
             self.copy_selection()
             return True
