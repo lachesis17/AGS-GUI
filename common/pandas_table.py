@@ -1,6 +1,6 @@
 import pandas as pd
 from PyQt5.QtCore import *
-from PyQt5.QtWidgets import QApplication, QTableView
+from PyQt5.QtWidgets import QApplication, QTableView, QDoubleSpinBox
 from PyQt5.QtGui import QKeySequence, QMouseEvent
 import csv
 import io
@@ -115,10 +115,6 @@ class PandasModel(QAbstractTableModel):
         return _headers
     
 class PandasView(QTableView):
-    """
-    Extends the QtableView class to include basic spreadsheet functionality like copy/paste and sorting cols
-
-    """
     def __init__(self, *args, **kwargs):
         super(PandasView, self).__init__(*args, **kwargs)
         self.installEventFilter(self)
@@ -286,6 +282,26 @@ class PandasView(QTableView):
         return
 
     
+class Spinny(QDoubleSpinBox):
+    #handles the event of clicking (focusIn) in the QDoubleSpinBox for override values to select all text to make it easier to paste values
+
+    #__pyqtSignals__ = ("valueChanged(double)", "FocusIn()")
+
+    def __init__(self, *args):
+        QDoubleSpinBox.__init__(self, *args)
+
+    # def event(self, event):
+    #     if(event.type()==QEvent.Enter):
+    #         self.emit(SIGNAL("Enter()"))
+    #         #self.clear() 
+    #         self.selectAll()               
+
+    #     return QDoubleSpinBox.event(self, event)
+
+    def focusInEvent(self, event) -> None:
+        if(event.type()==QEvent.FocusIn):
+            QTimer.singleShot(0, self.selectAll)
+
 
 '''old model for viewing only'''
 # class pandasView(QAbstractTableModel):
