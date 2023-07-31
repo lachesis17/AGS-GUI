@@ -76,7 +76,7 @@ Wordcloud wheel for latest Python 3.11.1 (dependency for PandasGUI): wordcloud-1
 <br><br>
 
 
-##### Developed for [Geoquip-Marine](https://www.geoquip-marine.com/) using [AGS 4 Data Format](https://www.ags.org.uk/data-format/), [python-ags4](https://pypi.org/project/python-ags4/), [PandasGUI](https://pypi.org/project/pandasgui/), [tkinter](https://docs.python.org/3/library/tkinter.html), [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter).
+##### Developed for [Geoquip-Marine](https://www.geoquip-marine.com/) using [AGS 4 Data Format](https://www.ags.org.uk/data-format/), [python-ags4](https://pypi.org/project/python-ags4/), [PyQt5](https://pypi.org/project/PyQt5/).
 <br>
 
    <a href="https://www.geoquip-marine.com/"><img src="common/images/GQ_AGS2.PNG" data-canonical-src="common/images/geobig.png"/></a>
