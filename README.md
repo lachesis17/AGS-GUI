@@ -29,7 +29,7 @@
     - There may be an error as follows: Error: Line x does not have the same number of entries as the HEADING.
     - This occurs when a description or other text field contains a line-break, which alters key formatting of the file. The line-break needs to be removed before opening the file.
 
-#### View / Edit Data
+#### View & Edit Data
   - This opens the AGS, which has been extracted as a dictionary of dictionaries, into PandasGUI.
     - This has some limited functionality of being to edit fields, delete tables (groups), export single tables (groups) to .csv files, as well as some filter queries.
 
