@@ -34,7 +34,7 @@ class PandasModel(QAbstractTableModel):
     def data(self, index, role: int):
         if index.isValid():
             if role == Qt.DisplayRole or role == Qt.EditRole:
-                return str(self.df.iloc[index.row(), index.column()])
+                return self.df.iloc[index.row(), index.column()]
         return None
 
     def setData(self, index, value, role):
@@ -130,10 +130,13 @@ class PandasView(QTableView):
         elif event.type() == QEvent.KeyPress and event.matches(QKeySequence.Delete):
             self.delete_selection()
             return True
-        # elif event.type() == QMouseEvent and event.matches(QMouseEvent.mouseDoubleClickEvent):
-        #     self.sort_selection()
-        #     return True
+        elif event.type() == QMouseEvent and event.matches(QMouseEvent.mouseDoubleClickEvent):
+            self.test()
+            return True
         return super(PandasView, self).eventFilter(source, event)
+
+    def test(self):
+        print('wow!')
 
     def delete_selection(self):
         selection = self.selectedIndexes()
@@ -142,11 +145,46 @@ class PandasView(QTableView):
             return
         
         cols = []
+        rows = []
         for index in selection:
             if not index.column() in cols:
                 cols.append(index.column())
-        
+            if not index.row() in rows:
+                rows.append(index.row())
+
         model = self.model()
+        head = model.getHeaders(min=cols, max=None)
+        sel_cols = list(head)
+
+        #checking to see if entire rows/columns are selected. for columns, use column name to get index position for int to use as arg for isColumnSelected(), rows already have int index
+        col_check = False
+        row_check = False
+        col_idx = []
+        for col in sel_cols:
+            col_idx.append(list(model.df).index(col))
+        for col in col_idx:
+            col_check = self.selectionModel().isColumnSelected(col, parent = QModelIndex())
+            if col_check:
+                break
+        for row in rows:
+            row_check = self.selectionModel().isRowSelected(row, parent = QModelIndex())
+            if row_check:
+                break
+        if col_check:
+            model.df.drop(sel_cols, axis=1, inplace=True)
+        if row_check:
+            model.df.drop(rows, axis=0, inplace=True)
+            model.df.reset_index(drop=True, inplace=True) #make sure to reset the index, as the row indexes stay the same in selection, will crash if trying to delete same index twice without resetting
+
+        if not col_check and not row_check: #deleting cells if the entire row or entire column is not selected
+            for index in selection:
+                model.df.iloc[index.row(), index.column()] = ""
+
+        idx_top = model.createIndex(0,0)
+        idx_bot = model.createIndex(model.df.shape[0],0)
+        model.dataChanged.emit(idx_top, idx_bot)
+        model.layoutChanged.emit([QPersistentModelIndex(idx_top)])
+        #self.viewport().repaint()
 
     def sort_selection(self):
         selection = self.selectedIndexes()

@@ -5,7 +5,6 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from python_ags4 import AGS4
-from pandasgui import show
 from common.pandas_table import PandasModel
 import numpy as np
 import sys
@@ -39,7 +38,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         self.button_open.clicked.connect(self.get_ags_file)
         self.view_data.clicked.connect(self.view_tableview)
-        self.pandas_gui.clicked.connect(self.start_pandasgui)
         self.button_save_ags.clicked.connect(self.save_ags)
         self.button_count_results.clicked.connect(self.count_lab_results)
         self.button_ags_checker.clicked.connect(self.check_ags)
@@ -56,7 +54,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.temp_file_name = ''
         self.tables = None
         self.headings = None
-        self.gui = None
         self.result_list = []
         self.error_list = []
         self.ags_tables = []
@@ -80,7 +77,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
         #soft-resetting the pandasgui var (doesn't close window), since if the window is still open when a new file is loaded it will pull the data from the previous file when calling get_updated_tables()
         #gui is defined again with a new object code when it is opened again with the new file after defining it as None here - would be great to override the onClose event of pandasgui
-        self.gui = None
 
         self.text.setText('''Please insert AGS file.
 ''')
@@ -129,7 +125,7 @@ Please select an AGS with "Open File..."''')
             headings_with_shapes = list(zip(table_keys,table_shapes))
             headings_df = pd.DataFrame.from_dict(headings_with_shapes)
             headings_df.columns = ["",""]
-            self.tables_table.setSortingEnabled(True)   #sort
+            #self.tables_table.setSortingEnabled(True)   #sort
             self._headings_model = PandasModel(headings_df)
             self.headings_table.setModel(self._headings_model)
             self.headings_table.resizeColumnsToContents()
@@ -152,9 +148,6 @@ Please select an AGS with "Open File..."''')
 
     def count_lab_results(self):
         self.disable_buttons()
-
-        if not self.gui == None:
-            self.get_updated_tables()
 
         self.results_with_samp_and_type = pd.DataFrame()
 
@@ -362,9 +355,6 @@ Please select an AGS with "Open File..."''')
     def export_results(self):
         self.disable_buttons()
 
-        if not self.gui == None:
-            self.get_updated_tables()
-
         result_list = self.results_with_samp_and_type.copy(deep=True)
         result_list.reset_index(inplace=True)
         result_list.sort_index(inplace=True)
@@ -401,47 +391,12 @@ Please select an AGS with "Open File..."''')
     def view_tableview(self):
         self.tabWidget.setCurrentIndex(1)
 
-    def start_pandasgui(self):
-        self.disable_buttons()
-
-        self.text.setText('''PandasGUI loading, please wait...
-Close GUI to resume.''')
-        QApplication.processEvents()
-        
-        try:
-            self.gui = show(**self.tables)
-        except Exception as e:
-            print(e)
-            pass
-
-        self.text.setText('''You can now save the edited AGS.
-''')
-
-        QApplication.processEvents()
-        self.enable_buttons()
-
-        #need some way to check if pandasgui is open so that on close it calls the rest of the function so you're working with the updated edited tables
-        #unfortunately pandasgui is a custom class and doesnt have pyqt methods like exec(), finished.connect(), etc.
-        #this was working with tkinter because tkinter and the pyqt QMainWindow of pandasgui were running in the same thread, causing the crash but keeeping the updated tables...
-        #as you couldn't resume the gui of tkinter until the pandasgui was closed, continuing the thread. with pyqt, opening the pandasgui QMainWindow doesn't stop the thread events from completing
-        #at the moment, can't find gui in processes, has different object code than MainWindow so not in variable list, so checking if self.gui = None then calling get_updated_tables() where needed
-
-    def get_updated_tables(self):
-        updated_tables = self.gui.get_dataframes()
-        self.tables = updated_tables
-        for table in self.result_tables:
-            if table in list(self.tables):
-                self.ags_tables.append(table)
-
         
     def check_ags(self):
         self.disable_buttons()
         self.text.setText('''Checking AGS for errors...
 ''')
         QApplication.processEvents()
-
-        if not self.gui == None:
-            self.get_updated_tables()
 
         try:
             if not self.file_location == '':
@@ -500,9 +455,6 @@ Please select an AGS with "Open File..."''')
 
     def export_errors(self):
         self.disable_buttons()
-
-        if not self.gui == None:
-            self.get_updated_tables()
         
         if not self.config.get('LastFolder','dir') == "":
             self.log_path = QtWidgets.QFileDialog.getSaveFileName(self,'Save error log as...', self.config.get('LastFolder','dir'), '*.txt')
@@ -528,9 +480,6 @@ Please select an AGS with "Open File..."''')
     def save_ags(self):
         self.disable_buttons()
 
-        if not self.gui == None:
-            self.get_updated_tables()
-
         if not self.config.get('LastFolder','dir') == "":
             newFileName = QtWidgets.QFileDialog.getSaveFileName(self,'Save AGS file as...', self.config.get('LastFolder','dir'), '*.ags')
         else:
@@ -541,6 +490,9 @@ Please select an AGS with "Open File..."''')
             print('Done.')
             self.text.setText('''AGS saved.
 ''')
+        
+            print(f"""AGS saved: {newFileName}""")
+
             QApplication.processEvents()
             self.enable_buttons()
         except:
@@ -587,9 +539,6 @@ Please select an AGS with "Open File..."''')
 
     def get_ags_tables(self):
         self.ags_table_reset()
-
-        if not self.gui == None:
-            self.get_updated_tables()
 
         for table in self.result_tables:
             if table in list(self.tables):
@@ -663,9 +612,6 @@ Did you select the correct gINT or AGS?''')
         self.get_gint()
         self.matched = False
         self.error = False
-
-        if not self.gui == None:
-            self.get_updated_tables()
 
         if not self.gint_location or self.gint_location == '':
             self.text.setText('''AGS file loaded.
@@ -936,9 +882,6 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
 
-        if not self.gui == None:
-            self.get_updated_tables()
-
         if not self.gint_location or self.gint_location == '':
             self.text.setText('''AGS file loaded.
 ''')
@@ -1047,9 +990,6 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
 
-        if not self.gui == None:
-            self.get_updated_tables()
-
         if not self.gint_location or self.gint_location == '':
             self.text.setText('''AGS file loaded.
 ''')
@@ -1120,9 +1060,6 @@ Did you select the correct gINT or AGS?''')
         self.get_gint()
         self.matched = False
         self.error = False
-
-        if not self.gui == None:
-            self.get_updated_tables()
 
         if not self.gint_location or self.gint_location == '':
             self.text.setText('''AGS file loaded.
@@ -1221,9 +1158,6 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
 
-        if not self.gui == None:
-            self.get_updated_tables()
-
         if not self.gint_location or self.gint_location == '':
             self.text.setText('''AGS file loaded.
 ''')
@@ -1319,9 +1253,6 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
 
-        if not self.gui == None:
-            self.get_updated_tables()
-
         if not self.gint_location or self.gint_location == '':
             self.text.setText('''AGS file loaded.
 ''')
@@ -1393,9 +1324,6 @@ Did you select the correct gINT or AGS?''')
         self.get_gint()
         self.matched = False
         self.error = False
-
-        if not self.gui == None:
-            self.get_updated_tables()
 
         if not self.gint_location or self.gint_location == '':
             self.text.setText('''AGS file loaded.
@@ -1490,9 +1418,6 @@ Did you select the correct gINT or AGS?''')
         self.get_gint()
         self.matched = False
         self.error = False
-
-        if not self.gui == None:
-            self.get_updated_tables()
 
         if not self.gint_location or self.gint_location == '':
             self.text.setText('''AGS file loaded.
@@ -1738,9 +1663,6 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
 
-        if not self.gui == None:
-            self.get_updated_tables()
-
         if not self.gint_location or self.gint_location == '':
             self.text.setText('''AGS file loaded.
 ''')
@@ -1862,8 +1784,6 @@ Did you select the correct gINT or AGS?''')
     def del_non_lab_tables(self):
         self.get_ags_tables()
 
-        self.gui = None
-
         for table in self.result_tables:
             if table in list(self.tables):
                 self.ags_tables.append(table)
@@ -1891,9 +1811,6 @@ Did you select the correct gINT or AGS?''')
             
 
     def get_cpt_tables(self):
-        if not self.gui == None:
-            self.get_updated_tables()
-
         self.ags_table_reset()
 
         self.cpt_tables = ["SCPG","SCPT","SCPP","SCCG","SCCT","SCDG","SCDT"]
@@ -2031,7 +1948,6 @@ Saving AGS to excel file...
     def disable_buttons(self):       
         self.button_open.setEnabled(False)
         self.view_data.setEnabled(False)
-        self.pandas_gui.setEnabled(False)
         self.button_count_results.setEnabled(False)
         self.button_ags_checker.setEnabled(False)
         self.button_save_ags.setEnabled(False)
@@ -2048,7 +1964,6 @@ Saving AGS to excel file...
     def enable_buttons(self):
         self.button_open.setEnabled(True)
         self.view_data.setEnabled(True)
-        self.pandas_gui.setEnabled(True)
         self.button_count_results.setEnabled(True)
         self.button_ags_checker.setEnabled(True)
         self.button_save_ags.setEnabled(True)
