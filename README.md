@@ -12,7 +12,7 @@
      - Select the AGS file saved via the tool, and select the .gci import correspondence file
 
 - [Open an AGS file](#open-an-ags-file)
-- [View / Edit Data](#view-data)
+- [View & Edit Data](#view-&-edit-data)
 - [Save AGS file](#save-ags-file)
 - [Count Lab Results](#count-lab-results)
 - [Check AGS for Errors](#check-ags-for-errors)
