@@ -8,3 +8,7 @@ common/assets/__pycache__
 *.zip
 *.ldb
 *.bak
+*.png
+*.jpg
+*.xlsm
+*.pdf
