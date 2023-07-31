@@ -12,7 +12,7 @@
      - Select the AGS file saved via the tool, and select the .gci import correspondence file
 
 - [Open an AGS file](#open-an-ags-file)
-- [View Data](#view-data)
+- [View / Edit Data](#view-data)
 - [Save AGS file](#save-ags-file)
 - [Count Lab Results](#count-lab-results)
 - [Check AGS for Errors](#check-ags-for-errors)
@@ -24,14 +24,12 @@
 
 <img src="common/images/AGS-GUI.png" data-canonical-src="common/images/AGS-GUI.png"/>
 
-Wordcloud wheel for latest Python 3.11.1 (dependency for PandasGUI): wordcloud-1.8.1-cp311-cp311-win_amd64.whl
-
 #### Open an AGS file
   - Open any valid AGS files.
     - There may be an error as follows: Error: Line x does not have the same number of entries as the HEADING.
     - This occurs when a description or other text field contains a line-break, which alters key formatting of the file. The line-break needs to be removed before opening the file.
 
-#### View Data
+#### View / Edit Data
   - This opens the AGS, which has been extracted as a dictionary of dictionaries, into PandasGUI.
     - This has some limited functionality of being to edit fields, delete tables (groups), export single tables (groups) to .csv files, as well as some filter queries.
 
