@@ -12,7 +12,7 @@
      - Select the AGS file saved via the tool, and select the .gci import correspondence file
 
 - [Open an AGS file](#open-an-ags-file)
-- [View & Edit Data](#view-edit-data)
+- [View and Edit Data](#view-and-edit-data)
 - [Save AGS file](#save-ags-file)
 - [Count Lab Results](#count-lab-results)
 - [Check AGS for Errors](#check-ags-for-errors)
@@ -29,9 +29,9 @@
     - There may be an error as follows: Error: Line x does not have the same number of entries as the HEADING.
     - This occurs when a description or other text field contains a line-break, which alters key formatting of the file. The line-break needs to be removed before opening the file.
 
-#### View & Edit Data
-  - This opens the AGS, which has been extracted as a dictionary of dictionaries, into PandasGUI.
-    - This has some limited functionality of being to edit fields, delete tables (groups), export single tables (groups) to .csv files, as well as some filter queries.
+#### View and Edit Data
+  - This opens the AGS, which has been extracted as a dictionary of dictionaries, into a QAbstractTableView.
+    - This has some limited functionality of being to edit fields, copy & paste data, delete columns or rows and delete groups.
 
 #### Save AGS file
   - This allows the current state of the loaded AGS to be saved.
