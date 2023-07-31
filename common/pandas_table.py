@@ -1,7 +1,8 @@
 import pandas as pd
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import QApplication, QTableView, QDoubleSpinBox
-from PyQt5.QtGui import QKeySequence, QMouseEvent
+from PyQt5.QtGui import QKeySequence, QMouseEvent, QIcon
+import PyQt5.QtCore as QtCore
 import csv
 import io
 from typing_extensions import Literal
@@ -106,11 +107,11 @@ class PandasModel(QAbstractTableModel):
 
     def getHeaders(self, min, max=None):
         if max is None:
-            return self.headerData(min, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole)
+            return self.headerData(min, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.DecorationRole)
         
         _headers = []
         for i in range(min,max):
-            _headers.append(self.headerData(i, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole))
+            _headers.append(self.headerData(i, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.DecorationRole))
 
         return _headers
     
@@ -118,6 +119,9 @@ class PandasView(QTableView):
     def __init__(self, *args, **kwargs):
         super(PandasView, self).__init__(*args, **kwargs)
         self.installEventFilter(self)
+        self.horizontalHeader().sectionDoubleClicked.connect(lambda x: self.sort(x))
+        self.next_sort_state = 0
+
 
     def eventFilter(self, source, event):
         #print(event.type())
@@ -130,13 +134,36 @@ class PandasView(QTableView):
         elif event.type() == QEvent.KeyPress and event.matches(QKeySequence.Delete):
             self.delete_selection()
             return True
-        elif event.type() == QMouseEvent and event.matches(QMouseEvent.mouseDoubleClickEvent):
-            self.test()
-            return True
         return super(PandasView, self).eventFilter(source, event)
+    
 
-    def test(self):
-        print('wow!')
+    def sort(self, idx):
+        model = self.model()
+        col_name = model.df.columns[idx]
+        idx_top = model.createIndex(0,0)
+        print(self.next_sort_state)
+
+#        Determine next sorting state by current state
+        if self.next_sort_state == 0:
+            self.next_sort_state += 1
+            model.df.sort_values(col_name, ascending=1, kind='mergesort', inplace=True)
+            model.layoutChanged.emit([QPersistentModelIndex(idx_top)])
+            #self.horizontalHeader().
+            icon = QVariant(QIcon("common/images/sort-ascending.svg"))
+            print(icon.value())
+            model.setHeaderData(1, orientation=QtCore.Qt.Horizontal, value=QIcon("common/images/sort-ascending.svg"), role=Qt.ItemDataRole.DecorationRole)
+            return
+        if self.next_sort_state == 1:
+            self.next_sort_state += 1
+            model.df.sort_values(col_name, ascending=0, kind='mergesort', inplace=True)
+            model.layoutChanged.emit([QPersistentModelIndex(idx_top)])
+            return
+        if self.next_sort_state == 2:
+            self.next_sort_state -= 2
+            model.df.sort_index(ascending=True, kind='mergesort', inplace=True)
+            model.layoutChanged.emit([QPersistentModelIndex(idx_top)])
+            return
+
 
     def delete_selection(self):
         selection = self.selectedIndexes()
@@ -184,6 +211,7 @@ class PandasView(QTableView):
         idx_bot = model.createIndex(model.df.shape[0],0)
         model.dataChanged.emit(idx_top, idx_bot)
         model.layoutChanged.emit([QPersistentModelIndex(idx_top)])
+        self.clearSelection()
         #self.viewport().repaint()
 
     def sort_selection(self):
