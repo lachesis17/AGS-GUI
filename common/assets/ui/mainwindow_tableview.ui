@@ -561,6 +561,94 @@ QPushButton:disabled {
                   </layout>
                  </item>
                  <item>
+                  <layout class="QHBoxLayout" name="horizontalLayout_19">
+                   <item>
+                    <spacer name="horizontalSpacer_8">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                   <item>
+                    <widget class="QPushButton" name="button_convert_excel">
+                     <property name="enabled">
+                      <bool>false</bool>
+                     </property>
+                     <property name="sizePolicy">
+                      <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+                       <horstretch>0</horstretch>
+                       <verstretch>0</verstretch>
+                      </sizepolicy>
+                     </property>
+                     <property name="minimumSize">
+                      <size>
+                       <width>250</width>
+                       <height>24</height>
+                      </size>
+                     </property>
+                     <property name="maximumSize">
+                      <size>
+                       <width>16777215</width>
+                       <height>24</height>
+                      </size>
+                     </property>
+                     <property name="font">
+                      <font>
+                       <family>Tahoma</family>
+                       <pointsize>9</pointsize>
+                       <weight>50</weight>
+                       <italic>false</italic>
+                       <bold>false</bold>
+                      </font>
+                     </property>
+                     <property name="styleSheet">
+                      <string notr="true">QPushButton {
+    border-radius: 10px;
+	font: 9pt &quot;Tahoma&quot;;
+    background: #2b4768;
+    color: white;
+	padding:5px;
+}
+
+QPushButton:selected { 
+    color: black;
+}
+
+QPushButton:hover {
+    background: #6bb7dd;
+}
+
+QPushButton:disabled { 
+    color: #999999;
+}</string>
+                     </property>
+                     <property name="text">
+                      <string>Save AGS as Excel</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <spacer name="horizontalSpacer_9">
+                     <property name="orientation">
+                      <enum>Qt::Horizontal</enum>
+                     </property>
+                     <property name="sizeHint" stdset="0">
+                      <size>
+                       <width>40</width>
+                       <height>20</height>
+                      </size>
+                     </property>
+                    </spacer>
+                   </item>
+                  </layout>
+                 </item>
+                 <item>
                   <spacer name="verticalSpacer_7">
                    <property name="orientation">
                     <enum>Qt::Vertical</enum>

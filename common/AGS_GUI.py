@@ -14,6 +14,7 @@ import pandas as pd
 import pyodbc
 from statistics import mean
 import configparser
+import time
 import warnings
 warnings.filterwarnings("ignore")
 QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough) 
@@ -48,6 +49,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.button_lab_only.clicked.connect(self.export_lab_only)
         self.button_export_results.clicked.connect(self.export_results)
         self.button_export_error.clicked.connect(self.export_errors)
+        self.button_convert_excel.clicked.connect(self.convert_excel)
 
         self.headings_table.clicked.connect(self.refresh_table)
 
@@ -1968,6 +1970,42 @@ Check the AGS with "View data".''')
             print("No Lab or GEOL groups found - did this AGS contain CPT data? Check the data with 'View data'.")
             self.ags_table_reset()
 
+    
+    def convert_excel(self):
+        try:
+            fname = QtWidgets.QFileDialog.getSaveFileName(self, "Save AGS as excel...", os.path.dirname(self.file_location), "Excel file *.xlsx;")
+        except:
+            fname = QtWidgets.QFileDialog.getSaveFileName(self, "Save AGS as excel...", os.getcwd(), "Excel file *.xlsx;")
+        
+        if fname[0] == '':
+            return
+
+        final_dataframes = [(k,v) for (k,v) in self.tables.items() if not v.empty]
+        final_dataframes = dict(final_dataframes)
+        empty_dataframes = [k for (k,v) in self.tables.items() if v.empty]
+
+        print(f"""------------------------------------------------------
+Saving AGS to excel file...
+------------------------------------------------------""")
+
+        #create the excel file with the first dataframe from dict, so pd.excelwriter can be called (can only be used on existing excel workbook to append more sheets)
+        if not len(final_dataframes.keys()) < 1:
+            next(iter(final_dataframes.values())).to_excel(f"{fname[0]}", sheet_name=(f"{next(iter(final_dataframes))}"), index=None, index_label=None)
+            final_writer = pd.ExcelWriter(f"{fname[0]}", engine="openpyxl", mode="a", if_sheet_exists="replace")
+        else:
+            print(f"All selected tables are empty! Please select others. Tables selected: {empty_dataframes}")
+            self.enable_buttons()
+            return
+
+        #for every key (table name) and value (table data) in the AGS, append to excel sheet and update progress bar, saving only at the end for performance
+        for (k,v) in final_dataframes.items():
+            print(f"Writing {k} to excel...")
+            v.to_excel(final_writer, sheet_name=(f"{str(k)}"), index=None, index_label=None)
+            time.sleep(0.01)
+        final_writer.close()
+
+        print(f"""AGS saved as Excel file: {fname[0]}""")
+
       
     def play_coin(self):
         coin_num = np.random.randint(100)
@@ -2004,6 +2042,7 @@ Check the AGS with "View data".''')
         self.button_match_lab.setEnabled(False)
         self.button_export_results.setEnabled(False)
         self.button_export_error.setEnabled(False)
+        self.button_convert_excel.setEnabled(False)
 
 
     def enable_buttons(self):
@@ -2018,6 +2057,7 @@ Check the AGS with "View data".''')
         self.button_lab_only.setEnabled(True)
         self.lab_select.setEnabled(True)
         self.button_match_lab.setEnabled(True)
+        self.button_convert_excel.setEnabled(True)
 
 
     def eventFilter(self, object: QObject, event: QEvent) -> bool:
