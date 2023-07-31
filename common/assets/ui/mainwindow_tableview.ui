@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>AGS GUI v4.3</string>
+   <string>AGS GUI v4.31</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="minimumSize">
