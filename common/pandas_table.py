@@ -117,6 +117,7 @@ class PandasView(QTableView):
         menu = QMenu()
         model = self.model()
         rename = menu.addAction(QIcon("common/images/edit.svg"),"Rename Header")
+        insert_col = menu.addAction(QIcon("common/images/insert.svg"),"Insert Column")
         del_col = menu.addAction(QIcon("common/images/delete.svg"),"Delete Column")
         move_right = menu.addAction(QIcon("common/images/right.svg"),"Move Column Right")
         move_left = menu.addAction(QIcon("common/images/left.svg"),"Move Column Left")
@@ -135,6 +136,15 @@ class PandasView(QTableView):
                 model.df.rename(columns={f'{col_name}':f'{new_header[0]}'}, inplace=True)
                 self.resizeColumnsToContents()
                 model.layoutChanged.emit()
+        if _action == insert_col:   
+            new_col = QInputDialog.getText(self," ","New column name:")
+            if new_col[1]:
+                try:
+                    model.df.insert(index+1, new_col[0], value="")
+                    model.layoutChanged.emit()
+                    self.resizeColumnsToContents()
+                except Exception as e:
+                    print(e)
         if _action == del_col:
             model.df.drop(col_name, axis=1, inplace=True)
             model.layoutChanged.emit()
@@ -170,6 +180,7 @@ class PandasView(QTableView):
             model.headerData(index, Qt.Orientation.Horizontal, role=Qt.ItemDataRole.DecorationRole)
         if _action == github:
             webbrowser.open('https://github.com/lachesis17')
+            
 
     def eventFilter(self, source, event):
         #print(event.type())
