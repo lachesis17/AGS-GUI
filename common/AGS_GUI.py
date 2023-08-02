@@ -132,6 +132,7 @@ Please select an AGS with "Open File..."''')
             self.headings_table.horizontalHeader().hide()
 
             self._tables_model = PandasModel(self.tables[f"{table_keys[0]}"])
+            self.tables_table.setAlternatingRowColors(True)
             self.tables_table.setModel(self._tables_model)
             self.tables_table.resizeColumnsToContents()
             self.tables_table.horizontalHeader().sectionPressed.connect(self.tables_table.selectColumn)   #col sel

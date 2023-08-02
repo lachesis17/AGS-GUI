@@ -18,7 +18,7 @@ class PandasModel(QAbstractTableModel):
         #self.table.horizontalHeader().sectionPressed.connect(self.table.selectColumn)
         
         self.df = dataframe
-        self.sort_state = 'None'
+        self.sort_state = 0
         
     def rowCount(self, parent: QPersistentModelIndex) -> int:
         if self.df is None:
@@ -46,16 +46,34 @@ class PandasModel(QAbstractTableModel):
         
         if role == Qt.EditRole:
             self.df.iloc[index.row(),index.column()] = value
-            self.layoutChanged.emit([QPersistentModelIndex(index)])
+            self.layoutChanged.emit()
             return True
 
+    # def headerData(self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole):
+    #     if not role == Qt.ItemDataRole.DisplayRole or orientation == Qt.Orientation.Vertical:
+    #         return
+        
+    #     headers = self.df.columns
+        
+    #     return headers[section]
+
     def headerData(self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole):
-        if not role == Qt.ItemDataRole.DisplayRole or orientation == Qt.Orientation.Vertical:
+        # if not role == Qt.ItemDataRole.DisplayRole or orientation == Qt.Orientation.Vertical:
+        #     return
+        if role == Qt.ItemDataRole.DecorationRole and orientation == Qt.Orientation.Horizontal:
+            if self.sort_state == 1:
+                return QtCore.QVariant(QIcon("common/images/sort-ascending.svg"))
+            elif self.sort_state == 2:
+                return QtCore.QVariant(QIcon("common/images/sort-descending.svg"))
+            else:
+                pass
+        elif not role == Qt.ItemDataRole.DisplayRole or orientation == Qt.Orientation.Vertical:
             return
         
         headers = self.df.columns
         
         return headers[section]
+    
 
     def flags(self, index: QModelIndex) -> Qt.ItemFlag:
         return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEditable
@@ -107,11 +125,11 @@ class PandasModel(QAbstractTableModel):
 
     def getHeaders(self, min, max=None):
         if max is None:
-            return self.headerData(min, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.DecorationRole)
+            return self.headerData(min, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole)
         
         _headers = []
         for i in range(min,max):
-            _headers.append(self.headerData(i, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.DecorationRole))
+            _headers.append(self.headerData(i, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole))
 
         return _headers
     
@@ -140,28 +158,40 @@ class PandasView(QTableView):
     def sort(self, idx):
         model = self.model()
         col_name = model.df.columns[idx]
-        idx_top = model.createIndex(0,0)
-        print(self.next_sort_state)
 
+        #https://gist.github.com/StephenNneji/14bfc4e7a322ec89df7d30847fbf19b3
+        #https://stackoverflow.com/questions/65179468/cannot-set-header-data-with-qtableview-custom-table-model
+        #https://forum.qt.io/topic/54115/text-and-icon-in-qtableview-header
+    
 #        Determine next sorting state by current state
         if self.next_sort_state == 0:
             self.next_sort_state += 1
+            model.sort_state += 1
             model.df.sort_values(col_name, ascending=1, kind='mergesort', inplace=True)
-            model.layoutChanged.emit([QPersistentModelIndex(idx_top)])
+            model.headerData(idx, Qt.Orientation.Horizontal, role=Qt.ItemDataRole.DecorationRole)
+            self.resizeColumnsToContents()
+            #model.setHeaderData(idx, orientation=QtCore.Qt.Alignment.Horizontal, value=QIcon("common/images/sort-ascending.svg"), role=Qt.ItemDataRole.DecorationRole)
+            model.layoutChanged.emit()
             #self.horizontalHeader().
-            icon = QVariant(QIcon("common/images/sort-ascending.svg"))
-            print(icon.value())
-            model.setHeaderData(1, orientation=QtCore.Qt.Horizontal, value=QIcon("common/images/sort-ascending.svg"), role=Qt.ItemDataRole.DecorationRole)
+            # icon = QVariant(QIcon("common/images/sort-ascending.svg"))
+            # print(icon.value())
+            # model.setHeaderData(1, orientation=QtCore.Qt.Horizontal, value=icon.value(), role=Qt.ItemDataRole.DecorationRole)
             return
         if self.next_sort_state == 1:
             self.next_sort_state += 1
+            model.sort_state += 1
             model.df.sort_values(col_name, ascending=0, kind='mergesort', inplace=True)
-            model.layoutChanged.emit([QPersistentModelIndex(idx_top)])
+            model.headerData(idx, Qt.Orientation.Horizontal, role=Qt.ItemDataRole.DecorationRole)
+            self.resizeColumnsToContents()
+            model.layoutChanged.emit()
             return
         if self.next_sort_state == 2:
             self.next_sort_state -= 2
+            model.sort_state -= 2
             model.df.sort_index(ascending=True, kind='mergesort', inplace=True)
-            model.layoutChanged.emit([QPersistentModelIndex(idx_top)])
+            model.headerData(idx, Qt.Orientation.Horizontal, role=Qt.ItemDataRole.DecorationRole)
+            self.resizeColumnsToContents()
+            model.layoutChanged.emit()
             return
 
 
@@ -210,7 +240,7 @@ class PandasView(QTableView):
         idx_top = model.createIndex(0,0)
         idx_bot = model.createIndex(model.df.shape[0],0)
         model.dataChanged.emit(idx_top, idx_bot)
-        model.layoutChanged.emit([QPersistentModelIndex(idx_top)])
+        model.layoutChanged.emit()
         self.clearSelection()
         #self.viewport().repaint()
 
