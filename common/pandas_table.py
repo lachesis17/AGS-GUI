@@ -1,11 +1,11 @@
 import pandas as pd
 from PyQt5.QtCore import *
+#from PyQt5.QtCore import QAbstractTableModel, QPersistentModelIndex, QModelIndex, QEvent, QTimer
 from PyQt5.QtWidgets import QApplication, QTableView, QDoubleSpinBox, QMenu, QInputDialog, QPushButton
-from PyQt5.QtGui import QKeySequence, QMouseEvent, QIcon, QPixmap, QPainter
+from PyQt5.QtGui import QKeySequence, QMouseEvent, QIcon, QPixmap
 import PyQt5.QtCore as QtCore
 import csv
 import io
-from typing_extensions import Literal
 import webbrowser
 import sys
 sys.stdout.reconfigure(encoding='utf-8')
@@ -148,6 +148,7 @@ class PandasView(QTableView):
         if _action == del_col:
             model.df.drop(col_name, axis=1, inplace=True)
             model.layoutChanged.emit()
+            self.resizeColumnsToContents()
         if _action == move_right:
             if index + 1 >= len(model.df.columns):
                 return
@@ -180,7 +181,7 @@ class PandasView(QTableView):
             model.headerData(index, Qt.Orientation.Horizontal, role=Qt.ItemDataRole.DecorationRole)
         if _action == github:
             webbrowser.open('https://github.com/lachesis17')
-            
+
 
     def eventFilter(self, source, event):
         #print(event.type())

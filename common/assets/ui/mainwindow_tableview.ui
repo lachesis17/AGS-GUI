@@ -90,10 +90,19 @@ QTabWidget::pane {
         <string>Open and Save</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_7">
+        <property name="spacing">
+         <number>0</number>
+        </property>
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_3">
+          <property name="spacing">
+           <number>10</number>
+          </property>
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_5">
+            <property name="spacing">
+             <number>0</number>
+            </property>
             <item>
              <widget class="QGraphicsView" name="top_spacer">
               <property name="maximumSize">
@@ -130,6 +139,9 @@ QTabWidget::pane {
           </item>
           <item>
            <layout class="QHBoxLayout" name="top_box">
+            <property name="spacing">
+             <number>0</number>
+            </property>
             <item>
              <layout class="QHBoxLayout" name="top_left_spacer_layout">
               <item>
@@ -183,8 +195,14 @@ QTabWidget::pane {
                <enum>QFrame::Raised</enum>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_9">
+               <property name="spacing">
+                <number>2</number>
+               </property>
                <item>
                 <layout class="QVBoxLayout" name="verticalLayout">
+                 <property name="spacing">
+                  <number>2</number>
+                 </property>
                  <item>
                   <spacer name="verticalSpacer_15">
                    <property name="orientation">
@@ -216,7 +234,7 @@ QTabWidget::pane {
                    <item>
                     <widget class="QPushButton" name="button_open">
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                      <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
@@ -229,7 +247,7 @@ QTabWidget::pane {
                      </property>
                      <property name="maximumSize">
                       <size>
-                       <width>16777215</width>
+                       <width>550</width>
                        <height>24</height>
                       </size>
                      </property>
@@ -317,7 +335,7 @@ QPushButton:disabled {
                       <bool>false</bool>
                      </property>
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                      <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
@@ -330,7 +348,7 @@ QPushButton:disabled {
                      </property>
                      <property name="maximumSize">
                       <size>
-                       <width>16777215</width>
+                       <width>425</width>
                        <height>24</height>
                       </size>
                      </property>
@@ -405,7 +423,7 @@ QPushButton:disabled {
                       <bool>false</bool>
                      </property>
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                      <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
@@ -418,7 +436,7 @@ QPushButton:disabled {
                      </property>
                      <property name="maximumSize">
                       <size>
-                       <width>16777215</width>
+                       <width>425</width>
                        <height>24</height>
                       </size>
                      </property>
@@ -493,7 +511,7 @@ QPushButton:disabled {
                       <bool>false</bool>
                      </property>
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                      <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
@@ -506,7 +524,7 @@ QPushButton:disabled {
                      </property>
                      <property name="maximumSize">
                       <size>
-                       <width>16777215</width>
+                       <width>425</width>
                        <height>24</height>
                       </size>
                      </property>
@@ -602,6 +620,9 @@ QPushButton:disabled {
           </item>
           <item>
            <layout class="QHBoxLayout" name="bot_box">
+            <property name="spacing">
+             <number>0</number>
+            </property>
             <item>
              <layout class="QHBoxLayout" name="bot_left_spacer_layout">
               <item>
@@ -655,8 +676,14 @@ QPushButton:disabled {
                <enum>QFrame::Raised</enum>
               </property>
               <layout class="QHBoxLayout" name="horizontalLayout_10">
+               <property name="spacing">
+                <number>2</number>
+               </property>
                <item>
                 <layout class="QVBoxLayout" name="verticalLayout_2">
+                 <property name="spacing">
+                  <number>2</number>
+                 </property>
                  <item>
                   <spacer name="verticalSpacer_8">
                    <property name="orientation">
@@ -691,7 +718,7 @@ QPushButton:disabled {
                       <bool>false</bool>
                      </property>
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                      <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
@@ -704,7 +731,7 @@ QPushButton:disabled {
                      </property>
                      <property name="maximumSize">
                       <size>
-                       <width>16777215</width>
+                       <width>550</width>
                        <height>24</height>
                       </size>
                      </property>
@@ -792,7 +819,7 @@ QPushButton:disabled {
                       <bool>false</bool>
                      </property>
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                      <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
@@ -805,7 +832,7 @@ QPushButton:disabled {
                      </property>
                      <property name="maximumSize">
                       <size>
-                       <width>16777215</width>
+                       <width>425</width>
                        <height>24</height>
                       </size>
                      </property>
@@ -927,7 +954,7 @@ QComboBox:enabled {
                       <bool>false</bool>
                      </property>
                      <property name="sizePolicy">
-                      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+                      <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
                        <horstretch>0</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
@@ -940,7 +967,7 @@ QComboBox:enabled {
                      </property>
                      <property name="maximumSize">
                       <size>
-                       <width>16777215</width>
+                       <width>425</width>
                        <height>24</height>
                       </size>
                      </property>

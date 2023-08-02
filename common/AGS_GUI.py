@@ -1,8 +1,8 @@
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
 from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtWidgets import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import QUrl, QEvent, QTimer, QSize, QObject
+from PyQt5.QtGui import QResizeEvent
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from python_ags4 import AGS4
 from common.pandas_table import PandasModel
@@ -17,7 +17,7 @@ import time
 import webbrowser
 import warnings
 warnings.filterwarnings("ignore")
-QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough) 
+QApplication.setHighDpiScaleFactorRoundingPolicy(QtCore.Qt.HighDpiScaleFactorRoundingPolicy.PassThrough) 
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
@@ -1984,7 +1984,7 @@ Saving AGS to excel file...
 
     def eventFilter(self, object: QObject, event: QEvent) -> bool:
         if event.type() == QEvent.Type.WindowStateChange:
-            maximized = bool(Qt.WindowState.WindowMaximized & self.windowState())
+            maximized = bool(QtCore.Qt.WindowState.WindowMaximized & self.windowState())
             self.config['Window']['maximized'] = str(maximized)
             with open('common/assets/settings.ini', 'w') as configfile: 
                 self.config.write(configfile)
