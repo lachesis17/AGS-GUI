@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>555</width>
-    <height>517</height>
+    <width>557</width>
+    <height>539</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -32,7 +32,7 @@
      <height>385</height>
     </size>
    </property>
-   <layout class="QHBoxLayout" name="horizontalLayout_13">
+   <layout class="QVBoxLayout" name="verticalLayout_10">
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="sizePolicy">
@@ -92,6 +92,9 @@ QTabWidget::pane {
        <layout class="QVBoxLayout" name="verticalLayout_7">
         <item>
          <layout class="QVBoxLayout" name="verticalLayout_3">
+          <property name="spacing">
+           <number>5</number>
+          </property>
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_5">
             <item>
@@ -1036,12 +1039,15 @@ QPushButton:disabled {
           </item>
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_9">
+            <property name="spacing">
+             <number>0</number>
+            </property>
             <item>
              <widget class="QGraphicsView" name="top_spacer_3">
               <property name="maximumSize">
                <size>
-                <width>20</width>
-                <height>10</height>
+                <width>10</width>
+                <height>0</height>
                </size>
               </property>
               <property name="styleSheet">
@@ -1049,6 +1055,36 @@ QPushButton:disabled {
     background: #f0f0f0;
 	border: 0;
 }</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="GitButton" name="github">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>25</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>25</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">border : 0;
+background: transparent;
+padding: 18px;</string>
+              </property>
+              <property name="text">
+               <string/>
               </property>
              </widget>
             </item>
@@ -1758,7 +1794,7 @@ QPushButton:disabled {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>555</width>
+     <width>557</width>
      <height>26</height>
     </rect>
    </property>
@@ -1769,6 +1805,11 @@ QPushButton:disabled {
   <customwidget>
    <class>PandasView</class>
    <extends>QTableView</extends>
+   <header>common.pandas_table</header>
+  </customwidget>
+  <customwidget>
+   <class>GitButton</class>
+   <extends>QPushButton</extends>
    <header>common.pandas_table</header>
   </customwidget>
  </customwidgets>

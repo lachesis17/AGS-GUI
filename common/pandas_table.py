@@ -1,11 +1,12 @@
 import pandas as pd
 from PyQt5.QtCore import *
-from PyQt5.QtWidgets import QApplication, QTableView, QDoubleSpinBox
-from PyQt5.QtGui import QKeySequence, QMouseEvent, QIcon
+from PyQt5.QtWidgets import QApplication, QTableView, QDoubleSpinBox, QMenu, QInputDialog, QPushButton
+from PyQt5.QtGui import QKeySequence, QMouseEvent, QIcon, QPixmap, QPainter
 import PyQt5.QtCore as QtCore
 import csv
 import io
 from typing_extensions import Literal
+import webbrowser
 import sys
 sys.stdout.reconfigure(encoding='utf-8')
 
@@ -17,6 +18,7 @@ class PandasModel(QAbstractTableModel):
         #self.table.setSortingEnabled(True)
         #self.table.horizontalHeader().sectionPressed.connect(self.table.selectColumn)
         
+        self.original = dataframe.copy()
         self.df = dataframe
         self.sort_state = 0
         
@@ -62,9 +64,9 @@ class PandasModel(QAbstractTableModel):
         #     return
         if role == Qt.ItemDataRole.DecorationRole and orientation == Qt.Orientation.Horizontal:
             if self.sort_state == 1:
-                return QtCore.QVariant(QIcon("common/images/sort-ascending.svg"))
+                return QPixmap("common/images/sort-ascending.svg").scaled(100, 100, transformMode=QtCore.Qt.SmoothTransformation, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
             elif self.sort_state == 2:
-                return QtCore.QVariant(QIcon("common/images/sort-descending.svg"))
+                return QPixmap("common/images/sort-descending.svg").scaled(100, 100, transformMode=QtCore.Qt.SmoothTransformation, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
             else:
                 pass
         elif not role == Qt.ItemDataRole.DisplayRole or orientation == Qt.Orientation.Vertical:
@@ -88,39 +90,6 @@ class PandasModel(QAbstractTableModel):
             self.layoutChanged.emit()
         except Exception as e:
             print(e)
-    
-    
-    def sorted(self, ix: int, next_sort_state: Literal['Asc', 'Desc', 'None'] = None):
-        col_name = self.df.columns[ix]
-
-        # Determine next sorting state by current state
-        if next_sort_state is None:
-            # Clicked an unsorted column
-            if ix != self.sorted_column_ix:
-                next_sort_state = 'Asc'
-            # Clicked a sorted column
-            elif ix == self.sorted_column_ix and self.sort_state == 'Asc':
-                next_sort_state = 'Desc'
-            # Clicked a reverse sorted column - reset to sorted by index
-            elif ix == self.sorted_column_ix:
-                next_sort_state = 'None'
-
-        if next_sort_state == 0:
-            self.df = self.df.sort_values(col_name, ascending=True, kind='mergesort')
-            self.sorted_column_name = self.df.columns[ix]
-            self.sort_state = 'Asc'
-
-        elif next_sort_state == 1:
-            self.df = self.df.sort_values(col_name, ascending=False, kind='mergesort')
-            self.sorted_column_name = self.df.columns[ix]
-            self.sort_state = 'Desc'
-
-        elif next_sort_state == 'None':
-            self.df = self.df.sort_index(ascending=True, kind='mergesort')
-            self.sorted_column_name = None
-            self.sort_state = 'None'
-
-        self.layoutChanged.emit()
 
 
     def getHeaders(self, min, max=None):
@@ -133,13 +102,74 @@ class PandasModel(QAbstractTableModel):
 
         return _headers
     
+    
 class PandasView(QTableView):
     def __init__(self, *args, **kwargs):
         super(PandasView, self).__init__(*args, **kwargs)
         self.installEventFilter(self)
-        self.horizontalHeader().sectionDoubleClicked.connect(lambda x: self.sort(x))
-        self.next_sort_state = 0
+        self.headers = self.horizontalHeader()
+        self.headers.sectionDoubleClicked.connect(lambda x: self.sort(x))
+        self.headers.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.headers.customContextMenuRequested.connect(self.header_menu)
 
+
+    def header_menu(self, position):
+        menu = QMenu()
+        model = self.model()
+        rename = menu.addAction(QIcon("common/images/edit.svg"),"Rename Header")
+        del_col = menu.addAction(QIcon("common/images/delete.svg"),"Delete Column")
+        move_right = menu.addAction(QIcon("common/images/right.svg"),"Move Column Right")
+        move_left = menu.addAction(QIcon("common/images/left.svg"),"Move Column Left")
+        sort_asc = menu.addAction(QIcon("common/images/sort-ascending.svg"),"Sort Ascending")
+        sort_des = menu.addAction(QIcon("common/images/sort-descending.svg"),"Sort Descending")
+        refresh = menu.addAction(QIcon("common/images/refresh.svg"),"Reload Data")
+        menu.addSeparator()
+        menu.addSeparator()
+        github = menu.addAction(QIcon("common/images/github.svg"),"GitHub")
+        _action = menu.exec_(self.mapToGlobal(position))
+        index = self.headers.logicalIndexAt(position)
+        col_name = model.df.columns[index]
+        if _action == rename:
+            new_header = QInputDialog.getText(self," ","New header name:")
+            if new_header[1]:
+                model.df.rename(columns={f'{col_name}':f'{new_header[0]}'}, inplace=True)
+                self.resizeColumnsToContents()
+                model.layoutChanged.emit()
+        if _action == del_col:
+            model.df.drop(col_name, axis=1, inplace=True)
+            model.layoutChanged.emit()
+        if _action == move_right:
+            if index + 1 >= len(model.df.columns):
+                return
+            model.df.insert(index+1, col_name, model.df.pop(col_name))
+            self.resizeColumnsToContents()
+            model.layoutChanged.emit()
+        if _action == move_left:
+            if index - 1 < 1:
+                return
+            model.df.insert(index-1, col_name, model.df.pop(col_name))
+            self.resizeColumnsToContents()
+            model.layoutChanged.emit()
+        if _action == sort_asc:
+            model.sort_state = 1
+            model.df.sort_values(col_name, ascending=True, kind='mergesort', inplace=True)
+            model.headerData(index, Qt.Orientation.Horizontal, role=Qt.ItemDataRole.DecorationRole)
+            self.resizeColumnsToContents()
+            model.layoutChanged.emit()
+        if _action == sort_des:
+            model.sort_state = 2
+            model.df.sort_values(col_name, ascending=False, kind='mergesort', inplace=True)
+            model.headerData(index, Qt.Orientation.Horizontal, role=Qt.ItemDataRole.DecorationRole)
+            self.resizeColumnsToContents()
+            model.layoutChanged.emit()
+        if _action == refresh:
+            model.df = model.original.copy()
+            model.layoutChanged.emit()
+            self.resizeColumnsToContents()
+            model.sort_state = 0
+            model.headerData(index, Qt.Orientation.Horizontal, role=Qt.ItemDataRole.DecorationRole)
+        if _action == github:
+            webbrowser.open('https://github.com/lachesis17')
 
     def eventFilter(self, source, event):
         #print(event.type())
@@ -164,30 +194,22 @@ class PandasView(QTableView):
         #https://forum.qt.io/topic/54115/text-and-icon-in-qtableview-header
     
 #        Determine next sorting state by current state
-        if self.next_sort_state == 0:
-            self.next_sort_state += 1
-            model.sort_state += 1
-            model.df.sort_values(col_name, ascending=1, kind='mergesort', inplace=True)
-            model.headerData(idx, Qt.Orientation.Horizontal, role=Qt.ItemDataRole.DecorationRole)
-            self.resizeColumnsToContents()
-            #model.setHeaderData(idx, orientation=QtCore.Qt.Alignment.Horizontal, value=QIcon("common/images/sort-ascending.svg"), role=Qt.ItemDataRole.DecorationRole)
-            model.layoutChanged.emit()
-            #self.horizontalHeader().
-            # icon = QVariant(QIcon("common/images/sort-ascending.svg"))
-            # print(icon.value())
-            # model.setHeaderData(1, orientation=QtCore.Qt.Horizontal, value=icon.value(), role=Qt.ItemDataRole.DecorationRole)
-            return
-        if self.next_sort_state == 1:
-            self.next_sort_state += 1
-            model.sort_state += 1
-            model.df.sort_values(col_name, ascending=0, kind='mergesort', inplace=True)
+        if model.sort_state == 0:
+            model.sort_state = 1
+            model.df.sort_values(col_name, ascending=True, kind='mergesort', inplace=True)
             model.headerData(idx, Qt.Orientation.Horizontal, role=Qt.ItemDataRole.DecorationRole)
             self.resizeColumnsToContents()
             model.layoutChanged.emit()
             return
-        if self.next_sort_state == 2:
-            self.next_sort_state -= 2
-            model.sort_state -= 2
+        if model.sort_state == 1:
+            model.sort_state = 2
+            model.df.sort_values(col_name, ascending=False, kind='mergesort', inplace=True)
+            model.headerData(idx, Qt.Orientation.Horizontal, role=Qt.ItemDataRole.DecorationRole)
+            self.resizeColumnsToContents()
+            model.layoutChanged.emit()
+            return
+        if model.sort_state == 2:
+            model.sort_state = 0
             model.df.sort_index(ascending=True, kind='mergesort', inplace=True)
             model.headerData(idx, Qt.Orientation.Horizontal, role=Qt.ItemDataRole.DecorationRole)
             self.resizeColumnsToContents()
@@ -237,9 +259,9 @@ class PandasView(QTableView):
             for index in selection:
                 model.df.iloc[index.row(), index.column()] = ""
 
-        idx_top = model.createIndex(0,0)
-        idx_bot = model.createIndex(model.df.shape[0],0)
-        model.dataChanged.emit(idx_top, idx_bot)
+        # idx_top = model.createIndex(0,0)
+        # idx_bot = model.createIndex(model.df.shape[0],0)
+        # model.dataChanged.emit(idx_top, idx_bot)
         model.layoutChanged.emit()
         self.clearSelection()
         #self.viewport().repaint()
@@ -397,6 +419,43 @@ class Spinny(QDoubleSpinBox):
     def focusInEvent(self, event) -> None:
         if(event.type()==QEvent.FocusIn):
             QTimer.singleShot(0, self.selectAll)
+
+
+class GitButton(QPushButton):
+    def __init__(self, *args, **kwargs):
+        QPushButton.__init__(self, *args, **kwargs)
+        self.setMouseTracking(True)
+
+    def mouseMoveEvent(self, event):
+        
+        if (event.type()==QEvent.Leave):
+            print('pp')
+            icon = QPixmap("common/images/github.svg").scaled(25, 25, transformMode=QtCore.Qt.SmoothTransformation, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
+            self.setIcon(QIcon(icon))
+            return QPushButton.mouseMoveEvent(self, event)
+        else:
+            icon_ = QPixmap("common/images/github_grey.svg").scaled(25, 25, transformMode=QtCore.Qt.SmoothTransformation, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
+            self.setIcon(QIcon(icon_))
+            return QPushButton.mouseMoveEvent(self, event)
+
+# bool myWidget::event(QEvent* e) 
+# {
+#     if(e->type() == QEvent::Leave) 
+#     {
+#         QPoint view_pos(x(), y());
+#         QPoint view_pos_global = mapToGlobal(view_pos);
+#         QPoint mouse_global = QCursor::pos();
+#         if(mouse_global.x() < view_pos_global.x() || mouse_global.x() > view_pos_global.x() + width())
+#         {
+#             closeMenu();
+#         }
+#         else if(mouse_global.y() < view_pos_global.y() || mouse_global.y() > view_pos_global.y() + height())
+#         {
+#             closeMenu();
+#         }
+#     }
+#     return QWidget::event(e);
+# }
 
 
 '''old model for viewing only'''

@@ -14,10 +14,12 @@ import pyodbc
 from statistics import mean
 import configparser
 import time
+import webbrowser
 import warnings
 warnings.filterwarnings("ignore")
 QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough) 
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
@@ -48,6 +50,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.button_export_results.clicked.connect(self.export_results)
         self.button_export_error.clicked.connect(self.export_errors)
         self.button_convert_excel.clicked.connect(self.convert_excel)
+
+        # git_icon = QPixmap("common/images/github_grey.svg").scaled(25, 25, transformMode=QtCore.Qt.SmoothTransformation, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
+        # self.github.setIcon(QtGui.QIcon(git_icon))
+        # self.github.clicked.connect(lambda: webbrowser.open('https://github.com/lachesis17'))
 
         self.headings_table.clicked.connect(self.refresh_table)
 
