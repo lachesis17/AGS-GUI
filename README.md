@@ -30,8 +30,8 @@
     - This occurs when a description or other text field contains a line-break, which alters key formatting of the file. The line-break needs to be removed before opening the file.
 
 #### View and Edit Data
-  - This opens the AGS, which has been extracted as a dictionary of dictionaries, into a QAbstractTableView.
-    - This has some limited functionality of being to edit fields, copy & paste data, delete columns or rows and delete groups.
+  - This opens the AGS, which has been extracted as a dictionary of DataFrames, into a QAbstractTableView.
+    - This has some limited functionality of being to edit fields, copy & paste data, delete columns or rows, insert, rename and move columns, and delete groups.
 
 #### Save AGS file
   - This allows the current state of the loaded AGS to be saved.
