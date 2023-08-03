@@ -1,6 +1,5 @@
 import pandas as pd
-from PyQt5.QtCore import *
-#from PyQt5.QtCore import QAbstractTableModel, QPersistentModelIndex, QModelIndex, QEvent, QTimer
+from PyQt5.QtCore import QAbstractTableModel, QPersistentModelIndex, QModelIndex, QEvent, QTimer, pyqtSignal
 from PyQt5.QtWidgets import QApplication, QTableView, QDoubleSpinBox, QMenu, QInputDialog, QPushButton
 from PyQt5.QtGui import QKeySequence, QMouseEvent, QIcon, QPixmap
 import PyQt5.QtCore as QtCore
@@ -36,7 +35,7 @@ class PandasModel(QAbstractTableModel):
 
     def data(self, index, role: int):
         if index.isValid():
-            if role == Qt.DisplayRole or role == Qt.EditRole:
+            if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
                 return self.df.iloc[index.row(), index.column()]
         return None
 
@@ -46,7 +45,7 @@ class PandasModel(QAbstractTableModel):
         except ValueError:
             pass
         
-        if role == Qt.EditRole:
+        if role == QtCore.Qt.EditRole:
             self.df.iloc[index.row(),index.column()] = value
             self.layoutChanged.emit()
             return True
@@ -59,17 +58,17 @@ class PandasModel(QAbstractTableModel):
         
     #     return headers[section]
 
-    def headerData(self, section: int, orientation: Qt.Orientation, role: Qt.ItemDataRole):
+    def headerData(self, section: int, orientation: QtCore.Qt.Orientation, role: QtCore.Qt.ItemDataRole):
         # if not role == Qt.ItemDataRole.DisplayRole or orientation == Qt.Orientation.Vertical:
         #     return
-        if role == Qt.ItemDataRole.DecorationRole and orientation == Qt.Orientation.Horizontal:
+        if role == QtCore.Qt.ItemDataRole.DecorationRole and orientation == QtCore.Qt.Orientation.Horizontal:
             if self.sort_state == 1:
                 return QPixmap("common/images/sort-ascending.svg").scaled(100, 100, transformMode=QtCore.Qt.SmoothTransformation, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
             elif self.sort_state == 2:
                 return QPixmap("common/images/sort-descending.svg").scaled(100, 100, transformMode=QtCore.Qt.SmoothTransformation, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
             else:
                 pass
-        elif not role == Qt.ItemDataRole.DisplayRole or orientation == Qt.Orientation.Vertical:
+        elif not role == QtCore.Qt.ItemDataRole.DisplayRole or orientation == QtCore.Qt.Orientation.Vertical:
             return
         
         headers = self.df.columns
@@ -77,8 +76,8 @@ class PandasModel(QAbstractTableModel):
         return headers[section]
     
 
-    def flags(self, index: QModelIndex) -> Qt.ItemFlag:
-        return Qt.ItemFlag.ItemIsEnabled | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEditable
+    def flags(self, index: QModelIndex) -> QtCore.Qt.ItemFlag:
+        return QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable | QtCore.Qt.ItemFlag.ItemIsEditable
     
     def sort(self, Ncol, order):
         return
@@ -94,23 +93,29 @@ class PandasModel(QAbstractTableModel):
 
     def getHeaders(self, min, max=None):
         if max is None:
-            return self.headerData(min, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole)
+            return self.headerData(min, QtCore.Qt.Orientation.Horizontal, QtCore.Qt.ItemDataRole.DisplayRole)
         
         _headers = []
         for i in range(min,max):
-            _headers.append(self.headerData(i, Qt.Orientation.Horizontal, Qt.ItemDataRole.DisplayRole))
+            _headers.append(self.headerData(i, QtCore.Qt.Orientation.Horizontal, QtCore.Qt.ItemDataRole.DisplayRole))
 
         return _headers
     
     
 class PandasView(QTableView):
+
+    insert_rows = pyqtSignal(list)
+
     def __init__(self, *args, **kwargs):
         super(PandasView, self).__init__(*args, **kwargs)
         self.installEventFilter(self)
         self.headers = self.horizontalHeader()
         self.headers.sectionDoubleClicked.connect(lambda x: self.sort(x))
-        self.headers.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.headers.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.headers.customContextMenuRequested.connect(self.header_menu)
+        self.rows = self.verticalHeader()
+        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.row_menu)
 
 
     def header_menu(self, position):
@@ -164,13 +169,13 @@ class PandasView(QTableView):
         if _action == sort_asc:
             model.sort_state = 1
             model.df.sort_values(col_name, ascending=True, kind='mergesort', inplace=True)
-            model.headerData(index, Qt.Orientation.Horizontal, role=Qt.ItemDataRole.DecorationRole)
+            model.headerData(index, QtCore.Qt.Orientation.Horizontal, role=QtCore.Qt.ItemDataRole.DecorationRole)
             self.resizeColumnsToContents()
             model.layoutChanged.emit()
         if _action == sort_des:
             model.sort_state = 2
             model.df.sort_values(col_name, ascending=False, kind='mergesort', inplace=True)
-            model.headerData(index, Qt.Orientation.Horizontal, role=Qt.ItemDataRole.DecorationRole)
+            model.headerData(index, QtCore.Qt.Orientation.Horizontal, role=QtCore.Qt.ItemDataRole.DecorationRole)
             self.resizeColumnsToContents()
             model.layoutChanged.emit()
         if _action == refresh:
@@ -178,9 +183,29 @@ class PandasView(QTableView):
             model.layoutChanged.emit()
             self.resizeColumnsToContents()
             model.sort_state = 0
-            model.headerData(index, Qt.Orientation.Horizontal, role=Qt.ItemDataRole.DecorationRole)
+            model.headerData(index, QtCore.Qt.Orientation.Horizontal, role=QtCore.Qt.ItemDataRole.DecorationRole)
         if _action == github:
             webbrowser.open('https://github.com/lachesis17')
+
+
+    def row_menu(self, position):
+        menu = QMenu()
+        model = self.model()
+        insert_rows = menu.addAction(QIcon("common/images/insert.svg"),"Insert Rows")
+        #del_grp = menu.addAction(QIcon("common/images/delete.svg"),"Delete Group")
+        #refresh = menu.addAction(QIcon("common/images/refresh.svg"),"Reload Groups???")
+        menu.addSeparator()
+        menu.addSeparator()
+        _action = menu.exec_(self.mapToGlobal(position))
+        index = self.rows.logicalIndexAt(position)
+        if _action == insert_rows:
+            num_rows = QInputDialog.getInt(self," ","Number of new rows:")
+            if num_rows[1]:
+                if num_rows[0] == 0:
+                    return
+                rows = [index, num_rows[0]]
+                self.insert_rows.emit(rows)
+
 
 
     def eventFilter(self, source, event):
@@ -209,21 +234,21 @@ class PandasView(QTableView):
         if model.sort_state == 0:
             model.sort_state = 1
             model.df.sort_values(col_name, ascending=True, kind='mergesort', inplace=True)
-            model.headerData(idx, Qt.Orientation.Horizontal, role=Qt.ItemDataRole.DecorationRole)
+            model.headerData(idx, QtCore.Qt.Orientation.Horizontal, role=QtCore.Qt.ItemDataRole.DecorationRole)
             self.resizeColumnsToContents()
             model.layoutChanged.emit()
             return
         if model.sort_state == 1:
             model.sort_state = 2
             model.df.sort_values(col_name, ascending=False, kind='mergesort', inplace=True)
-            model.headerData(idx, Qt.Orientation.Horizontal, role=Qt.ItemDataRole.DecorationRole)
+            model.headerData(idx, QtCore.Qt.Orientation.Horizontal, role=QtCore.Qt.ItemDataRole.DecorationRole)
             self.resizeColumnsToContents()
             model.layoutChanged.emit()
             return
         if model.sort_state == 2:
             model.sort_state = 0
             model.df.sort_index(ascending=True, kind='mergesort', inplace=True)
-            model.headerData(idx, Qt.Orientation.Horizontal, role=Qt.ItemDataRole.DecorationRole)
+            model.headerData(idx, QtCore.Qt.Orientation.Horizontal, role=QtCore.Qt.ItemDataRole.DecorationRole)
             self.resizeColumnsToContents()
             model.layoutChanged.emit()
             return
@@ -271,9 +296,9 @@ class PandasView(QTableView):
             for index in selection:
                 model.df.iloc[index.row(), index.column()] = ""
 
-        # idx_top = model.createIndex(0,0)
-        # idx_bot = model.createIndex(model.df.shape[0],0)
-        # model.dataChanged.emit(idx_top, idx_bot)
+        idx_top = model.createIndex(0,0)
+        idx_bot = model.createIndex(model.df.shape[0],0)
+        model.dataChanged.emit(idx_top, idx_bot)
         model.layoutChanged.emit()
         self.clearSelection()
         #self.viewport().repaint()
@@ -379,7 +404,7 @@ class PandasView(QTableView):
                     for i, insert_row in enumerate(insert_rows):
                         for j, insert_column in enumerate(insert_columns):
                             cell = arr[i][j]
-                            model.setData(model.index(insert_row, insert_column), cell, Qt.EditRole)
+                            model.setData(model.index(insert_row, insert_column), cell, QtCore.Qt.EditRole)
                 elif not justPasteItAll:
                     for index in selection:
                         selection_row = visible_rows.index(index.row())
@@ -388,7 +413,7 @@ class PandasView(QTableView):
                             model.setData(
                                 model.index(index.row(), index.column()),
                                 arr[selection_row][selection_column],
-                                Qt.EditRole
+                                QtCore.Qt.EditRole
                             )
                         except IndexError:
                             continue
@@ -402,7 +427,7 @@ class PandasView(QTableView):
                                 model.setData(
                                     model.index(topleftRow+i, topleftCol+j),
                                     arr[i][j],
-                                    Qt.EditRole
+                                    QtCore.Qt.EditRole
                                 )
                             except IndexError:
                                 print("oops")
@@ -433,22 +458,22 @@ class Spinny(QDoubleSpinBox):
             QTimer.singleShot(0, self.selectAll)
 
 
-class GitButton(QPushButton):
-    def __init__(self, *args, **kwargs):
-        QPushButton.__init__(self, *args, **kwargs)
-        self.setMouseTracking(True)
+# class GitButton(QPushButton):
+#     def __init__(self, *args, **kwargs):
+#         QPushButton.__init__(self, *args, **kwargs)
+#         self.setMouseTracking(True)
 
-    def mouseMoveEvent(self, event):
+#     def mouseMoveEvent(self, event):
         
-        if (event.type()==QEvent.Leave):
-            print('pp')
-            icon = QPixmap("common/images/github.svg").scaled(25, 25, transformMode=QtCore.Qt.SmoothTransformation, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
-            self.setIcon(QIcon(icon))
-            return QPushButton.mouseMoveEvent(self, event)
-        else:
-            icon_ = QPixmap("common/images/github_grey.svg").scaled(25, 25, transformMode=QtCore.Qt.SmoothTransformation, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
-            self.setIcon(QIcon(icon_))
-            return QPushButton.mouseMoveEvent(self, event)
+#         if (event.type()==QEvent.Leave):
+#             print('pp')
+#             icon = QPixmap("common/images/github.svg").scaled(25, 25, transformMode=QtCore.Qt.SmoothTransformation, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
+#             self.setIcon(QIcon(icon))
+#             return QPushButton.mouseMoveEvent(self, event)
+#         else:
+#             icon_ = QPixmap("common/images/github_grey.svg").scaled(25, 25, transformMode=QtCore.Qt.SmoothTransformation, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
+#             self.setIcon(QIcon(icon_))
+#             return QPushButton.mouseMoveEvent(self, event)
 
 # bool myWidget::event(QEvent* e) 
 # {
@@ -468,6 +493,55 @@ class GitButton(QPushButton):
 #     }
 #     return QWidget::event(e);
 # }
+
+
+
+class HeadersView(QTableView):
+
+    delete_group = pyqtSignal(str)
+    rename_group = pyqtSignal(list)
+    new_group = pyqtSignal(str)
+
+    def __init__(self, *args, **kwargs):
+        super(HeadersView, self).__init__(*args, **kwargs)
+        #self.installEventFilter(self)
+        #self.doubleClicked.connect(lambda x: self.sort(x))
+        self.rows = self.verticalHeader()
+        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.header_menu)
+
+
+
+    def header_menu(self, position):
+        menu = QMenu()
+        model = self.model()
+        rename = menu.addAction(QIcon("common/images/edit.svg"),"Rename Group")
+        insert_grp = menu.addAction(QIcon("common/images/insert.svg"),"Insert Group")
+        del_grp = menu.addAction(QIcon("common/images/delete.svg"),"Delete Group")
+        menu.addSeparator()
+        menu.addSeparator()
+        github = menu.addAction(QIcon("common/images/github.svg"),"GitHub")
+        _action = menu.exec_(self.mapToGlobal(position))
+        index = self.rows.logicalIndexAt(position)
+        group_name = model.df.iloc[index,0]
+        if _action == rename:
+            new_group = QInputDialog.getText(self," ","Rename group:")
+            if new_group[1]:
+                groups = [group_name, new_group[0]]
+                self.rename_group.emit(groups)
+        if _action == insert_grp:   
+            new_grp = QInputDialog.getText(self," ","New group name:")
+            if new_grp[1]:
+                self.new_group.emit(new_grp[0])
+        if _action == del_grp:
+            self.delete_group.emit(group_name)
+            model.layoutChanged.emit()
+            self.resizeColumnsToContents()
+        if _action == github:
+            webbrowser.open('https://github.com/lachesis17')
+
+    
+
 
 
 '''old model for viewing only'''

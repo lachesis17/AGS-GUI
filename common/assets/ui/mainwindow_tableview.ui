@@ -1110,7 +1110,7 @@ QPushButton:disabled {
                 <item>
                  <layout class="QHBoxLayout" name="horizontalLayout_21">
                   <item>
-                   <widget class="PandasView" name="headings_table">
+                   <widget class="HeadersView" name="headings_table">
                     <property name="sizePolicy">
                      <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
                       <horstretch>0</horstretch>
@@ -1131,6 +1131,9 @@ QPushButton:disabled {
                     </property>
                     <property name="sizeAdjustPolicy">
                      <enum>QAbstractScrollArea::AdjustIgnored</enum>
+                    </property>
+                    <property name="selectionBehavior">
+                     <enum>QAbstractItemView::SelectRows</enum>
                     </property>
                     <property name="showGrid">
                      <bool>false</bool>
@@ -1786,7 +1789,7 @@ QPushButton:disabled {
      <x>0</x>
      <y>0</y>
      <width>555</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>
@@ -1795,6 +1798,11 @@ QPushButton:disabled {
  <customwidgets>
   <customwidget>
    <class>PandasView</class>
+   <extends>QTableView</extends>
+   <header>common.pandas_table</header>
+  </customwidget>
+  <customwidget>
+   <class>HeadersView</class>
    <extends>QTableView</extends>
    <header>common.pandas_table</header>
   </customwidget>

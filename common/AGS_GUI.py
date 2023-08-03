@@ -1,6 +1,5 @@
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
-from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QMessageBox
 from PyQt5.QtCore import QUrl, QEvent, QTimer, QSize, QObject
 from PyQt5.QtGui import QResizeEvent
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
@@ -55,7 +54,14 @@ class MainWindow(QtWidgets.QMainWindow):
         # self.github.setIcon(QtGui.QIcon(git_icon))
         # self.github.clicked.connect(lambda: webbrowser.open('https://github.com/lachesis17'))
 
+
+        'table connects'
         self.headings_table.clicked.connect(self.refresh_table)
+        self.headings_table.delete_group.connect(lambda x: self.delete_group(x))
+        self.headings_table.rename_group.connect(lambda x: self.rename_group(x))
+        self.headings_table.new_group.connect(lambda x: self.new_group(x))
+        self.tables_table.insert_rows.connect(lambda x: self.add_rows(x))
+
 
         self.temp_file_name = ''
         self.tables = None
@@ -124,32 +130,82 @@ Please select an AGS with "Open File..."''')
                 self.lab_select.removeItem(0)
                 self.lab_select.setCurrentIndex(0)
             self.enable_buttons()
+            self.setup_tables()
 
-            #set tablemodels
-            table_keys = [k for k in self.tables.keys()]
-            table_shapes = [str(f"({v.shape[0]} x {v.shape[1]})") for k,v in self.tables.items()]
-            headings_with_shapes = list(zip(table_keys,table_shapes))
-            headings_df = pd.DataFrame.from_dict(headings_with_shapes)
-            headings_df.columns = ["",""]
-            #self.tables_table.setSortingEnabled(True)   #sort
-            self._headings_model = PandasModel(headings_df)
-            self.headings_table.setModel(self._headings_model)
-            self.headings_table.resizeColumnsToContents()
-            self.headings_table.horizontalHeader().hide()
 
-            self._tables_model = PandasModel(self.tables[f"{table_keys[0]}"])
-            self.tables_table.setAlternatingRowColors(True)
-            self.tables_table.setModel(self._tables_model)
-            self.tables_table.resizeColumnsToContents()
-            self.tables_table.horizontalHeader().sectionPressed.connect(self.tables_table.selectColumn)   #col sel
+    def setup_tables(self):
+        '''setting up the models for groups and tables'''
+        table_keys = [k for k in self.tables.keys()]
+        table_shapes = [str(f"({v.shape[0]} x {v.shape[1]})") for k,v in self.tables.items()]
+        headings_with_shapes = list(zip(table_keys,table_shapes))
+        headings_df = pd.DataFrame.from_dict(headings_with_shapes)
+        headings_df.sort_values(0, ascending=True, kind='mergesort', inplace=True, key=lambda col: col.str.lower())
+        headings_df.columns = ["",""]
+        self._headings_model = PandasModel(headings_df)
+        self.headings_table.setModel(self._headings_model)
+        self.headings_table.resizeColumnsToContents()
+        self.headings_table.horizontalHeader().hide()
+
+        self._tables_model = PandasModel(self.tables[f"{headings_df.iloc[0,0]}"])
+        self.tables_table.setAlternatingRowColors(True)
+        self.tables_table.setModel(self._tables_model)
+        self.tables_table.resizeColumnsToContents()
+        self.tables_table.horizontalHeader().sectionPressed.connect(self.tables_table.selectColumn)   #col sel
+
+
+    def delete_group(self, group: str):
+        del self.tables[group]
+        self.setup_tables()
+
+    def rename_group(self, groups: list):
+        self.tables[groups[1]] = self.tables.pop(groups[0])
+        self.setup_tables()
+
+    def new_group(self, group: str):
+        temp = {'HEADING': ["UNIT", "TYPE", "DATA"]}
+        df = pd.DataFrame(data=temp)
+        self.tables[group] = df
+        self.setup_tables()
+
+    def add_rows(self, rows: list):
+        index = rows[0]
+        num_rows = rows[1]
+        if self.headings_table.selectionModel().selection().indexes() == []:
+            group = self._headings_model.df.iloc[0,0]
+            print(group)
+        else:
+            try:
+                selected_rows = self.headings_table.selectionModel().selectedRows()
+                group = self._headings_model.data(selected_rows[0], role=QtCore.Qt.DisplayRole)
+                print(group)
+            except Exception as e:
+                print(e)
+        num_col = len(self.tables[group].columns)
+        try:
+            empty_df = pd.DataFrame(data=[[np.nan]*num_col]*num_rows, columns=self.tables[group].columns)
+            first_col = list(empty_df.columns)[0]
+            empty_df[first_col] = "DATA"
+        except Exception as e:
+            print(e)
+        try:
+            print(self.tables[group].loc[:index])
+            print(self.tables[group].loc[index+1:])
+            new = pd.concat([self.tables[group].loc[:index], empty_df])
+            new.replace(np.nan,"", inplace=True)
+            new = pd.concat([new, self.tables[group].loc[index+1:]])
+            new.reset_index(drop=True, inplace=True)
+            self.tables[group] = new
+            self.refresh_table()
+        except Exception as e:
+            print(e)
+
 
     def refresh_table(self):
         index = self.headings_table.selectionModel().currentIndex()
         self.headings_table.selectRow(index.row())
-        QApplication.processEvents()
         value = index.sibling(index.row(),0).data()
-        self._tables_model = PandasModel(self.tables[f"{value}"])
-        self.tables_table.setModel(self._tables_model)
+        self._tables_model.df = self.tables[value]
+        self._tables_model.layoutChanged.emit()
         self.tables_table.resizeColumnsToContents()
 
 
