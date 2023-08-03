@@ -61,6 +61,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.headings_table.rename_group.connect(lambda x: self.rename_group(x))
         self.headings_table.new_group.connect(lambda x: self.new_group(x))
         self.tables_table.insert_rows.connect(lambda x: self.add_rows(x))
+        self.tables_table.refreshed.connect(self.reload_table)
 
 
         self.temp_file_name = ''
@@ -172,12 +173,10 @@ Please select an AGS with "Open File..."''')
         num_rows = rows[1]
         if self.headings_table.selectionModel().selection().indexes() == []:
             group = self._headings_model.df.iloc[0,0]
-            print(group)
         else:
             try:
                 selected_rows = self.headings_table.selectionModel().selectedRows()
                 group = self._headings_model.data(selected_rows[0], role=QtCore.Qt.DisplayRole)
-                print(group)
             except Exception as e:
                 print(e)
         num_col = len(self.tables[group].columns)
@@ -188,8 +187,6 @@ Please select an AGS with "Open File..."''')
         except Exception as e:
             print(e)
         try:
-            print(self.tables[group].loc[:index])
-            print(self.tables[group].loc[index+1:])
             new = pd.concat([self.tables[group].loc[:index], empty_df])
             new.replace(np.nan,"", inplace=True)
             new = pd.concat([new, self.tables[group].loc[index+1:]])
@@ -205,8 +202,19 @@ Please select an AGS with "Open File..."''')
         self.headings_table.selectRow(index.row())
         value = index.sibling(index.row(),0).data()
         self._tables_model.df = self.tables[value]
+        self._tables_model.original = self.tables[value].copy()
         self._tables_model.layoutChanged.emit()
         self.tables_table.resizeColumnsToContents()
+
+    def reload_table(self):
+        index = self.headings_table.selectionModel().currentIndex()
+        self.headings_table.selectRow(index.row())
+        value = index.sibling(index.row(),0).data()
+        self.tables[value] = self._tables_model.df
+        self._tables_model.original = self.tables[value].copy()
+        self._tables_model.layoutChanged.emit()
+        self.tables_table.resizeColumnsToContents()
+
 
 
     def count_lab_results(self):
@@ -2086,6 +2094,9 @@ Saving AGS to excel file...
         self.resizing = False
         
 
+def except_hook(cls, exception, traceback):
+    sys.__excepthook__(cls, exception, traceback)
+
 def main():
     app = QtWidgets.QApplication([sys.argv])
     #QtGui.QFontDatabase.addApplicationFont("assets/fonts/Roboto.ttf")
@@ -2095,6 +2106,7 @@ def main():
 
 
 if __name__ == '__main__':
+    sys.excepthook = except_hook
     main()
 
 #articles on threading - need to implement both this and dataframe column assigning instead of creating a billion loops

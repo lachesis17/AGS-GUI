@@ -105,6 +105,7 @@ class PandasModel(QAbstractTableModel):
 class PandasView(QTableView):
 
     insert_rows = pyqtSignal(list)
+    refreshed = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super(PandasView, self).__init__(*args, **kwargs)
@@ -133,78 +134,85 @@ class PandasView(QTableView):
         menu.addSeparator()
         github = menu.addAction(QIcon("common/images/github.svg"),"GitHub")
         _action = menu.exec_(self.mapToGlobal(position))
-        index = self.headers.logicalIndexAt(position)
-        col_name = model.df.columns[index]
-        if _action == rename:
-            new_header = QInputDialog.getText(self," ","New header name:")
-            if new_header[1]:
-                model.df.rename(columns={f'{col_name}':f'{new_header[0]}'}, inplace=True)
+        try:
+            index = self.headers.logicalIndexAt(position)
+            col_name = model.df.columns[index]
+            if _action == rename:
+                new_header = QInputDialog.getText(self," ","New header name:")
+                if new_header[1]:
+                    model.df.rename(columns={f'{col_name}':f'{new_header[0]}'}, inplace=True)
+                    self.resizeColumnsToContents()
+                    model.layoutChanged.emit()
+            if _action == insert_col:   
+                new_col = QInputDialog.getText(self," ","New column name:")
+                if new_col[1]:
+                    try:
+                        model.df.insert(index+1, new_col[0], value="")
+                        model.layoutChanged.emit()
+                        self.resizeColumnsToContents()
+                    except Exception as e:
+                        print(e)
+            if _action == del_col:
+                model.df.drop(col_name, axis=1, inplace=True)
+                model.layoutChanged.emit()
+                self.resizeColumnsToContents()
+            if _action == move_right:
+                if index + 1 >= len(model.df.columns):
+                    return
+                model.df.insert(index+1, col_name, model.df.pop(col_name))
                 self.resizeColumnsToContents()
                 model.layoutChanged.emit()
-        if _action == insert_col:   
-            new_col = QInputDialog.getText(self," ","New column name:")
-            if new_col[1]:
-                try:
-                    model.df.insert(index+1, new_col[0], value="")
-                    model.layoutChanged.emit()
-                    self.resizeColumnsToContents()
-                except Exception as e:
-                    print(e)
-        if _action == del_col:
-            model.df.drop(col_name, axis=1, inplace=True)
-            model.layoutChanged.emit()
-            self.resizeColumnsToContents()
-        if _action == move_right:
-            if index + 1 >= len(model.df.columns):
-                return
-            model.df.insert(index+1, col_name, model.df.pop(col_name))
-            self.resizeColumnsToContents()
-            model.layoutChanged.emit()
-        if _action == move_left:
-            if index - 1 < 1:
-                return
-            model.df.insert(index-1, col_name, model.df.pop(col_name))
-            self.resizeColumnsToContents()
-            model.layoutChanged.emit()
-        if _action == sort_asc:
-            model.sort_state = 1
-            model.df.sort_values(col_name, ascending=True, kind='mergesort', inplace=True)
-            model.headerData(index, QtCore.Qt.Orientation.Horizontal, role=QtCore.Qt.ItemDataRole.DecorationRole)
-            self.resizeColumnsToContents()
-            model.layoutChanged.emit()
-        if _action == sort_des:
-            model.sort_state = 2
-            model.df.sort_values(col_name, ascending=False, kind='mergesort', inplace=True)
-            model.headerData(index, QtCore.Qt.Orientation.Horizontal, role=QtCore.Qt.ItemDataRole.DecorationRole)
-            self.resizeColumnsToContents()
-            model.layoutChanged.emit()
-        if _action == refresh:
-            model.df = model.original.copy()
-            model.layoutChanged.emit()
-            self.resizeColumnsToContents()
-            model.sort_state = 0
-            model.headerData(index, QtCore.Qt.Orientation.Horizontal, role=QtCore.Qt.ItemDataRole.DecorationRole)
-        if _action == github:
-            webbrowser.open('https://github.com/lachesis17')
+            if _action == move_left:
+                if index - 1 < 1:
+                    return
+                model.df.insert(index-1, col_name, model.df.pop(col_name))
+                self.resizeColumnsToContents()
+                model.layoutChanged.emit()
+            if _action == sort_asc:
+                model.sort_state = 1
+                model.df.sort_values(col_name, ascending=True, kind='mergesort', inplace=True)
+                model.headerData(index, QtCore.Qt.Orientation.Horizontal, role=QtCore.Qt.ItemDataRole.DecorationRole)
+                self.resizeColumnsToContents()
+                model.layoutChanged.emit()
+            if _action == sort_des:
+                model.sort_state = 2
+                model.df.sort_values(col_name, ascending=False, kind='mergesort', inplace=True)
+                model.headerData(index, QtCore.Qt.Orientation.Horizontal, role=QtCore.Qt.ItemDataRole.DecorationRole)
+                self.resizeColumnsToContents()
+                model.layoutChanged.emit()
+            if _action == refresh:
+                model.df = model.original.copy()
+                self.refreshed.emit()
+                # idx_top = model.createIndex(0,0)
+                # idx_bot = model.createIndex(model.df.shape[0],0)
+                # model.dataChanged.emit(idx_top, idx_bot)
+                model.layoutChanged.emit()
+                self.resizeColumnsToContents()
+                model.sort_state = 0
+                model.headerData(index, QtCore.Qt.Orientation.Horizontal, role=QtCore.Qt.ItemDataRole.DecorationRole)
+            if _action == github:
+                webbrowser.open('https://github.com/lachesis17')
+        except Exception as e:
+            print(e)
 
 
     def row_menu(self, position):
         menu = QMenu()
-        model = self.model()
         insert_rows = menu.addAction(QIcon("common/images/insert.svg"),"Insert Rows")
-        #del_grp = menu.addAction(QIcon("common/images/delete.svg"),"Delete Group")
-        #refresh = menu.addAction(QIcon("common/images/refresh.svg"),"Reload Groups???")
         menu.addSeparator()
         menu.addSeparator()
         _action = menu.exec_(self.mapToGlobal(position))
-        index = self.rows.logicalIndexAt(position)
-        if _action == insert_rows:
-            num_rows = QInputDialog.getInt(self," ","Number of new rows:")
-            if num_rows[1]:
-                if num_rows[0] == 0:
-                    return
-                rows = [index, num_rows[0]]
-                self.insert_rows.emit(rows)
+        try:
+            index = self.rows.logicalIndexAt(position)
+            if _action == insert_rows:
+                num_rows = QInputDialog.getInt(self," ","Number of new rows:")
+                if num_rows[1]:
+                    if num_rows[0] == 0:
+                        return
+                    rows = [index, num_rows[0]]
+                    self.insert_rows.emit(rows)
+        except Exception as e:
+            print(e)
 
 
 
@@ -541,7 +549,8 @@ class HeadersView(QTableView):
             webbrowser.open('https://github.com/lachesis17')
 
     
-
+def except_hook(cls, exception, traceback):
+    sys.__excepthook__(cls, exception, traceback)
 
 
 '''old model for viewing only'''
