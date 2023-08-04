@@ -1,80 +1,78 @@
-### **Open, edit and check AGS for import to an access database (gINT)**
+### **Open, edit and check .AGS files**
 <br>
 
 #### Steps for gINT Import:
-     - Open a valid AGS file
+     - Open an AGS file
      - Delete Non-Result Tables
-     - Select a laboratory from the dropdown list, then select Match Lab AGS to gINT
-     - Select a gINT project when prompted by dialogue box (check the gINT is correct)
-     - Once "Matching Complete!" is displayed, select 'Save AGS file'
+     - Select a laboratory from the dropdown list, then select 'Match Lab AGS to gINT'
+     - Select a gINT when prompted by dialogue box (check the gINT is correct)
+     - Once 'Matching Complete!' is displayed, select 'Save AGS file'
      - Save the file when prompted by the dialogue box
      - Open gINT, go to File > Import AGS
-     - Select the AGS file saved via the tool, and select the .gci import correspondence file
+     - Select the saved AGS file, and use the .gci import correspondence file in this repository
 
-- [Open an AGS file](#open-an-ags-file)
-- [View and Edit Data](#view-and-edit-data)
-- [Save AGS file](#save-ags-file)
-- [Count Lab Results](#count-lab-results)
-- [Check AGS for Errors](#check-ags-for-errors)
-- [Delete Non-Result Tables for gINT Import](#delete-non-result-tables-for-gint-import)
-- [Match Lab AGS to gINT](#match-lab-ags-to-gint)
-- [CPT Only Data Export](#cpt-only-data-export)
-- [Lab Only Data Export](#lab-only-data-export)
+- [Open and Save](#open-and-save)
+- [View and Edit](#view-and-edit)
+- [Count Results and Check Errors](#count-results-and-check-errors)
 <br>
 
-<img src="common/images/AGS-GUI.png" data-canonical-src="common/images/AGS-GUI.png"/>
+<img src="common/images/AGS-GUI-readme.png" data-canonical-src="common/images/AGS-GUI-readme.png"/>
 
-#### Open an AGS file
-  - Open any valid AGS files.
-    - There may be an error as follows: Error: Line x does not have the same number of entries as the HEADING.
-    - This occurs when a description or other text field contains a line-break, which alters key formatting of the file. The line-break needs to be removed before opening the file.
+#### Open and Save
+  - Open File: opens any valid AGS files
+    - Use the 'AGS4_package_edit.py' file to replace 'AGS4.py' in <i>Python/lib/site-packages/python_ags4/</i>
+        - This allows misplaced carriage returns characters (line-breaks) to be concatenated onto the line above, fixing the<br>
+        <i>Error: Line x does not have the same number of entries as the HEADING.</i>
+        - This commonly occurs in remark fields '_REM' or comments and prevents the file from being opened with the python_ags4 library
+  - Save File: allows the current state of the loaded AGS to be saved, into either AGS or Excel
+  - Delete Non-Result Tables and gINT data matching
+    - This deletes all non-testing tables with the exception of PROJ and TRAN, so that only testing data is used for importing to gINT
+      - PROJ and TRAN are the minimum required for gINT to recognise the file as valid AGS
+    - Matches records in each table to gINT SPEC data, using the LOCA_ID, SPEC_REF and SPEC_DPTH values
+      - This is tailored for a few onshore labs where patterns in data can be used for data cleaning and manipulation prior to import
+      - Can be utilised for QA of values or missing key fields
+      - Python code can be amended for any SQL database using pyodbc, not specifically gINT. SPEC can be substituted for SAMP, along with any table/header adjustments
 
-#### View and Edit Data
-  - This opens the AGS, which has been extracted as a dictionary of DataFrames, into a QAbstractTableView.
-    - This has some limited functionality of being to edit fields, copy & paste data, delete columns or rows, insert, rename and move columns, and delete groups.
 
-#### Save AGS file
-  - This allows the current state of the loaded AGS to be saved.
-    - This includes edits in PandasGUI, or matching sample data to gINT.
-    - If a filter was used in PandasGUI, it will save the new AGS with the filter applied.
-    - If non-result tables were deleted, they will be deleted in the saved file.
+#### View and Edit
+  - The loaded AGS, extracted as a dictionary of DataFrames, opens groups and data into subclassed QTableViews with a subclassed QAbstractTableModel
+  - There are right-click context menus for the QHeaderView, the QTableView holding the groups and the QTableView holding the data
+    - Editing functions are handled with Pandas (QAbstractTableModel), context menus and the QTableView:
+      - Edit fields (cells) in TableView - all edited data will be in the saved exports of AGS or excel using the button functions
+      - Copy & paste data, including data to and from excel
+      - Delete columns, rows, cells or groups
+      - Insert, rename and move columns
+        - Columns/headers are edited with the header right-click context menu of the headers, QHeaderView
+      - Insert, rename and delete groups
+        - Groups are edited with right-click context menu on the groups, left QTableView
+        - Inserted groups have one column: 'HEADING', with 'UNIT', 'TYPE', 'DATA' as rows
+      - Insert rows
+        - Rows are inserted with the right-click context menu on the data, right QTableView
+        - Inserted rows are always prefixed with 'DATA' in the first column. Without this, the python_ags4 library will not read the row as valid data
+      - Sort data ascending or descending with context menu or on double-click event of a header
+        - Sort state toggles on each double-click, with default as index sorting
+      - Added groups and headers must also be manually added to the DICT group to avoid AGS4 errors
 
-#### Count Lab Results
-  - This checks certain parent groups for specific fields relating to test type.
-    - For triaxial results, like unconsolidated undrained, the sample condition is used to distinguish test type.
-    - Totals of test types for each group can be exported to a .txt file.
 
-#### Check AGS for Errors
-  - This will use the AGS standard dictionary to check the file for errors.
-  - The AGS version in the TRAN group will be used.
-  - Version AGS 4+ supported (e.g. '4.1.1', '4.1', '4.0.4', '4.0.3', '4.0').
-    - This will check the dictionary for fields named as KEY and REQUIRED as part of the error checking process to establish unique records.
-    - Minor errors may arise with fields in DICT with incorrect DICT_STAT, (e.g. if a SPEC_DPTH field is not used as a KEY or REQUIRED field in DICT.DICT_STAT).
-    - Error logs can be exported to a .txt file.
-
-#### Delete Non-Result Tables for gINT Import
-  - This checks the groups found in the loaded AGS file against a set list of groups expected to contain laboratory test results.
-    - This is mainly used remove unwanted groups that may conflict when the file is imported to gINT (e.g. removing SAMP table to not create incorrect duplicate samples), and but also filters data (removing CPT data to improve load times for PandasGUI), and to improve match time for sample data from gINT (by removing non-used tables from the loop).
-    - TRAN and PROJ are the two tables gINT need to class the AGS as readable data (with TRAN needed for the AGS version, and PROJ used as the parent of all other tables) - they are included with lab results and omitted with the correspondence file, to import only relevant data from onshore labs. 
-
-#### Match Lab AGS to gINT
-   - Matches sample data from an AGS file to a gINT database.
-     - Selecting a lab from the dropdown option menu toggles between functions, as different labs require differening conditions for multiple test types to be matched correctly. 
-     - Specific conditions are hard-coded to account for inconsistencies between issues of AGS from specific labs.
-     - As well as amending values and placement of values, it will also rename and reformat fields to be imported into gINT.
-    
-#### CPT Only Data Export
-  - Checks the groups found in the loaded AGS file against a set list of groups expected to contain CPT data, including sesimic.
-    - Deletes all non-essential tables, keeping only CPT data.
-    
-#### Lab Only Data Export
-  - Checks the groups found in the loaded AGS file against a set list of groups expected to contain laboratory test results.
-    - Deletes all non-essential tables, keeping only Lab data as well Geology and Depth Remarks.
+#### Count Results and Check Errors
+  - Count Lab Results: checks most onshore testing groups for fields relating to test type and laboratory
+    - For groups with more than one test type (e.g. GCHM, TREG, TRIG), the sample condition is used to distinguish test type
+    - Totals can be exported to excel
+    - Totals are split between 'Onshore' and 'Offshore' to aid project reporting
+  - Check AGS for Errors: uses the AGS standard dictionary to check for errors
+    - The AGS version in the TRAN group will be used, AGS4+ versions supported (e.g. '4.1.1', '4.1', '4.0.4', '4.0.3', '4.0')
+      - This will check the dictionary for fields named as KEY and REQUIRED as part of the error checking process to establish unique records
+      - Errors may arise in DICT with incorrect DICT_STAT on fields, (e.g. if a SPEC_DPTH field is not used as a KEY or REQUIRED field in DICT.DICT_STAT)
+      - Error logs can be exported to a .txt file
+  - CPT Only Data Export: uses most groups expected to contain CPT data, including seismic
+      - Deletes all non-essential tables, keeping only CPT data
+  - Lab Only Data Export: uses most onshore testing groups
+      - Deletes all non-essential tables, keeping only Lab data as well Geology and Depth Remarks
 
 <br><br>
 
 
-##### Developed for [Geoquip-Marine](https://www.geoquip-marine.com/) using [AGS 4 Data Format](https://www.ags.org.uk/data-format/), [python-ags4](https://pypi.org/project/python-ags4/), [PyQt5](https://pypi.org/project/PyQt5/).
+##### Developed for onshore & offshore geotechnical data for [Geoquip-Marine](https://www.geoquip-marine.com/) using [AGS 4 Data Format](https://www.ags.org.uk/data-format/), [python-ags4](https://pypi.org/project/python-ags4/), [PyQt](https://doc.qt.io/qtforpython-5/) and [Pandas](https://pandas.pydata.org/).
 <br>
 
    <a href="https://www.geoquip-marine.com/"><img src="common/images/GQ_AGS2.PNG" data-canonical-src="common/images/geobig.png"/></a>
