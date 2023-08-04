@@ -16,7 +16,7 @@ import time
 import webbrowser
 import warnings
 warnings.filterwarnings("ignore")
-QApplication.setHighDpiScaleFactorRoundingPolicy(QtCore.Qt.HighDpiScaleFactorRoundingPolicy.PassThrough) 
+#QApplication.setHighDpiScaleFactorRoundingPolicy(QtCore.Qt.HighDpiScaleFactorRoundingPolicy.PassThrough) 
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
@@ -31,8 +31,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.config = configparser.ConfigParser()
         self.config.read('common/assets/settings.ini')
         self.move(200,200)
-
-        #self.file_open.triggered.connect(print())   -menubar
 
         self.text.setText('''Please insert AGS file.
 ''')
@@ -49,10 +47,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.button_export_results.clicked.connect(self.export_results)
         self.button_export_error.clicked.connect(self.export_errors)
         self.button_convert_excel.clicked.connect(self.convert_excel)
-
-        # git_icon = QPixmap("common/images/github_grey.svg").scaled(25, 25, transformMode=QtCore.Qt.SmoothTransformation, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
-        # self.github.setIcon(QtGui.QIcon(git_icon))
-        # self.github.clicked.connect(lambda: webbrowser.open('https://github.com/lachesis17'))
+        self.github.clicked.connect(self.promote)
 
 
         'table connects'
@@ -62,15 +57,17 @@ class MainWindow(QtWidgets.QMainWindow):
         self.headings_table.new_group.connect(lambda x: self.new_group(x))
         self.tables_table.insert_rows.connect(lambda x: self.add_rows(x))
         self.tables_table.refreshed.connect(self.reload_table)
+        self.tables_table.promote_sig.connect(self.promote)
 
+        #self.file_open.triggered.connect(print())   -menubar
 
-        self.temp_file_name = ''
+        self.temp_file_name: str = ''
         self.tables = None
         self.headings = None
-        self.result_list = []
-        self.error_list = []
-        self.ags_tables = []
-        self.results_with_samp_and_type = ""
+        self.result_list: list = []
+        self.error_list: list = []
+        self.ags_tables:list = []
+        self.results_with_samp_and_type: str = ""
 
         self.core_tables = ["TRAN","PROJ","UNIT","ABBR","TYPE","DICT","LOCA"]
 
@@ -148,7 +145,6 @@ Please select an AGS with "Open File..."''')
         self.headings_table.horizontalHeader().hide()
 
         self._tables_model = PandasModel(self.tables[f"{headings_df.iloc[0,0]}"])
-        self.tables_table.setAlternatingRowColors(True)
         self.tables_table.setModel(self._tables_model)
         self.tables_table.resizeColumnsToContents()
         self.tables_table.horizontalHeader().sectionPressed.connect(self.tables_table.selectColumn)   #col sel
@@ -2014,6 +2010,15 @@ Saving AGS to excel file...
             self.player.setMedia(content)
             self.player.setVolume(33)
             self.player.play()
+
+    def promote(self):
+        nice = ('common/assets/sounds/nice.mp3')
+        nice_url = QUrl.fromLocalFile(nice)
+        content = QMediaContent(nice_url)
+        self.player.setMedia(content)
+        self.player.setVolume(33)
+        self.player.play()
+        webbrowser.open('https://github.com/lachesis17')
 
 
     def disable_buttons(self):       

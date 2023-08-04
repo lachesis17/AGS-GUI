@@ -1,8 +1,10 @@
 import pandas as pd
-from PyQt5.QtCore import QAbstractTableModel, QPersistentModelIndex, QModelIndex, QEvent, QTimer, pyqtSignal
-from PyQt5.QtWidgets import QApplication, QTableView, QDoubleSpinBox, QMenu, QInputDialog, QPushButton
+from PyQt5.QtCore import QAbstractTableModel, QPersistentModelIndex, QModelIndex, QEvent, QTimer, pyqtSignal, QPoint, QObject, QPropertyAnimation
+from PyQt5.QtWidgets import QApplication, QTableView, QDoubleSpinBox, QMenu, QInputDialog, QPushButton, QWidget
 from PyQt5.QtGui import QKeySequence, QMouseEvent, QIcon, QPixmap
 import PyQt5.QtCore as QtCore
+from dataclasses import dataclass
+from functools import cached_property
 import csv
 import io
 import webbrowser
@@ -61,6 +63,7 @@ class PandasModel(QAbstractTableModel):
     def headerData(self, section: int, orientation: QtCore.Qt.Orientation, role: QtCore.Qt.ItemDataRole):
         # if not role == Qt.ItemDataRole.DisplayRole or orientation == Qt.Orientation.Vertical:
         #     return
+        '''When headerData() is called from the model, check the roles and give icons to header items based on sort state'''
         if role == QtCore.Qt.ItemDataRole.DecorationRole and orientation == QtCore.Qt.Orientation.Horizontal:
             if self.sort_state == 1:
                 return QPixmap("common/images/sort-ascending.svg").scaled(100, 100, transformMode=QtCore.Qt.SmoothTransformation, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
@@ -79,6 +82,7 @@ class PandasModel(QAbstractTableModel):
     def flags(self, index: QModelIndex) -> QtCore.Qt.ItemFlag:
         return QtCore.Qt.ItemFlag.ItemIsEnabled | QtCore.Qt.ItemFlag.ItemIsSelectable | QtCore.Qt.ItemFlag.ItemIsEditable
     
+    '''Overriding default sort method as it affects the interaction of the selection model on click, '''
     def sort(self, Ncol, order):
         return
 
@@ -106,6 +110,7 @@ class PandasView(QTableView):
 
     insert_rows = pyqtSignal(list)
     refreshed = pyqtSignal()
+    promote_sig = pyqtSignal()
 
     def __init__(self, *args, **kwargs):
         super(PandasView, self).__init__(*args, **kwargs)
@@ -118,7 +123,7 @@ class PandasView(QTableView):
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.row_menu)
 
-
+    '''Header context menu'''
     def header_menu(self, position):
         menu = QMenu()
         model = self.model()
@@ -191,11 +196,11 @@ class PandasView(QTableView):
                 model.sort_state = 0
                 model.headerData(index, QtCore.Qt.Orientation.Horizontal, role=QtCore.Qt.ItemDataRole.DecorationRole)
             if _action == github:
-                webbrowser.open('https://github.com/lachesis17')
+                self.promote_sig.emit()
         except Exception as e:
             print(e)
 
-
+    '''TableView context menu for adding rows'''
     def row_menu(self, position):
         menu = QMenu()
         insert_rows = menu.addAction(QIcon("common/images/insert.svg"),"Insert Rows")
@@ -215,7 +220,7 @@ class PandasView(QTableView):
             print(e)
 
 
-
+    '''Event handler for keyboard events'''
     def eventFilter(self, source, event):
         #print(event.type())
         if event.type() == QEvent.KeyPress and event.matches(QKeySequence.Copy):
@@ -238,7 +243,8 @@ class PandasView(QTableView):
         #https://stackoverflow.com/questions/65179468/cannot-set-header-data-with-qtableview-custom-table-model
         #https://forum.qt.io/topic/54115/text-and-icon-in-qtableview-header
     
-#        Determine next sorting state by current state
+
+        '''Toggling between sort states, to sort ascending, descending, and back to original index on double click event'''
         if model.sort_state == 0:
             model.sort_state = 1
             model.df.sort_values(col_name, ascending=True, kind='mergesort', inplace=True)
@@ -311,6 +317,7 @@ class PandasView(QTableView):
         self.clearSelection()
         #self.viewport().repaint()
 
+
     def sort_selection(self):
         selection = self.selectedIndexes()
 
@@ -324,6 +331,7 @@ class PandasView(QTableView):
         
         model = self.model()
         model._sort(cols[0], 1)
+
 
     def copy_selection(self):
         selection = self.selectedIndexes()
@@ -368,6 +376,7 @@ class PandasView(QTableView):
         stream = io.StringIO()
         csv.writer(stream, delimiter="\t").writerows(table)
         QApplication.clipboard().setText(stream.getvalue())
+
 
     def paste_selection(self):
         selection = self.selectedIndexes()
@@ -443,6 +452,45 @@ class PandasView(QTableView):
                         
 
         return
+    
+class HeadersView(QTableView):
+
+    delete_group = pyqtSignal(str)
+    rename_group = pyqtSignal(list)
+    new_group = pyqtSignal(str)
+
+    def __init__(self, *args, **kwargs):
+        super(HeadersView, self).__init__(*args, **kwargs)
+        #self.installEventFilter(self)
+        #self.doubleClicked.connect(lambda x: self.sort(x))
+        self.rows = self.verticalHeader()
+        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.header_menu)
+
+
+    '''Subclass TableView and context menu for just the groups'''
+    def header_menu(self, position):
+        menu = QMenu()
+        model = self.model()
+        rename = menu.addAction(QIcon("common/images/edit.svg"),"Rename Group")
+        insert_grp = menu.addAction(QIcon("common/images/insert.svg"),"Insert Group")
+        del_grp = menu.addAction(QIcon("common/images/delete.svg"),"Delete Group")
+        _action = menu.exec_(self.mapToGlobal(position))
+        index = self.rows.logicalIndexAt(position)
+        group_name = model.df.iloc[index,0]
+        if _action == rename:
+            new_group = QInputDialog.getText(self," ","Rename group:")
+            if new_group[1]:
+                groups = [group_name, new_group[0]]
+                self.rename_group.emit(groups)
+        if _action == insert_grp:   
+            new_grp = QInputDialog.getText(self," ","New group name:")
+            if new_grp[1]:
+                self.new_group.emit(new_grp[0])
+        if _action == del_grp:
+            self.delete_group.emit(group_name)
+            model.layoutChanged.emit()
+            self.resizeColumnsToContents()
 
     
 class Spinny(QDoubleSpinBox):
@@ -466,22 +514,23 @@ class Spinny(QDoubleSpinBox):
             QTimer.singleShot(0, self.selectAll)
 
 
-# class GitButton(QPushButton):
-#     def __init__(self, *args, **kwargs):
-#         QPushButton.__init__(self, *args, **kwargs)
-#         self.setMouseTracking(True)
+class GitButton(QPushButton):
+    def __init__(self, *args, **kwargs):
+        QPushButton.__init__(self, *args, **kwargs)
+        self.setMouseTracking(True)
+        #animate_image = AnimationManager(widget=self)
 
-#     def mouseMoveEvent(self, event):
+    def mouseMoveEvent(self, event):
         
-#         if (event.type()==QEvent.Leave):
-#             print('pp')
-#             icon = QPixmap("common/images/github.svg").scaled(25, 25, transformMode=QtCore.Qt.SmoothTransformation, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
-#             self.setIcon(QIcon(icon))
-#             return QPushButton.mouseMoveEvent(self, event)
-#         else:
-#             icon_ = QPixmap("common/images/github_grey.svg").scaled(25, 25, transformMode=QtCore.Qt.SmoothTransformation, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
-#             self.setIcon(QIcon(icon_))
-#             return QPushButton.mouseMoveEvent(self, event)
+        if (event.type()==QEvent.MouseTrackingChange):
+            print('pp')
+            icon = QPixmap("common/images/github.svg").scaled(25, 25, transformMode=QtCore.Qt.SmoothTransformation, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
+            self.setIcon(QIcon(icon))
+            return QPushButton.mouseMoveEvent(self, event)
+        else:
+            icon = QPixmap("common/images/github_grey.svg").scaled(25, 25, transformMode=QtCore.Qt.SmoothTransformation, aspectRatioMode=QtCore.Qt.KeepAspectRatio)
+            self.setIcon(QIcon(icon))
+            return QPushButton.mouseMoveEvent(self, event)
 
 # bool myWidget::event(QEvent* e) 
 # {
@@ -502,51 +551,51 @@ class Spinny(QDoubleSpinBox):
 #     return QWidget::event(e);
 # }
 
+#animating buttons    
+@dataclass
+class AnimationManager(QObject):
+    widget: QWidget
+    duration: int = 150
 
+    def __post_init__(self):
+        super().__init__(self.widget)
+        self._start_value = QPoint()
+        self.delta: QPoint = QPoint()
+        self._end_value = QPoint()
+        self.widget.installEventFilter(self)
+        self.animation.setTargetObject(self.widget)
+        self.animation.setPropertyName(b"pos")
+        self.reset()
 
-class HeadersView(QTableView):
+    def reset(self):
+        self._start_value = self.widget.pos()
+        self.delta = QPoint(self.widget.pos().x() + 6, self.widget.pos().y())
+        self._end_value = self._start_value + self.delta
+        self.animation.setDuration(self.duration)
 
-    delete_group = pyqtSignal(str)
-    rename_group = pyqtSignal(list)
-    new_group = pyqtSignal(str)
+    @cached_property
+    def animation(self):
+        return QPropertyAnimation(self)
 
-    def __init__(self, *args, **kwargs):
-        super(HeadersView, self).__init__(*args, **kwargs)
-        #self.installEventFilter(self)
-        #self.doubleClicked.connect(lambda x: self.sort(x))
-        self.rows = self.verticalHeader()
-        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.header_menu)
+    def eventFilter(self, obj, event):
+        if obj is self.widget:
+            if event.type() == QEvent.Enter:
+                self.start_enter_animation()
+            elif event.type() == QEvent.Leave:
+                self.start_leave_animation()
+        return super().eventFilter(obj, event)
 
+    def start_enter_animation(self):
+        self.animation.stop()
+        self.animation.setStartValue(self.widget.pos())
+        self.animation.setEndValue(self._end_value)
+        self.animation.start()
 
-
-    def header_menu(self, position):
-        menu = QMenu()
-        model = self.model()
-        rename = menu.addAction(QIcon("common/images/edit.svg"),"Rename Group")
-        insert_grp = menu.addAction(QIcon("common/images/insert.svg"),"Insert Group")
-        del_grp = menu.addAction(QIcon("common/images/delete.svg"),"Delete Group")
-        menu.addSeparator()
-        menu.addSeparator()
-        github = menu.addAction(QIcon("common/images/github.svg"),"GitHub")
-        _action = menu.exec_(self.mapToGlobal(position))
-        index = self.rows.logicalIndexAt(position)
-        group_name = model.df.iloc[index,0]
-        if _action == rename:
-            new_group = QInputDialog.getText(self," ","Rename group:")
-            if new_group[1]:
-                groups = [group_name, new_group[0]]
-                self.rename_group.emit(groups)
-        if _action == insert_grp:   
-            new_grp = QInputDialog.getText(self," ","New group name:")
-            if new_grp[1]:
-                self.new_group.emit(new_grp[0])
-        if _action == del_grp:
-            self.delete_group.emit(group_name)
-            model.layoutChanged.emit()
-            self.resizeColumnsToContents()
-        if _action == github:
-            webbrowser.open('https://github.com/lachesis17')
+    def start_leave_animation(self):
+        self.animation.stop()
+        self.animation.setStartValue(self.widget.pos())
+        self.animation.setEndValue(self._start_value)
+        self.animation.start()
 
     
 def except_hook(cls, exception, traceback):

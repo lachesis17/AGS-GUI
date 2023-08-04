@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>555</width>
-    <height>517</height>
+    <width>450</width>
+    <height>425</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,7 +19,7 @@
   <property name="minimumSize">
    <size>
     <width>450</width>
-    <height>385</height>
+    <height>425</height>
    </size>
   </property>
   <property name="windowTitle">
@@ -29,7 +29,7 @@
    <property name="minimumSize">
     <size>
      <width>450</width>
-     <height>385</height>
+     <height>420</height>
     </size>
    </property>
    <layout class="QHBoxLayout" name="horizontalLayout_13">
@@ -125,7 +125,7 @@ QTabWidget::pane {
            <widget class="QLabel" name="text">
             <property name="font">
              <font>
-              <family>Tahoma</family>
+              <family>Segoe UI</family>
               <pointsize>9</pointsize>
              </font>
             </property>
@@ -235,25 +235,25 @@ QTabWidget::pane {
                     <widget class="QPushButton" name="button_open">
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
-                       <horstretch>0</horstretch>
+                       <horstretch>1</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
                      <property name="minimumSize">
                       <size>
                        <width>325</width>
-                       <height>24</height>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="maximumSize">
                       <size>
                        <width>550</width>
-                       <height>24</height>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="font">
                       <font>
-                       <family>Tahoma</family>
+                       <family>Segoe UI</family>
                        <pointsize>9</pointsize>
                        <weight>50</weight>
                        <italic>false</italic>
@@ -263,7 +263,7 @@ QTabWidget::pane {
                      <property name="styleSheet">
                       <string notr="true">QPushButton {
     border-radius: 10px;
-	font: 9pt &quot;Tahoma&quot;;
+	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
 	padding:5px;
@@ -343,18 +343,18 @@ QPushButton:disabled {
                      <property name="minimumSize">
                       <size>
                        <width>250</width>
-                       <height>24</height>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="maximumSize">
                       <size>
                        <width>425</width>
-                       <height>24</height>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="font">
                       <font>
-                       <family>Tahoma</family>
+                       <family>Segoe UI</family>
                        <pointsize>9</pointsize>
                        <weight>50</weight>
                        <italic>false</italic>
@@ -364,7 +364,7 @@ QPushButton:disabled {
                      <property name="styleSheet">
                       <string notr="true">QPushButton {
     border-radius: 10px;
-	font: 9pt &quot;Tahoma&quot;;
+	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
 	padding:5px;
@@ -431,18 +431,18 @@ QPushButton:disabled {
                      <property name="minimumSize">
                       <size>
                        <width>250</width>
-                       <height>24</height>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="maximumSize">
                       <size>
                        <width>425</width>
-                       <height>24</height>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="font">
                       <font>
-                       <family>Tahoma</family>
+                       <family>Segoe UI</family>
                        <pointsize>9</pointsize>
                        <weight>50</weight>
                        <italic>false</italic>
@@ -452,7 +452,7 @@ QPushButton:disabled {
                      <property name="styleSheet">
                       <string notr="true">QPushButton {
     border-radius: 10px;
-	font: 9pt &quot;Tahoma&quot;;
+	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
 	padding:5px;
@@ -519,18 +519,18 @@ QPushButton:disabled {
                      <property name="minimumSize">
                       <size>
                        <width>250</width>
-                       <height>24</height>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="maximumSize">
                       <size>
                        <width>425</width>
-                       <height>24</height>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="font">
                       <font>
-                       <family>Tahoma</family>
+                       <family>Segoe UI</family>
                        <pointsize>9</pointsize>
                        <weight>50</weight>
                        <italic>false</italic>
@@ -540,7 +540,7 @@ QPushButton:disabled {
                      <property name="styleSheet">
                       <string notr="true">QPushButton {
     border-radius: 10px;
-	font: 9pt &quot;Tahoma&quot;;
+	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
 	padding:5px;
@@ -719,25 +719,25 @@ QPushButton:disabled {
                      </property>
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
-                       <horstretch>0</horstretch>
+                       <horstretch>1</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
                      <property name="minimumSize">
                       <size>
                        <width>325</width>
-                       <height>24</height>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="maximumSize">
                       <size>
                        <width>550</width>
-                       <height>24</height>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="font">
                       <font>
-                       <family>Tahoma</family>
+                       <family>Segoe UI</family>
                        <pointsize>9</pointsize>
                        <weight>50</weight>
                        <italic>false</italic>
@@ -747,7 +747,7 @@ QPushButton:disabled {
                      <property name="styleSheet">
                       <string notr="true">QPushButton {
     border-radius: 10px;
-	font: 9pt &quot;Tahoma&quot;;
+	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
 	padding:5px;
@@ -827,18 +827,18 @@ QPushButton:disabled {
                      <property name="minimumSize">
                       <size>
                        <width>250</width>
-                       <height>24</height>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="maximumSize">
                       <size>
                        <width>425</width>
-                       <height>24</height>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="styleSheet">
                       <string notr="true">QComboBox {
-	font: 9pt &quot;Tahoma&quot;;
+	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
     border-radius: 10px;
@@ -962,18 +962,18 @@ QComboBox:enabled {
                      <property name="minimumSize">
                       <size>
                        <width>250</width>
-                       <height>24</height>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="maximumSize">
                       <size>
                        <width>425</width>
-                       <height>24</height>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="font">
                       <font>
-                       <family>Tahoma</family>
+                       <family>Segoe UI</family>
                        <pointsize>9</pointsize>
                        <weight>50</weight>
                        <italic>false</italic>
@@ -983,7 +983,7 @@ QComboBox:enabled {
                      <property name="styleSheet">
                       <string notr="true">QPushButton {
     border-radius: 10px;
-	font: 9pt &quot;Tahoma&quot;;
+	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
 	padding:5px;
@@ -1061,25 +1061,70 @@ QPushButton:disabled {
             </item>
            </layout>
           </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_10">
+          <property name="spacing">
+           <number>0</number>
+          </property>
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_9">
-            <item>
-             <widget class="QGraphicsView" name="top_spacer_3">
-              <property name="maximumSize">
-               <size>
-                <width>20</width>
-                <height>10</height>
-               </size>
-              </property>
-              <property name="styleSheet">
-               <string notr="true">QGraphicsView {
+           <widget class="QGraphicsView" name="top_spacer_4">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>1</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>4</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">QGraphicsView {
     background: #f0f0f0;
 	border: 0;
 }</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="GitButton" name="github">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+              <horstretch>0</horstretch>
+              <verstretch>5</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>25</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>25</width>
+              <height>25</height>
+             </size>
+            </property>
+            <property name="styleSheet">
+             <string notr="true">border : 0;
+background: transparent;
+padding: 18px;</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+           </widget>
           </item>
          </layout>
         </item>
@@ -1089,83 +1134,119 @@ QPushButton:disabled {
        <attribute name="title">
         <string>View and Edit</string>
        </attribute>
-       <layout class="QVBoxLayout" name="verticalLayout_4">
+       <layout class="QHBoxLayout" name="horizontalLayout_20">
         <item>
-         <layout class="QHBoxLayout" name="horizontalLayout_20">
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_22">
+         <widget class="QSplitter" name="splitter">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <widget class="QWidget" name="widget" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>1</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>16777215</height>
+            </size>
+           </property>
+           <layout class="QHBoxLayout" name="horizontalLayout_12">
             <item>
-             <widget class="QSplitter" name="splitter">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
+             <widget class="HeadersView" name="headings_table">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
               </property>
-              <widget class="QWidget" name="widget" native="true">
-               <property name="maximumSize">
-                <size>
-                 <width>150</width>
-                 <height>16777215</height>
-                </size>
-               </property>
-               <layout class="QHBoxLayout" name="horizontalLayout_12">
-                <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_21">
-                  <item>
-                   <widget class="HeadersView" name="headings_table">
-                    <property name="sizePolicy">
-                     <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
-                      <horstretch>0</horstretch>
-                      <verstretch>0</verstretch>
-                     </sizepolicy>
-                    </property>
-                    <property name="minimumSize">
-                     <size>
-                      <width>0</width>
-                      <height>0</height>
-                     </size>
-                    </property>
-                    <property name="maximumSize">
-                     <size>
-                      <width>150</width>
-                      <height>16777215</height>
-                     </size>
-                    </property>
-                    <property name="sizeAdjustPolicy">
-                     <enum>QAbstractScrollArea::AdjustIgnored</enum>
-                    </property>
-                    <property name="selectionBehavior">
-                     <enum>QAbstractItemView::SelectRows</enum>
-                    </property>
-                    <property name="showGrid">
-                     <bool>false</bool>
-                    </property>
-                    <property name="gridStyle">
-                     <enum>Qt::NoPen</enum>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
-                </item>
-               </layout>
-              </widget>
-              <widget class="QWidget" name="widget_2" native="true">
-               <layout class="QVBoxLayout" name="verticalLayout_6">
-                <item>
-                 <widget class="PandasView" name="tables_table">
-                  <property name="sizePolicy">
-                   <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-                    <horstretch>0</horstretch>
-                    <verstretch>0</verstretch>
-                   </sizepolicy>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </widget>
+              <property name="minimumSize">
+               <size>
+                <width>150</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QTableView {
+	border: 1px solid #828790;
+}
+
+</string>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::Box</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Plain</enum>
+              </property>
+              <property name="lineWidth">
+               <number>1</number>
+              </property>
+              <property name="midLineWidth">
+               <number>1</number>
+              </property>
+              <property name="sizeAdjustPolicy">
+               <enum>QAbstractScrollArea::AdjustIgnored</enum>
+              </property>
+              <property name="selectionBehavior">
+               <enum>QAbstractItemView::SelectRows</enum>
+              </property>
+              <property name="showGrid">
+               <bool>false</bool>
+              </property>
+              <property name="gridStyle">
+               <enum>Qt::NoPen</enum>
+              </property>
              </widget>
             </item>
            </layout>
-          </item>
-         </layout>
+          </widget>
+          <widget class="QWidget" name="widget_2" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+             <horstretch>10</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <layout class="QVBoxLayout" name="verticalLayout_6">
+            <item>
+             <widget class="PandasView" name="tables_table">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QTableView {
+	border: 1px solid #828790;
+}</string>
+              </property>
+              <property name="frameShape">
+               <enum>QFrame::Box</enum>
+              </property>
+              <property name="frameShadow">
+               <enum>QFrame::Plain</enum>
+              </property>
+              <property name="lineWidth">
+               <number>1</number>
+              </property>
+              <property name="midLineWidth">
+               <number>1</number>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </widget>
         </item>
        </layout>
       </widget>
@@ -1209,8 +1290,23 @@ QPushButton:disabled {
           <layout class="QHBoxLayout" name="horizontalLayout_8">
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout">
+             <property name="spacing">
+              <number>6</number>
+             </property>
+             <property name="leftMargin">
+              <number>6</number>
+             </property>
+             <property name="rightMargin">
+              <number>6</number>
+             </property>
              <item>
               <layout class="QVBoxLayout" name="verticalLayout_8">
+               <property name="leftMargin">
+                <number>6</number>
+               </property>
+               <property name="rightMargin">
+                <number>6</number>
+               </property>
                <item>
                 <widget class="QGraphicsView" name="top_left_spacer_2">
                  <property name="maximumSize">
@@ -1236,9 +1332,12 @@ QPushButton:disabled {
                      <property name="orientation">
                       <enum>Qt::Horizontal</enum>
                      </property>
+                     <property name="sizeType">
+                      <enum>QSizePolicy::MinimumExpanding</enum>
+                     </property>
                      <property name="sizeHint" stdset="0">
                       <size>
-                       <width>40</width>
+                       <width>20</width>
                        <height>20</height>
                       </size>
                      </property>
@@ -1251,25 +1350,25 @@ QPushButton:disabled {
                      </property>
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-                       <horstretch>0</horstretch>
+                       <horstretch>3</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
                      <property name="minimumSize">
                       <size>
-                       <width>200</width>
-                       <height>24</height>
+                       <width>150</width>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="maximumSize">
                       <size>
                        <width>16777215</width>
-                       <height>24</height>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="font">
                       <font>
-                       <family>Tahoma</family>
+                       <family>Segoe UI</family>
                        <pointsize>9</pointsize>
                        <weight>50</weight>
                        <italic>false</italic>
@@ -1279,7 +1378,7 @@ QPushButton:disabled {
                      <property name="styleSheet">
                       <string notr="true">QPushButton {
     border-radius: 10px;
-	font: 9pt &quot;Tahoma&quot;;
+	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
 	padding:5px;
@@ -1307,9 +1406,12 @@ QPushButton:disabled {
                      <property name="orientation">
                       <enum>Qt::Horizontal</enum>
                      </property>
+                     <property name="sizeType">
+                      <enum>QSizePolicy::MinimumExpanding</enum>
+                     </property>
                      <property name="sizeHint" stdset="0">
                       <size>
-                       <width>40</width>
+                       <width>20</width>
                        <height>20</height>
                       </size>
                      </property>
@@ -1322,25 +1424,25 @@ QPushButton:disabled {
                      </property>
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-                       <horstretch>0</horstretch>
+                       <horstretch>3</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
                      <property name="minimumSize">
                       <size>
-                       <width>200</width>
-                       <height>24</height>
+                       <width>150</width>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="maximumSize">
                       <size>
                        <width>16777215</width>
-                       <height>24</height>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="font">
                       <font>
-                       <family>Tahoma</family>
+                       <family>Segoe UI</family>
                        <pointsize>9</pointsize>
                        <weight>50</weight>
                        <italic>false</italic>
@@ -1350,7 +1452,7 @@ QPushButton:disabled {
                      <property name="styleSheet">
                       <string notr="true">QPushButton {
     border-radius: 10px;
-	font: 9pt &quot;Tahoma&quot;;
+	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
 	padding:5px;
@@ -1378,9 +1480,12 @@ QPushButton:disabled {
                      <property name="orientation">
                       <enum>Qt::Horizontal</enum>
                      </property>
+                     <property name="sizeType">
+                      <enum>QSizePolicy::MinimumExpanding</enum>
+                     </property>
                      <property name="sizeHint" stdset="0">
                       <size>
-                       <width>40</width>
+                       <width>20</width>
                        <height>20</height>
                       </size>
                      </property>
@@ -1414,25 +1519,25 @@ QPushButton:disabled {
                      </property>
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-                       <horstretch>0</horstretch>
+                       <horstretch>1</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
                      <property name="minimumSize">
                       <size>
-                       <width>160</width>
-                       <height>24</height>
+                       <width>130</width>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="maximumSize">
                       <size>
                        <width>16777215</width>
-                       <height>24</height>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="font">
                       <font>
-                       <family>Tahoma</family>
+                       <family>Segoe UI</family>
                        <pointsize>9</pointsize>
                        <weight>50</weight>
                        <italic>false</italic>
@@ -1442,7 +1547,7 @@ QPushButton:disabled {
                      <property name="styleSheet">
                       <string notr="true">QPushButton {
     border-radius: 10px;
-	font: 9pt &quot;Tahoma&quot;;
+	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
 	padding:5px;
@@ -1485,25 +1590,25 @@ QPushButton:disabled {
                      </property>
                      <property name="sizePolicy">
                       <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-                       <horstretch>0</horstretch>
+                       <horstretch>1</horstretch>
                        <verstretch>0</verstretch>
                       </sizepolicy>
                      </property>
                      <property name="minimumSize">
                       <size>
-                       <width>160</width>
-                       <height>24</height>
+                       <width>130</width>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="maximumSize">
                       <size>
                        <width>16777215</width>
-                       <height>24</height>
+                       <height>28</height>
                       </size>
                      </property>
                      <property name="font">
                       <font>
-                       <family>Tahoma</family>
+                       <family>Segoe UI</family>
                        <pointsize>9</pointsize>
                        <weight>50</weight>
                        <italic>false</italic>
@@ -1513,7 +1618,7 @@ QPushButton:disabled {
                      <property name="styleSheet">
                       <string notr="true">QPushButton {
     border-radius: 10px;
-	font: 9pt &quot;Tahoma&quot;;
+	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
 	padding:5px;
@@ -1577,6 +1682,21 @@ QPushButton:disabled {
                    <verstretch>0</verstretch>
                   </sizepolicy>
                  </property>
+                 <property name="frameShadow">
+                  <enum>QFrame::Plain</enum>
+                 </property>
+                 <property name="lineWidth">
+                  <number>10</number>
+                 </property>
+                 <property name="midLineWidth">
+                  <number>10</number>
+                 </property>
+                 <property name="showGrid">
+                  <bool>false</bool>
+                 </property>
+                 <attribute name="verticalHeaderVisible">
+                  <bool>false</bool>
+                 </attribute>
                 </widget>
                </item>
                <item>
@@ -1617,25 +1737,25 @@ QPushButton:disabled {
                    </property>
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-                     <horstretch>0</horstretch>
+                     <horstretch>2</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
                    </property>
                    <property name="minimumSize">
                     <size>
-                     <width>175</width>
-                     <height>24</height>
+                     <width>160</width>
+                     <height>28</height>
                     </size>
                    </property>
                    <property name="maximumSize">
                     <size>
                      <width>16777215</width>
-                     <height>24</height>
+                     <height>28</height>
                     </size>
                    </property>
                    <property name="font">
                     <font>
-                     <family>Tahoma</family>
+                     <family>Segoe UI</family>
                      <pointsize>9</pointsize>
                      <weight>50</weight>
                      <italic>false</italic>
@@ -1645,7 +1765,7 @@ QPushButton:disabled {
                    <property name="styleSheet">
                     <string notr="true">QPushButton {
     border-radius: 10px;
-	font: 9pt &quot;Tahoma&quot;;
+	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
 	padding:5px;
@@ -1675,7 +1795,7 @@ QPushButton:disabled {
                    </property>
                    <property name="sizeHint" stdset="0">
                     <size>
-                     <width>40</width>
+                     <width>20</width>
                      <height>20</height>
                     </size>
                    </property>
@@ -1688,25 +1808,25 @@ QPushButton:disabled {
                    </property>
                    <property name="sizePolicy">
                     <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-                     <horstretch>0</horstretch>
+                     <horstretch>2</horstretch>
                      <verstretch>0</verstretch>
                     </sizepolicy>
                    </property>
                    <property name="minimumSize">
                     <size>
-                     <width>175</width>
-                     <height>24</height>
+                     <width>160</width>
+                     <height>28</height>
                     </size>
                    </property>
                    <property name="maximumSize">
                     <size>
                      <width>16777215</width>
-                     <height>24</height>
+                     <height>28</height>
                     </size>
                    </property>
                    <property name="font">
                     <font>
-                     <family>Tahoma</family>
+                     <family>Segoe UI</family>
                      <pointsize>9</pointsize>
                      <weight>50</weight>
                      <italic>false</italic>
@@ -1716,7 +1836,7 @@ QPushButton:disabled {
                    <property name="styleSheet">
                     <string notr="true">QPushButton {
     border-radius: 10px;
-	font: 9pt &quot;Tahoma&quot;;
+	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
 	padding:5px;
@@ -1788,7 +1908,7 @@ QPushButton:disabled {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>555</width>
+     <width>450</width>
      <height>21</height>
     </rect>
    </property>
@@ -1804,6 +1924,11 @@ QPushButton:disabled {
   <customwidget>
    <class>HeadersView</class>
    <extends>QTableView</extends>
+   <header>common.pandas_table</header>
+  </customwidget>
+  <customwidget>
+   <class>GitButton</class>
+   <extends>QPushButton</extends>
    <header>common.pandas_table</header>
   </customwidget>
  </customwidgets>
