@@ -16,7 +16,7 @@ import time
 import webbrowser
 import warnings
 warnings.filterwarnings("ignore")
-#QApplication.setHighDpiScaleFactorRoundingPolicy(QtCore.Qt.HighDpiScaleFactorRoundingPolicy.PassThrough) 
+QApplication.setHighDpiScaleFactorRoundingPolicy(QtCore.Qt.HighDpiScaleFactorRoundingPolicy.PassThrough) 
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
 
@@ -1904,12 +1904,14 @@ Did you select the correct gINT or AGS?''')
 Click "Save AGS file"''')
             QApplication.processEvents()
             print("CPT Data export ready. Click 'Save AGS file'.")
+            self.setup_tables()
 
         else:
             self.text.setText('''Could not find any CPT tables.
 Check the AGS with "View data".''')
             QApplication.processEvents()
             print("No CPT groups found - did this AGS contain CPT data? Check the data with 'View data'.")
+            self.setup_tables()
 
     
     def get_lab_tables(self):
@@ -1946,6 +1948,7 @@ Click "Save AGS file"''')
             QApplication.processEvents()
             print("Lab Data & GEOL export ready. Click 'Save AGS file'.")
             self.ags_table_reset()
+            self.setup_tables()
 
         else:
             self.text.setText('''Could not find any Lab or GEOL tables.
@@ -1953,6 +1956,7 @@ Check the AGS with "View data".''')
             QApplication.processEvents()
             print("No Lab or GEOL groups found - did this AGS contain CPT data? Check the data with 'View data'.")
             self.ags_table_reset()
+            self.setup_tables()
 
     
     def convert_excel(self):
@@ -2079,8 +2083,8 @@ Saving AGS to excel file...
         
         self.config['Window']['width'] = width
         self.config['Window']['height'] = height
-        # with open('common/assets/settings.ini', 'w') as configfile: 
-        #     self.config.write(configfile)
+        with open('common/assets/settings.ini', 'w') as configfile: 
+            self.config.write(configfile)
         self.resizing = False
     
     def set_size(self):

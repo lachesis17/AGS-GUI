@@ -266,7 +266,7 @@ QTabWidget::pane {
 	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
-	padding:5px;
+	padding:2px;
 }
 
 QPushButton:selected { 
@@ -367,7 +367,7 @@ QPushButton:disabled {
 	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
-	padding:5px;
+	padding:2px;
 }
 
 QPushButton:selected { /* italicize selected tabs */
@@ -455,7 +455,7 @@ QPushButton:disabled {
 	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
-	padding:5px;
+	padding:2px;
 }
 
 QPushButton:selected { 
@@ -543,7 +543,7 @@ QPushButton:disabled {
 	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
-	padding:5px;
+	padding:2px;
 }
 
 QPushButton:selected { 
@@ -750,7 +750,7 @@ QPushButton:disabled {
 	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
-	padding:5px;
+	padding:2px;
 }
 
 QPushButton:selected {
@@ -842,7 +842,7 @@ QPushButton:disabled {
     background: #2b4768;
     color: white;
     border-radius: 10px;
-	padding: 4px;
+	padding: 2px;
 	padding-left: 6px;
 }
 
@@ -986,7 +986,7 @@ QComboBox:enabled {
 	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
-	padding:5px;
+	padding:2px;
 }
 
 QPushButton:selected { 
@@ -1381,7 +1381,7 @@ padding: 18px;</string>
 	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
-	padding:5px;
+	padding:2px;
 }
 
 QPushButton:selected { 
@@ -1455,7 +1455,7 @@ QPushButton:disabled {
 	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
-	padding:5px;
+	padding:2px;
 }
 
 QPushButton:selected { 
@@ -1525,7 +1525,7 @@ QPushButton:disabled {
                      </property>
                      <property name="minimumSize">
                       <size>
-                       <width>130</width>
+                       <width>145</width>
                        <height>28</height>
                       </size>
                      </property>
@@ -1550,7 +1550,7 @@ QPushButton:disabled {
 	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
-	padding:5px;
+	padding: 2px;
 }
 
 QPushButton:selected { 
@@ -1596,7 +1596,7 @@ QPushButton:disabled {
                      </property>
                      <property name="minimumSize">
                       <size>
-                       <width>130</width>
+                       <width>145</width>
                        <height>28</height>
                       </size>
                      </property>
@@ -1621,7 +1621,7 @@ QPushButton:disabled {
 	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
-	padding:5px;
+	padding:2px;
 }
 
 QPushButton:selected { 
@@ -1743,7 +1743,7 @@ QPushButton:disabled {
                    </property>
                    <property name="minimumSize">
                     <size>
-                     <width>160</width>
+                     <width>170</width>
                      <height>28</height>
                     </size>
                    </property>
@@ -1768,7 +1768,7 @@ QPushButton:disabled {
 	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
-	padding:5px;
+	padding:2px;
 }
 
 QPushButton:selected { 
@@ -1814,7 +1814,7 @@ QPushButton:disabled {
                    </property>
                    <property name="minimumSize">
                     <size>
-                     <width>160</width>
+                     <width>170</width>
                      <height>28</height>
                     </size>
                    </property>
@@ -1839,7 +1839,7 @@ QPushButton:disabled {
 	font: 9pt &quot;Segoe UI&quot;;
     background: #2b4768;
     color: white;
-	padding:5px;
+	padding:2px;
 }
 
 QPushButton:selected {
@@ -1909,7 +1909,7 @@ QPushButton:disabled {
      <x>0</x>
      <y>0</y>
      <width>450</width>
-     <height>21</height>
+     <height>26</height>
     </rect>
    </property>
   </widget>
