@@ -1,4 +1,4 @@
-### **Open, edit and check .AGS files**
+### **Open, edit and check .AGS files used in onshore & offshore geotechnical site investigations**
 <br>
 
 #### Steps for gINT Import:
@@ -21,8 +21,8 @@
 #### Open and Save
   - Open File: opens any valid AGS files
     - Use the 'AGS4_package_edit.py' file to replace 'AGS4.py' in <i>Python/lib/site-packages/python_ags4/</i>
-        - This allows misplaced carriage returns characters (line-breaks) to be concatenated onto the line above, fixing the<br>
-        <i>Error: Line x does not have the same number of entries as the HEADING.</i>
+        - This allows misplaced carriage returns characters (line-breaks) to be concatenated onto the line above<br>
+        <i>Bugfix for - Error: Line x does not have the same number of entries as the HEADING.</i>
         - This commonly occurs in remark fields '_REM' or comments and prevents the file from being opened with the python_ags4 library
   - Save File: allows the current state of the loaded AGS to be saved, into either AGS or Excel
   - Delete Non-Result Tables and gINT data matching
@@ -72,7 +72,7 @@
 <br><br>
 
 
-##### Developed for onshore & offshore geotechnical data for [Geoquip-Marine](https://www.geoquip-marine.com/) using [AGS 4 Data Format](https://www.ags.org.uk/data-format/), [python-ags4](https://pypi.org/project/python-ags4/), [PyQt](https://doc.qt.io/qtforpython-5/) and [Pandas](https://pandas.pydata.org/).
+##### Developed for [Geoquip-Marine](https://www.geoquip-marine.com/) using [AGS 4 Data Format](https://www.ags.org.uk/data-format/), [python-ags4](https://pypi.org/project/python-ags4/), [PyQt](https://doc.qt.io/qtforpython-5/) and [Pandas](https://pandas.pydata.org/).
 <br>
 
    <a href="https://www.geoquip-marine.com/"><img src="common/images/GQ_AGS2.PNG" data-canonical-src="common/images/geobig.png"/></a>
