@@ -2005,8 +2005,14 @@ Saving AGS to excel file...
             self.player.setVolume(22)
             self.player.play()
 
-    def play_nice(self):
-        nice_num = np.random.randint(100)
+    def play_nice(self, *args):
+        if not args:
+            nice_num = np.random.randint(100)
+        else:
+            try:
+                nice_num = np.random.randint(args[0])
+            except Exception as e:
+                print(e)
         if nice_num == 7:
             nice = ('common/assets/sounds/nice.mp3')
             nice_url = QUrl.fromLocalFile(nice)
@@ -2016,13 +2022,8 @@ Saving AGS to excel file...
             self.player.play()
 
     def promote(self):
-        nice = ('common/assets/sounds/nice.mp3')
-        nice_url = QUrl.fromLocalFile(nice)
-        content = QMediaContent(nice_url)
-        self.player.setMedia(content)
-        self.player.setVolume(33)
-        self.player.play()
-        webbrowser.open('https://github.com/lachesis17')
+        self.play_nice(8)
+        webbrowser.open('https://github.com/lachesis17/AGS-GUI')
 
 
     def disable_buttons(self):       
