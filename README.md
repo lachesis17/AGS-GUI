@@ -16,7 +16,7 @@
 - [Count Results and Check Errors](#count-results-and-check-errors)
 <br>
 
-<img src="common/images/AGS-GUI-readme.png" data-canonical-src="common/images/AGS-GUI-readme.png"/>
+<img src="common/images/AGS-GUI-readme.png" data-canonical-src="common/images/AGS-GUI-readme.png" width="75%"/>
 
 #### Open and Save
   - Open File: opens any valid AGS files
