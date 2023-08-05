@@ -123,6 +123,8 @@ class PandasView(QTableView):
         self.rows.setFixedWidth(12)
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.row_menu)
+        self.rows.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.rows.customContextMenuRequested.connect(self.row_menu)
 
     '''Header context menu'''
     def header_menu(self, position):

@@ -460,25 +460,34 @@ Please select an AGS with "Open File..."''')
 
         
     def check_ags(self):
+        self.error_list = []
         self.disable_buttons()
         self.text.setText('''Checking AGS for errors...
 ''')
         QApplication.processEvents()
 
         try:
-            if not self.file_location == '':
-                errors = AGS4.check_file(self.file_location)
-            else:
-                if self.file_location == '':
-                    self.text.setText('''No AGS file selected!
+            if self.file_location == '':
+                self.text.setText('''No AGS file selected!
 Please select an AGS with "Open File..."''')
-                    QApplication.processEvents()
-                    print("No AGS file selected! Please select an AGS with 'Open File...'")
-                else:
-                    errors = AGS4.check_file(self.file_location)
+                QApplication.processEvents()
+                print("No AGS file selected! Please select an AGS with 'Open File...'")
+            else:
+                try:
+                    #errors = AGS4.check_file(self.file_location)
+                    '''need to get the latest data from self.tables to check errors, but dataframe_to_AGS4 method returns a file... so create a temp file to delete later'''
+                    AGS4.dataframe_to_AGS4(self.tables, self.tables, f'{os.getcwd()}\\_temp_.ags')
+                    errors = AGS4.check_file(f'{os.getcwd()}\\_temp_.ags')
+                except Exception as e:
+                    print(e)
                     
         except ValueError as e:
             print(f'AGS Checker ended unexpectedly: {e}')
+            try:
+                if os.path.isfile(f'{os.getcwd()}\\_temp_.ags'):
+                    os.remove(f'{os.getcwd()}\\_temp_.ags')
+            except Exception as e:
+                print(e)
             return
         
         if not errors:
@@ -486,6 +495,11 @@ Please select an AGS with "Open File..."''')
             self.text.setText("""AGS file contains no errors!
 """)
             QApplication.processEvents()
+            try:    
+                if os.path.isfile(f'{os.getcwd()}\\_temp_.ags'):
+                    os.remove(f'{os.getcwd()}\\_temp_.ags')
+            except Exception as e:
+                print(e)
             return
         
         for rule, items in errors.items():
@@ -518,6 +532,12 @@ Please select an AGS with "Open File..."''')
             self.text.setText('''Error(s) found, check output or click 'Export Error Log'.
 ''')
             QApplication.processEvents()
+        
+        try:    
+            if os.path.isfile(f'{os.getcwd()}\\_temp_.ags'):
+                os.remove(f'{os.getcwd()}\\_temp_.ags')
+        except Exception as e:
+            print(e)
         self.enable_buttons()
 
     def export_errors(self):
