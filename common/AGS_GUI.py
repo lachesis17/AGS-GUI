@@ -490,18 +490,6 @@ Please select an AGS with "Open File..."''')
                 print(e)
             return
         
-        if not errors:
-            print("No errors found. Yay.")
-            self.text.setText("""AGS file contains no errors!
-""")
-            QApplication.processEvents()
-            try:    
-                if os.path.isfile(f'{os.getcwd()}\\_temp_.ags'):
-                    os.remove(f'{os.getcwd()}\\_temp_.ags')
-            except Exception as e:
-                print(e)
-            return
-        
         for rule, items in errors.items():
             if rule == 'Metadata':
                 print('Metadata')
@@ -510,15 +498,28 @@ Please select an AGS with "Open File..."''')
                 continue
                     
             for error in items:
-                self.text.setText('''Error(s) found, check output or click 'Export Error Log'.
-''')
-                QApplication.processEvents()
                 print(f"Error in line: {error['line']}, group: {error['group']}, description: {error['desc']}")
                 self.error_list.append(f"Error in line: {error['line']}, group: {error['group']}, description: {error['desc']}")
 
         if errors:
             self.button_export_error.setEnabled(True)
-            err_str = '\n'.join(str(x) for x in self.error_list)
+
+            try:    
+                if os.path.isfile(f'{os.getcwd()}\\_temp_.ags'):
+                    os.remove(f'{os.getcwd()}\\_temp_.ags')
+            except Exception as e:
+                print(e)
+            self.enable_buttons()
+
+            if self.error_list == []:
+                self.error_list.append("No errors found. Yay.")
+                print("No errors found. Yay.")
+                self.text.setText("""AGS file contains no errors!
+""")        
+            else:
+                self.text.setText('''Error(s) found, check output or click 'Export Error Log'.
+''')
+            QApplication.processEvents()
 
             err_df = pd.DataFrame.from_dict(self.error_list)
             print(err_df)
@@ -528,17 +529,6 @@ Please select an AGS with "Open File..."''')
             self.listbox.resizeColumnsToContents()
             self.listbox.horizontalHeader().hide()
 
-            #self.listbox.setText(err_str)
-            self.text.setText('''Error(s) found, check output or click 'Export Error Log'.
-''')
-            QApplication.processEvents()
-        
-        try:    
-            if os.path.isfile(f'{os.getcwd()}\\_temp_.ags'):
-                os.remove(f'{os.getcwd()}\\_temp_.ags')
-        except Exception as e:
-            print(e)
-        self.enable_buttons()
 
     def export_errors(self):
         self.disable_buttons()
