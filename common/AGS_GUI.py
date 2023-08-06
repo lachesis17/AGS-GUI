@@ -151,11 +151,17 @@ Please select an AGS with "Open File..."''')
 
 
     def delete_group(self, group: str):
-        del self.tables[group]
+        try:
+            del self.tables[group]
+        except Exception as e:
+            print(e)
         self.setup_tables()
 
     def rename_group(self, groups: list):
-        self.tables[groups[1]] = self.tables.pop(groups[0])
+        try:
+            self.tables[groups[1]] = self.tables.pop(groups[0])
+        except Exception as e:
+            print(e)
         self.setup_tables()
 
     def new_group(self, group: str):
@@ -211,8 +217,167 @@ Please select an AGS with "Open File..."''')
         self._tables_model.layoutChanged.emit()
         self.tables_table.resizeColumnsToContents()
 
+        
+    def view_tableview(self):
+        self.tabWidget.setCurrentIndex(1)
+
+        
+    def check_ags(self):
+        self.error_list = []
+        self.disable_buttons()
+        self.text.setText('''Checking AGS for errors...
+''')
+        QApplication.processEvents()
+
+        try:
+            if self.file_location == '':
+                self.text.setText('''No AGS file selected!
+Please select an AGS with "Open File..."''')
+                QApplication.processEvents()
+                print("No AGS file selected! Please select an AGS with 'Open File...'")
+            else:
+                try:
+                    #errors = AGS4.check_file(self.file_location)
+                    '''need to get the latest data from self.tables to check errors, but dataframe_to_AGS4 method returns a file... so create a temp file to delete later'''
+                    AGS4.dataframe_to_AGS4(self.tables, self.tables, f'{os.getcwd()}\\_temp_.ags')
+                    errors = AGS4.check_file(f'{os.getcwd()}\\_temp_.ags')
+                except Exception as e:
+                    print(e)
+                    
+        except ValueError as e:
+            print(f'AGS Checker ended unexpectedly: {e}')
+            try:
+                if os.path.isfile(f'{os.getcwd()}\\_temp_.ags'):
+                    os.remove(f'{os.getcwd()}\\_temp_.ags')
+            except Exception as e:
+                print(e)
+            return
+        
+        for rule, items in errors.items():
+            if rule == 'Metadata':
+                print('Metadata')
+                for msg in items:
+                    print(f"{msg['line']}: {msg['desc']}")
+                continue
+                    
+            for error in items:
+                print(f"Error in line: {error['line']}, group: {error['group']}, description: {error['desc']}")
+                self.error_list.append(f"Error in line: {error['line']}, group: {error['group']}, description: {error['desc']}")
+
+        if errors:
+            self.button_export_error.setEnabled(True)
+
+            try:    
+                if os.path.isfile(f'{os.getcwd()}\\_temp_.ags'):
+                    os.remove(f'{os.getcwd()}\\_temp_.ags')
+            except Exception as e:
+                print(e)
+            self.enable_buttons()
+
+            if self.error_list == []:
+                self.error_list.append("No errors found. Yay.")
+                print("No errors found. Yay.")
+                self.text.setText("""AGS file contains no errors!
+""")        
+            else:
+                self.text.setText('''Error(s) found, check output or click 'Export Error Log'.
+''')
+            QApplication.processEvents()
+
+            err_df = pd.DataFrame.from_dict(self.error_list)
+            print(err_df)
+
+            self._error_model = PandasModel(err_df)
+            self.listbox.setModel(self._error_model)
+            self.listbox.resizeColumnsToContents()
+            self.listbox.horizontalHeader().hide()
 
 
+    def export_errors(self):
+        self.disable_buttons()
+        
+        if not self.config.get('LastFolder','dir') == "":
+            self.log_path = QtWidgets.QFileDialog.getSaveFileName(self,'Save error log as...', self.config.get('LastFolder','dir'), '*.txt')
+        else:
+            self.log_path = QtWidgets.QFileDialog.getSaveFileName(self,'Save error log as...', os.getcwd(), '*.txt')
+        try:
+            self.log_path = self.log_path[0]
+            with open(self.log_path, "w") as f:
+                for item in self.error_list:
+                    f.write("%s\n" % item)
+            self.enable_buttons()
+            self.button_export_error.setEnabled(True)
+        except:
+            self.enable_buttons()
+            self.button_export_error.setEnabled(True)
+            return
+
+        print(f"Error log exported to:  + {str(self.log_path)}")
+        self.enable_buttons()
+        self.button_export_error.setEnabled(True)
+
+
+    def save_ags(self):
+        self.disable_buttons()
+
+        if not self.config.get('LastFolder','dir') == "":
+            newFileName = QtWidgets.QFileDialog.getSaveFileName(self,'Save AGS file as...', self.config.get('LastFolder','dir'), '*.ags')
+        else:
+            newFileName = QtWidgets.QFileDialog.getSaveFileName(self,'Save AGS file as...', os.getcwd(), '*.ags')
+        try:
+            newFileName = newFileName[0]
+            AGS4.dataframe_to_AGS4(self.tables, self.tables, newFileName)
+            print('Done.')
+            self.text.setText('''AGS saved.
+''')
+        
+            print(f"""AGS saved: {newFileName}""")
+
+            QApplication.processEvents()
+            self.enable_buttons()
+        except:
+            self.enable_buttons()
+            return
+
+    def get_gint(self):
+        self.disable_buttons()
+
+        if not self.config.get('LastFolder','dir') == "":
+            self.gint_location = QtWidgets.QFileDialog.getOpenFileNames(self,'Open gINT Project', self.config.get('LastFolder','dir'), '*.gpj')
+        else:
+            self.gint_location = QtWidgets.QFileDialog.getOpenFileNames(self,'Open gINT Project', os.getcwd(), '*.gpj')
+        try:
+            self.gint_location = self.gint_location[0][0]
+        except:
+            msgBox = QMessageBox()
+            msgBox.setIcon(QMessageBox.Information)
+            msgBox.setText("You must select a gINT")
+            msgBox.setWindowTitle("No gINT selected")
+            msgBox.setStandardButtons(QMessageBox.Ok)
+            msgBox.exec()
+            self.enable_buttons()
+            return
+
+        self.text.setText('''Getting gINT, please wait...
+''')
+        QApplication.processEvents()
+
+        try:
+            conn = pyodbc.connect(r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='+self.gint_location+';')
+            query = "SELECT * FROM SPEC"
+            self.gint_spec = pd.read_sql(query, conn)
+        except Exception as e:
+            print(e)
+            print("Uhh.... either that's the wrong gINT, or something went wrong.")
+            self.text.setText('''Uhh.... something went wrong.
+''')
+            QApplication.processEvents()
+            return
+
+    def get_spec(self):
+            return self.gint_spec
+    
+    
     def count_lab_results(self):
         self.disable_buttons()
 
@@ -454,165 +619,6 @@ Please select an AGS with "Open File..."''')
             self.enable_buttons()
             self.button_export_results.setEnabled(True)
             return
-        
-    def view_tableview(self):
-        self.tabWidget.setCurrentIndex(1)
-
-        
-    def check_ags(self):
-        self.error_list = []
-        self.disable_buttons()
-        self.text.setText('''Checking AGS for errors...
-''')
-        QApplication.processEvents()
-
-        try:
-            if self.file_location == '':
-                self.text.setText('''No AGS file selected!
-Please select an AGS with "Open File..."''')
-                QApplication.processEvents()
-                print("No AGS file selected! Please select an AGS with 'Open File...'")
-            else:
-                try:
-                    #errors = AGS4.check_file(self.file_location)
-                    '''need to get the latest data from self.tables to check errors, but dataframe_to_AGS4 method returns a file... so create a temp file to delete later'''
-                    AGS4.dataframe_to_AGS4(self.tables, self.tables, f'{os.getcwd()}\\_temp_.ags')
-                    errors = AGS4.check_file(f'{os.getcwd()}\\_temp_.ags')
-                except Exception as e:
-                    print(e)
-                    
-        except ValueError as e:
-            print(f'AGS Checker ended unexpectedly: {e}')
-            try:
-                if os.path.isfile(f'{os.getcwd()}\\_temp_.ags'):
-                    os.remove(f'{os.getcwd()}\\_temp_.ags')
-            except Exception as e:
-                print(e)
-            return
-        
-        for rule, items in errors.items():
-            if rule == 'Metadata':
-                print('Metadata')
-                for msg in items:
-                    print(f"{msg['line']}: {msg['desc']}")
-                continue
-                    
-            for error in items:
-                print(f"Error in line: {error['line']}, group: {error['group']}, description: {error['desc']}")
-                self.error_list.append(f"Error in line: {error['line']}, group: {error['group']}, description: {error['desc']}")
-
-        if errors:
-            self.button_export_error.setEnabled(True)
-
-            try:    
-                if os.path.isfile(f'{os.getcwd()}\\_temp_.ags'):
-                    os.remove(f'{os.getcwd()}\\_temp_.ags')
-            except Exception as e:
-                print(e)
-            self.enable_buttons()
-
-            if self.error_list == []:
-                self.error_list.append("No errors found. Yay.")
-                print("No errors found. Yay.")
-                self.text.setText("""AGS file contains no errors!
-""")        
-            else:
-                self.text.setText('''Error(s) found, check output or click 'Export Error Log'.
-''')
-            QApplication.processEvents()
-
-            err_df = pd.DataFrame.from_dict(self.error_list)
-            print(err_df)
-
-            self._error_model = PandasModel(err_df)
-            self.listbox.setModel(self._error_model)
-            self.listbox.resizeColumnsToContents()
-            self.listbox.horizontalHeader().hide()
-
-
-    def export_errors(self):
-        self.disable_buttons()
-        
-        if not self.config.get('LastFolder','dir') == "":
-            self.log_path = QtWidgets.QFileDialog.getSaveFileName(self,'Save error log as...', self.config.get('LastFolder','dir'), '*.txt')
-        else:
-            self.log_path = QtWidgets.QFileDialog.getSaveFileName(self,'Save error log as...', os.getcwd(), '*.txt')
-        try:
-            self.log_path = self.log_path[0]
-            with open(self.log_path, "w") as f:
-                for item in self.error_list:
-                    f.write("%s\n" % item)
-            self.enable_buttons()
-            self.button_export_error.setEnabled(True)
-        except:
-            self.enable_buttons()
-            self.button_export_error.setEnabled(True)
-            return
-
-        print(f"Error log exported to:  + {str(self.log_path)}")
-        self.enable_buttons()
-        self.button_export_error.setEnabled(True)
-
-
-    def save_ags(self):
-        self.disable_buttons()
-
-        if not self.config.get('LastFolder','dir') == "":
-            newFileName = QtWidgets.QFileDialog.getSaveFileName(self,'Save AGS file as...', self.config.get('LastFolder','dir'), '*.ags')
-        else:
-            newFileName = QtWidgets.QFileDialog.getSaveFileName(self,'Save AGS file as...', os.getcwd(), '*.ags')
-        try:
-            newFileName = newFileName[0]
-            AGS4.dataframe_to_AGS4(self.tables, self.tables, newFileName)
-            print('Done.')
-            self.text.setText('''AGS saved.
-''')
-        
-            print(f"""AGS saved: {newFileName}""")
-
-            QApplication.processEvents()
-            self.enable_buttons()
-        except:
-            self.enable_buttons()
-            return
-
-    def get_gint(self):
-        self.disable_buttons()
-
-        if not self.config.get('LastFolder','dir') == "":
-            self.gint_location = QtWidgets.QFileDialog.getOpenFileNames(self,'Open gINT Project', self.config.get('LastFolder','dir'), '*.gpj')
-        else:
-            self.gint_location = QtWidgets.QFileDialog.getOpenFileNames(self,'Open gINT Project', os.getcwd(), '*.gpj')
-        try:
-            self.gint_location = self.gint_location[0][0]
-        except:
-            msgBox = QMessageBox()
-            msgBox.setIcon(QMessageBox.Information)
-            msgBox.setText("You must select a gINT")
-            msgBox.setWindowTitle("No gINT selected")
-            msgBox.setStandardButtons(QMessageBox.Ok)
-            msgBox.exec()
-            self.enable_buttons()
-            return
-
-        self.text.setText('''Getting gINT, please wait...
-''')
-        QApplication.processEvents()
-
-        try:
-            conn = pyodbc.connect(r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='+self.gint_location+';')
-            query = "SELECT * FROM SPEC"
-            self.gint_spec = pd.read_sql(query, conn)
-        except Exception as e:
-            print(e)
-            print("Uhh.... either that's the wrong gINT, or something went wrong.")
-            self.text.setText('''Uhh.... something went wrong.
-''')
-            QApplication.processEvents()
-            return
-
-    def get_spec(self):
-            return self.gint_spec
 
     def get_ags_tables(self):
         self.ags_table_reset()

@@ -240,35 +240,37 @@ class PandasView(QTableView):
 
     def sort(self, idx):
         model = self.model()
-        col_name = model.df.columns[idx]
 
         #https://gist.github.com/StephenNneji/14bfc4e7a322ec89df7d30847fbf19b3
         #https://stackoverflow.com/questions/65179468/cannot-set-header-data-with-qtableview-custom-table-model
         #https://forum.qt.io/topic/54115/text-and-icon-in-qtableview-header
     
-
-        '''Toggling between sort states, to sort ascending, descending, and back to original index on double click event'''
-        if model.sort_state == 0:
-            model.sort_state = 1
-            model.df.sort_values(col_name, ascending=True, kind='mergesort', inplace=True)
-            model.headerData(idx, QtCore.Qt.Orientation.Horizontal, role=QtCore.Qt.ItemDataRole.DecorationRole)
-            self.resizeColumnsToContents()
-            model.layoutChanged.emit()
-            return
-        if model.sort_state == 1:
-            model.sort_state = 2
-            model.df.sort_values(col_name, ascending=False, kind='mergesort', inplace=True)
-            model.headerData(idx, QtCore.Qt.Orientation.Horizontal, role=QtCore.Qt.ItemDataRole.DecorationRole)
-            self.resizeColumnsToContents()
-            model.layoutChanged.emit()
-            return
-        if model.sort_state == 2:
-            model.sort_state = 0
-            model.df.sort_index(ascending=True, kind='mergesort', inplace=True)
-            model.headerData(idx, QtCore.Qt.Orientation.Horizontal, role=QtCore.Qt.ItemDataRole.DecorationRole)
-            self.resizeColumnsToContents()
-            model.layoutChanged.emit()
-            return
+        try:
+            col_name = model.df.columns[idx]
+            '''Toggling between sort states, to sort ascending, descending, and back to original index on double click event'''
+            if model.sort_state == 0:
+                model.sort_state = 1
+                model.df.sort_values(col_name, ascending=True, kind='mergesort', inplace=True)
+                model.headerData(idx, QtCore.Qt.Orientation.Horizontal, role=QtCore.Qt.ItemDataRole.DecorationRole)
+                self.resizeColumnsToContents()
+                model.layoutChanged.emit()
+                return
+            if model.sort_state == 1:
+                model.sort_state = 2
+                model.df.sort_values(col_name, ascending=False, kind='mergesort', inplace=True)
+                model.headerData(idx, QtCore.Qt.Orientation.Horizontal, role=QtCore.Qt.ItemDataRole.DecorationRole)
+                self.resizeColumnsToContents()
+                model.layoutChanged.emit()
+                return
+            if model.sort_state == 2:
+                model.sort_state = 0
+                model.df.sort_index(ascending=True, kind='mergesort', inplace=True)
+                model.headerData(idx, QtCore.Qt.Orientation.Horizontal, role=QtCore.Qt.ItemDataRole.DecorationRole)
+                self.resizeColumnsToContents()
+                model.layoutChanged.emit()
+                return
+        except Exception as e:
+            print(e)
 
 
     def delete_selection(self):
@@ -402,6 +404,7 @@ class PandasView(QTableView):
             reader = csv.reader(io.StringIO(buffer), delimiter="\t")
             arr = [[cell for cell in row] for row in reader]
             if len(arr) > 0: #there is something to paste
+                print('Pasting...')
                 nrows = len(arr)
                 ncols = len(arr[0])
                 justPasteItAll = True
@@ -442,7 +445,7 @@ class PandasView(QTableView):
                     topleftCol = visible_columns[0]
                     for i in range(nrows):
                         for j in range(ncols):
-                            print("Trying to set ", arr[i][j]," on row ", topleftRow+i," col ", topleftCol+j)
+                            #print("Trying to set ", arr[i][j]," on row ", topleftRow+i," col ", topleftCol+j)
                             try: 
                                 model.setData(
                                     model.index(topleftRow+i, topleftCol+j),
@@ -452,6 +455,7 @@ class PandasView(QTableView):
                             except IndexError:
                                 print("oops")
                                 continue
+            print('Pasted!')
                         
 
         return
@@ -480,20 +484,23 @@ class HeadersView(QTableView):
         del_grp = menu.addAction(QIcon("common/images/delete.svg"),"Delete Group")
         _action = menu.exec_(self.mapToGlobal(position))
         index = self.rows.logicalIndexAt(position)
-        group_name = model.df.iloc[index,0]
-        if _action == rename:
-            new_group = QInputDialog.getText(self," ","Rename group:")
-            if new_group[1]:
-                groups = [group_name, new_group[0]]
-                self.rename_group.emit(groups)
-        if _action == insert_grp:   
-            new_grp = QInputDialog.getText(self," ","New group name:")
-            if new_grp[1]:
-                self.new_group.emit(new_grp[0])
-        if _action == del_grp:
-            self.delete_group.emit(group_name)
-            model.layoutChanged.emit()
-            self.resizeColumnsToContents()
+        try:
+            group_name = model.df.iloc[index,0]
+            if _action == rename:
+                new_group = QInputDialog.getText(self," ","Rename group:")
+                if new_group[1]:
+                    groups = [group_name, new_group[0]]
+                    self.rename_group.emit(groups)
+            if _action == insert_grp:   
+                new_grp = QInputDialog.getText(self," ","New group name:")
+                if new_grp[1]:
+                    self.new_group.emit(new_grp[0])
+            if _action == del_grp:
+                self.delete_group.emit(group_name)
+                model.layoutChanged.emit()
+                self.resizeColumnsToContents()
+        except Exception as e:
+            print(e)
 
     
 class Spinny(QDoubleSpinBox):
