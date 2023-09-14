@@ -916,6 +916,11 @@ QComboBox:enabled {
                        <string>Geolabs (50HZ Fugro)</string>
                       </property>
                      </item>
+                     <item>
+                      <property name="text">
+                       <string>Sinotech TW</string>
+                      </property>
+                     </item>
                     </widget>
                    </item>
                    <item>
@@ -1912,7 +1917,7 @@ QPushButton:disabled {
      <x>0</x>
      <y>0</y>
      <width>450</width>
-     <height>26</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>

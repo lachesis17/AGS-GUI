@@ -663,6 +663,9 @@ Please select an AGS with "Open File..."''')
         elif self.get_selected_lab() == "Geolabs (50HZ Fugro)":
             print('Geolabs (50HZ Fugro) AGS selected to match to gINT.')
             self.match_unique_id_geolabs_fugro()
+        elif self.get_selected_lab() == "Sinotech TW":
+            print('Sinotech (Taiwan) AGS selected to match to gINT.')
+            self.match_unique_id_sinotech()
 
     def remove_match_id(self):
         self.get_ags_tables()
@@ -1848,6 +1851,129 @@ Did you select the correct gINT or AGS?''')
                             self.tables[table]['ERES_TNAM'][tablerow] = "LOI"
                         if "ph" in str(self.tables[table]['ERES_RUNI'][tablerow].lower()):
                             self.tables[table]['ERES_RUNI'][tablerow] = "-"
+
+            except Exception as e:
+                print(f"Couldn't find table or field, skipping... {str(e)}")
+                pass
+
+        self.remove_match_id()
+        self.check_matched_to_gint()
+        self.enable_buttons()
+
+
+    def match_unique_id_sinotech(self):
+        self.disable_buttons()
+        self.get_gint()
+        self.matched = False
+        self.error = False
+
+        if not self.gint_location or self.gint_location == '':
+            self.text.setText('''AGS file loaded.
+''')
+            QApplication.processEvents()
+            return
+
+        self.text.setText('''Matching AGS to gINT, please wait...
+''')
+        QApplication.processEvents()
+        print(f"Matching Sinotech AGS to gINT... {self.gint_location}") 
+
+        self.get_ags_tables()
+
+        self.get_spec()['Depth'] = self.get_spec()['Depth'].map('{:,.2f}'.format)
+        self.get_spec()['Depth'] = self.get_spec()['Depth'].astype(str)
+        self.get_spec()['match_id'] = self.get_spec()['PointID']
+        self.get_spec()['match_id'] += self.get_spec()['Depth']
+
+
+        for table in self.ags_tables:
+            try:
+                gint_rows = self.get_spec().shape[0]
+
+                self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
+                self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
+
+                try:
+                    for tablerow in range(2,len(self.tables[table])):
+                        for gintrow in range(0,gint_rows):
+                            if self.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
+                                self.matched = True
+                                self.tables[table]['LOCA_ID'][tablerow] = self.get_spec()['PointID'][gintrow]
+                                self.tables[table]['SAMP_ID'][tablerow] = self.get_spec()['SAMP_ID'][gintrow]
+                                self.tables[table]['SAMP_REF'][tablerow] = self.get_spec()['SAMP_REF'][gintrow]
+                                self.tables[table]['SAMP_TYPE'][tablerow] = self.get_spec()['SAMP_TYPE'][gintrow]
+                                self.tables[table]['SPEC_REF'][tablerow] = self.get_spec()['SPEC_REF'][gintrow]
+                                self.tables[table]['SAMP_TOP'][tablerow] = format(self.get_spec()['SAMP_Depth'][gintrow],'.2f')
+                                self.tables[table]['SPEC_DPTH'][tablerow] = self.get_spec()['Depth'][gintrow]
+                                
+                                for x in self.tables[table].keys():
+                                    if "LAB" in x:
+                                        self.tables[table][x][tablerow] = "Sinotech"
+                except:
+                    pass
+
+                '''CONG'''
+                if table == 'CONG':
+                    if 'CONG_TYPE' not in self.tables[table]:
+                        self.tables[table].insert(10,'CONG_TYPE','')
+                    for tablerow in range(2,len(self.tables[table])):
+                        if "crs" in str(self.tables[table]['FILE_FSET'][tablerow].lower()):
+                            self.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
+                            self.tables[table]['CONG_TYPE'][tablerow] = "CRS"
+                        if "oed" in str(self.tables[table]['FILE_FSET'][tablerow].lower()):
+                            self.tables[table]['CONG_TYPE'][tablerow] = "IL OEDOMETER"
+                            
+                '''LLPL'''
+                if table == 'LLPL':
+                    if 'Non-Plastic' not in self.tables[table]:
+                        self.tables[table].insert(13,'Non-Plastic','')
+                    for tablerow in range(2,len(self.tables[table])):
+                        if self.tables[table]['LLPL_LL'][tablerow] == '' and self.tables[table]['LLPL_PL'][tablerow] == '' and self.tables[table]['LLPL_PI'][tablerow] == '' or self.tables[table]['LLPL_LL'][tablerow] == "NP":
+                            self.tables[table]['Non-Plastic'][tablerow] = -1
+                            
+                '''TRIG & TRIT'''
+                if table == 'TRIG' or table == 'TRIT':
+                    if 'Depth' not in self.tables[table]:
+                        self.tables[table].insert(8,'Depth','')
+                    if table == 'TRIT':
+                        for tablerow in range(2,len(self.tables[table])):
+                            if self.tables[table]['TRIT_DEVF'][tablerow]:
+                                self.tables[table]['TRIT_DEVF'][tablerow] = round(float(self.tables[table]['TRIT_DEVF'][tablerow]))
+                            if self.tables[table]['TRIT_TESN'][tablerow] == '':
+                                self.tables[table]['TRIT_TESN'][tablerow] = 1
+                    for tablerow in range(2,len(self.tables[table])):
+                        for gintrow in range(0,gint_rows):
+                            if self.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
+                                if self.tables['TRIG']['TRIG_COND'][tablerow] == 'REMOULDED':
+                                    self.tables[table]['Depth'][tablerow] = round(float(self.get_spec()['Depth'][gintrow]) + 0.01,2)
+                                else:
+                                    self.tables[table]['Depth'][tablerow] = self.get_spec()['Depth'][gintrow]
+                                    
+                '''TRET'''
+                if table == 'TRET':
+                    for tablerow in range(2,len(self.tables[table])):
+                        if float(self.tables[table]['TRET_DDEN'][tablerow]) > 4.0:
+                            self.tables[table]['TRET_DDEN'][tablerow] = round(float(self.tables[table]['TRET_DDEN'][tablerow]) / 9.81, 2)
+                            
+                '''RELD'''
+                if table == 'RELD':
+                    for tablerow in range(2,len(self.tables[table])):
+                        if float(self.tables[table]['RELD_DMAX'][tablerow]) > 4.0:
+                            self.tables[table]['RELD_DMAX'][tablerow] = float(self.tables[table]['RELD_DMAX'][tablerow]) / 900.81
+                            self.tables[table]['RELD_DMIN'][tablerow] = float(self.tables[table]['RELD_DMIN'][tablerow]) / 900.81
+                            
+                '''LDEN'''
+                if table == 'LDEN':
+                    for tablerow in range(2,len(self.tables[table])):
+                        if not self.tables[table]['LDEN_BDEN'][tablerow] == "":
+                            if float(self.tables[table]['LDEN_BDEN'][tablerow]) > 4.0:
+                                self.tables[table]['LDEN_BDEN'][tablerow] = float(self.tables[table]['LDEN_BDEN'][tablerow]) / 9.81
+                        if not self.tables[table]['LDEN_DDEN'][tablerow] == "":
+                            if float(self.tables[table]['LDEN_DDEN'][tablerow]) > 4.0:
+                                self.tables[table]['LDEN_DDEN'][tablerow] = float(self.tables[table]['LDEN_DDEN'][tablerow]) / 9.81
+
+                            
+
 
             except Exception as e:
                 print(f"Couldn't find table or field, skipping... {str(e)}")
