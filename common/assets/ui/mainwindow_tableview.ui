@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>AGS GUI v4.4</string>
+   <string>AGS GUI v4.41</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="minimumSize">
@@ -1917,7 +1917,7 @@ QPushButton:disabled {
      <x>0</x>
      <y>0</y>
      <width>450</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
   </widget>
