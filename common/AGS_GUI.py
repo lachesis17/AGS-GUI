@@ -347,9 +347,7 @@ Please select an AGS with "Open File..."''')
             self.gint_location = QtWidgets.QFileDialog.getOpenFileNames(self,'Open gINT Project', self.config.get('LastFolder','dir'), '*.gpj')
         else:
             self.gint_location = QtWidgets.QFileDialog.getOpenFileNames(self,'Open gINT Project', os.getcwd(), '*.gpj')
-        try:
-            self.gint_location = self.gint_location[0][0]
-        except:
+        if len(self.gint_location[0]) == 0:
             msgBox = QMessageBox()
             msgBox.setIcon(QMessageBox.Information)
             msgBox.setText("You must select a gINT")
@@ -358,6 +356,8 @@ Please select an AGS with "Open File..."''')
             msgBox.exec()
             self.enable_buttons()
             return
+        else:
+            self.gint_location = self.gint_location[0][0]
 
         self.text.setText('''Getting gINT, please wait...
 ''')
@@ -700,9 +700,9 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
 
-        if not self.gint_location or self.gint_location == '':
-            self.text.setText('''AGS file loaded.
-''')
+        if len(self.gint_location[0]) == 0:
+            self.text.setText('''No gINT selected!
+AGS file loaded.''')
             QApplication.processEvents()
             return
 
@@ -969,9 +969,9 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
 
-        if not self.gint_location or self.gint_location == '':
-            self.text.setText('''AGS file loaded.
-''')
+        if len(self.gint_location[0]) == 0:
+            self.text.setText('''No gINT selected!
+AGS file loaded.''')
             QApplication.processEvents()
             return
 
@@ -1077,9 +1077,9 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
 
-        if not self.gint_location or self.gint_location == '':
-            self.text.setText('''AGS file loaded.
-''')
+        if len(self.gint_location[0]) == 0:
+            self.text.setText('''No gINT selected!
+AGS file loaded.''')
             QApplication.processEvents()
             return
 
@@ -1148,9 +1148,9 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
 
-        if not self.gint_location or self.gint_location == '':
-            self.text.setText('''AGS file loaded.
-''')
+        if len(self.gint_location[0]) == 0:
+            self.text.setText('''No gINT selected!
+AGS file loaded.''')
             QApplication.processEvents()
             return
 
@@ -1245,9 +1245,9 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
 
-        if not self.gint_location or self.gint_location == '':
-            self.text.setText('''AGS file loaded.
-''')
+        if len(self.gint_location[0]) == 0:
+            self.text.setText('''No gINT selected!
+AGS file loaded.''')
             QApplication.processEvents()
             return
 
@@ -1340,9 +1340,9 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
 
-        if not self.gint_location or self.gint_location == '':
-            self.text.setText('''AGS file loaded.
-''')
+        if len(self.gint_location[0]) == 0:
+            self.text.setText('''No gINT selected!
+AGS file loaded.''')
             QApplication.processEvents()
             return
 
@@ -1412,9 +1412,9 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
 
-        if not self.gint_location or self.gint_location == '':
-            self.text.setText('''AGS file loaded.
-''')
+        if len(self.gint_location[0]) == 0:
+            self.text.setText('''No gINT selected!
+AGS file loaded.''')
             QApplication.processEvents()
             return
 
@@ -1506,9 +1506,9 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
 
-        if not self.gint_location or self.gint_location == '':
-            self.text.setText('''AGS file loaded.
-''')
+        if len(self.gint_location[0]) == 0:
+            self.text.setText('''No gINT selected!
+AGS file loaded.''')
             QApplication.processEvents()
             return
 
@@ -1750,9 +1750,9 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
 
-        if not self.gint_location or self.gint_location == '':
-            self.text.setText('''AGS file loaded.
-''')
+        if len(self.gint_location[0]) == 0:
+            self.text.setText('''No gINT selected!
+AGS file loaded.''')
             QApplication.processEvents()
             return
 
@@ -1867,9 +1867,9 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
 
-        if not self.gint_location or self.gint_location == '':
-            self.text.setText('''AGS file loaded.
-''')
+        if len(self.gint_location[0]) == 0:
+            self.text.setText('''No gINT selected!
+AGS file loaded.''')
             QApplication.processEvents()
             return
 
