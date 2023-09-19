@@ -10,7 +10,6 @@ import numpy as np
 import sys
 import os
 import pandas as pd
-from statistics import mean
 import configparser
 import time
 import webbrowser
