@@ -375,7 +375,7 @@ def dataframe_to_AGS4(data, headings, filepath, mode='w', index=False, encoding=
 
                 rprint(f'[green]Writing data from... [bold]{key}[/bold][green]')
                 f.write('"GROUP"'+","+'"'+key+'"'+'\r\n')
-                df.to_csv(f, index=index, quoting=1, columns=columns, line_terminator='\r\n', encoding=encoding)
+                df.to_csv(f, index=index, quoting=1, columns=columns, lineterminator='\r\n', encoding=encoding)
                 f.write("\r\n")
 
             except KeyError:
@@ -388,7 +388,7 @@ def dataframe_to_AGS4(data, headings, filepath, mode='w', index=False, encoding=
                     rprint("[italic yellow]           Please check column order and ensure AGS4 Rule 7 is still satisfied.[/italic yellow]")
 
                 f.write('"GROUP"'+","+'"'+key+'"'+'\r\n')
-                df.to_csv(f, index=index, quoting=1, line_terminator='\r\n', encoding=encoding)
+                df.to_csv(f, index=index, quoting=1, lineterminator='\r\n', encoding=encoding)
                 f.write("\r\n")
 
 
