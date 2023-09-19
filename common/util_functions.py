@@ -31,12 +31,6 @@ class GintHandler(QWidget):
             self.gint_location = QtWidgets.QFileDialog.getOpenFileNames(self,'Open gINT Project', os.getcwd(), '*.gpj')
 
         if len(self.gint_location[0]) == 0:
-            msgBox = QMessageBox()
-            msgBox.setIcon(QMessageBox.Information)
-            msgBox.setText("You must select a gINT")
-            msgBox.setWindowTitle("No gINT selected")
-            msgBox.setStandardButtons(QMessageBox.Ok)
-            msgBox.exec()
             self._enable.emit()
             return
         else:
@@ -85,10 +79,10 @@ class AGSHandler(QWidget):
         self.tables: dict = None
         self.headings: dict = None
         self.ags_tables: list = []
-        self.results_with_samp_and_type: pd.DataFrame = None
-        self.temp_file_name: str = ''
         self.result_list: list = []
         self.error_list: list = []
+        self.results_with_samp_and_type: pd.DataFrame = None
+        self.temp_file_name: str = ''
 
         self.result_tables = ['SAMP','SPEC','TRIG','TRIT','LNMC','LDEN','GRAG','GRAT',
         'CONG','CONS','CODG','CODT','LDYN','LLPL','LPDN','LPEN','LRES','LTCH','LTHC',
@@ -167,8 +161,8 @@ Please select an AGS with "Open File..."''')
                     print(f"{str(table)} table deleted.")
             except:
                 pass
-        self._update_text.emit('''Deleted non-lab testing tables.
-Select a lab to match to.''')
+        self._update_text.emit('''Deleted non-lab testing tables,
+select a lab to match to.''')
     
             
     def check_ags(self):

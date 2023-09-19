@@ -103,8 +103,6 @@ class MainWindow(QtWidgets.QMainWindow):
             self.set_text('''No gINT selected!
 AGS file loaded.''')
             return False
-        self.set_text('''Matching AGS to gINT, please wait...
-''')
         return True
 
     def get_ags(self):
@@ -274,7 +272,13 @@ AGS file loaded.''')
             print(e)
 
 
+    def handle_tables(self):
+        self.get_ags_tables()
+        self.lab_handler.ags_tables = self.ags_handler.ags_tables
+        self.lab_handler.tables = self.ags_handler.tables
+        self.lab_handler.spec = self.gint_handler.gint_spec
 
+    #===GQM===
     def match_unique_id_gqm(self):
         self.disable_buttons()
         self.get_gint()
@@ -282,983 +286,179 @@ AGS file loaded.''')
         if not self.check_gint():
             return
         
-        print(f"Matching GM Lab AGS to gINT... {self.gint_handler.gint_location}") 
+        self.set_text('''Matching Geoquip Lab AGS to gINT,
+please wait...''')
+        print(f"Matching Geoquip Lab AGS to gINT... {self.gint_handler.gint_location}") 
 
-        self.get_ags_tables()
-        self.lab_handler.ags_tables = self.ags_handler.ags_tables
-        self.lab_handler.tables = self.ags_handler.tables
-        self.lab_handler.spec = self.gint_handler.gint_spec
+        self.handle_tables()
         self.lab_handler.match_unique_id_gqm()
         self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
         self.enable_buttons()
             
-
+    #===DETS===
     def match_unique_id_dets(self):
         self.disable_buttons()
         self.get_gint()
-        self.matched = False
-        self.error = False
 
         if not self.check_gint():
             return
 
+        self.set_text('''Matching DETS AGS to gINT,
+please wait...''')
         print(f"Matching DETS AGS to gINT... {self.gint_handler.gint_location}") 
 
-        self.get_ags_tables()
-
-        if 'GCHM' in self.ags_handler.ags_tables or 'ERES' in self.ags_handler.ags_tables:
-            pass
-        else:
-            self.error = True
-            print("Cannot find GCHM or ERES - looks like this AGS is from GM Lab.")
-
-        self.get_spec()['Depth'] = self.get_spec()['Depth'].map('{:,.2f}'.format)
-        self.get_spec()['Depth'] = self.get_spec()['Depth'].astype(str)
-        self.get_spec()['match_id'] = self.get_spec()['PointID']
-        self.get_spec()['match_id'] += self.get_spec()['Depth']
-
-        for table in self.ags_handler.ags_tables:
-            try:
-                gint_rows = self.get_spec().shape[0]
-
-                self.ags_handler.tables[table]['LOCA_ID'] = self.ags_handler.tables[table]['LOCA_ID'].str.split(" ", n=1, expand=True)[0]
-                self.ags_handler.tables[table]['match_id'] = self.ags_handler.tables[table]['LOCA_ID']
-                self.ags_handler.tables[table]['match_id'] += self.ags_handler.tables[table]['SAMP_TOP']
-
-                try:
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.ags_handler.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
-                                self.matched = True
-                                if table == 'ERES':
-                                    if 'ERES_REM' not in self.ags_handler.tables[table].keys():
-                                        self.ags_handler.tables[table].insert(len(self.ags_handler.tables[table].keys()),'ERES_REM','')
-                                    self.ags_handler.tables[table]['ERES_REM'][tablerow] = self.ags_handler.tables[table]['SPEC_REF'][tablerow]
-                                self.ags_handler.tables[table]['LOCA_ID'][tablerow] = self.get_spec()['PointID'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_ID'][tablerow] = self.get_spec()['SAMP_ID'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_REF'][tablerow] = self.get_spec()['SAMP_REF'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_TYPE'][tablerow] = self.get_spec()['SAMP_TYPE'][gintrow]
-                                self.ags_handler.tables[table]['SPEC_REF'][tablerow] = self.get_spec()['SPEC_REF'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_TOP'][tablerow] = format(self.get_spec()['SAMP_Depth'][gintrow],'.2f')
-                                self.ags_handler.tables[table]['SPEC_DPTH'][tablerow] = self.get_spec()['Depth'][gintrow]
-                                
-                                for x in self.ags_handler.tables[table].keys():
-                                    if "LAB" in x:
-                                        self.ags_handler.tables[table][x][tablerow] = "DETS"
-                except Exception as e:
-                    print(e)
-                    pass
-
-                '''GCHM'''
-                if table == 'GCHM':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if "ph" in str(self.ags_handler.tables[table]['GCHM_UNIT'][tablerow].lower()):
-                            self.ags_handler.tables[table]['GCHM_UNIT'][tablerow] = "-"
-                        if "co3" in str(self.ags_handler.tables[table]['GCHM_CODE'][tablerow].lower()):
-                            self.ags_handler.tables[table]['GCHM_CODE'][tablerow] = "CACO3"
-
-
-                '''ERES'''
-                if table == 'ERES':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if "<" in str(self.ags_handler.tables[table]['ERES_RTXT'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_RTXT'][tablerow] = str(self.ags_handler.tables[table]['ERES_RTXT'][tablerow]).rsplit(" ", 1)[1]
-                        if "solid_21" in str(self.ags_handler.tables[table]['ERES_REM'][tablerow].lower()) or "2:1" in str(self.ags_handler.tables[table]['ERES_NAME'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_NAME'][tablerow] = "SOLID_21 WATER EXTRACT"
-                        if "solid_wat" in str(self.ags_handler.tables[table]['ERES_REM'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_NAME'][tablerow] = "SOLID_11 WATER EXTRACT"
-                        if "solid_tot" in str(self.ags_handler.tables[table]['ERES_REM'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_NAME'][tablerow] = "SOLID_TOTAL"
-                        if "sulph" in str(self.ags_handler.tables[table]['ERES_TNAM'][tablerow].lower()) and "so4" in str(self.ags_handler.tables[table]['ERES_TNAM'][tablerow].lower()) or "sulf" in str(self.ags_handler.tables[table]['ERES_TNAM'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_TNAM'][tablerow] = "WS"
-                        if "sulph" in str(self.ags_handler.tables[table]['ERES_TNAM'][tablerow].lower()) and "total" in str(self.ags_handler.tables[table]['ERES_TNAM'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_TNAM'][tablerow] = "TS"
-                        if "caco3" in str(self.ags_handler.tables[table]['ERES_TNAM'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_TNAM'][tablerow] = "CACO3"
-                        if "co2" in str(self.ags_handler.tables[table]['ERES_TNAM'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_TNAM'][tablerow] = "CO2"
-                        if "ph" == str(self.ags_handler.tables[table]['ERES_TNAM'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_TNAM'][tablerow] = "PH"
-                        if "chloride" in str(self.ags_handler.tables[table]['ERES_TNAM'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_TNAM'][tablerow] = "Cl"
-                        if "los" in str(self.ags_handler.tables[table]['ERES_TNAM'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_TNAM'][tablerow] = "LOI"
-                        if "ph" in str(self.ags_handler.tables[table]['ERES_RUNI'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_RUNI'][tablerow] = "-"
-
-            except Exception as e:
-                print(f"Couldn't find table or field, skipping... {str(e)}")
-                pass
-
+        self.handle_tables()
+        self.lab_handler.match_unique_id_dets()
+        self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
-        self.check_matched_to_gint()
         self.enable_buttons()
 
-    
+
+    #===SOILS===
     def match_unique_id_soils(self):
         self.disable_buttons()
         self.get_gint()
-        self.matched = False
-        self.error = False
 
         if not self.check_gint():
             return
         
+        self.set_text('''Matching Structural Soils AGS to gINT, 
+please wait...''')
         print(f"Matching Structural Soils AGS to gINT... {self.gint_handler.gint_location}") 
 
-        self.get_ags_tables()
-
-        self.get_spec()['Depth'] = self.get_spec()['Depth'].map('{:,.2f}'.format)
-        self.get_spec()['Depth'] = self.get_spec()['Depth'].astype(str)
-        self.get_spec()['match_id'] = self.get_spec()['PointID']
-        self.get_spec()['match_id'] += self.get_spec()['Depth']
-
-
-        for table in self.ags_handler.ags_tables:
-            try:
-                gint_rows = self.get_spec().shape[0]
-
-                self.ags_handler.tables[table]['match_id'] = self.ags_handler.tables[table]['LOCA_ID']
-                self.ags_handler.tables[table]['match_id'] += self.ags_handler.tables[table]['SAMP_TOP']
-
-                try:
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.ags_handler.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
-                                self.matched = True
-                                self.ags_handler.tables[table]['LOCA_ID'][tablerow] = self.get_spec()['PointID'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_ID'][tablerow] = self.get_spec()['SAMP_ID'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_REF'][tablerow] = self.get_spec()['SAMP_REF'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_TYPE'][tablerow] = self.get_spec()['SAMP_TYPE'][gintrow]
-                                self.ags_handler.tables[table]['SPEC_REF'][tablerow] = self.get_spec()['SPEC_REF'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_TOP'][tablerow] = format(self.get_spec()['SAMP_Depth'][gintrow],'.2f')
-                                self.ags_handler.tables[table]['SPEC_DPTH'][tablerow] = self.get_spec()['Depth'][gintrow]
-                                
-                                for x in self.ags_handler.tables[table].keys():
-                                    if "LAB" in x:
-                                        self.ags_handler.tables[table][x][tablerow] = "Structural Soils"
-                except:
-                    pass
-
-                '''CONG'''
-                if table == 'CONG':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if "undisturbed" in str(self.ags_handler.tables[table]['CONG_COND'][tablerow].lower()):
-                            self.ags_handler.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
-                        if "oed" in str(self.ags_handler.tables[table]['CONG_TYPE'][tablerow].lower()):
-                            self.ags_handler.tables[table]['CONG_TYPE'][tablerow] = "IL OEDOMETER"
-                            self.ags_handler.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
-                        if "#" in str(self.ags_handler.tables[table]['CONG_PDEN'][tablerow].lower()):
-                            self.ags_handler.tables[table]['CONG_PDEN'][tablerow] = str(self.ags_handler.tables[table]['CONG_PDEN'][tablerow]).split('#')[1]
-
-            except Exception as e:
-                print(f"Couldn't find table or field, skipping... {str(e)}")
-                pass
-
+        self.handle_tables()
+        self.lab_handler.match_unique_id_soils()
+        self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
-        self.check_matched_to_gint()
         self.enable_buttons()
 
-
-    def match_unique_id_soils_pez(self):
-        self.disable_buttons()
-        self.get_gint()
-        self.matched = False
-        self.error = False
-
-        if not self.check_gint():
-            return
-        
-        print(f"Matching Structural Soils AGS to gINT... {self.gint_handler.gint_location}") 
-
-        self.get_ags_tables()
-
-        self.get_spec()['Depth'] = self.get_spec()['Depth'].map('{:,.2f}'.format)
-        self.get_spec()['Depth'] = self.get_spec()['Depth'].astype(str)
-        self.get_spec()['match_id'] = self.get_spec()['PointID']
-        self.get_spec()['match_id'] += self.get_spec()['Depth']
-        self.get_spec()['batched'] = self.get_spec()['SAMP_TYPE'].astype(str).str[0]
-        self.get_spec()['match_id'] += self.get_spec()['batched']
-        self.get_spec().drop(['batched'], axis=1, inplace=True)
-
-        for table in self.ags_handler.ags_tables:
-            try:
-                gint_rows = self.get_spec().shape[0]
-
-                self.ags_handler.tables[table]['match_id'] = self.ags_handler.tables[table]['LOCA_ID']
-                self.ags_handler.tables[table]['match_id'] += self.ags_handler.tables[table]['SPEC_DPTH']
-                self.ags_handler.tables[table]['batched'] = self.ags_handler.tables[table]['SAMP_TYPE'].astype(str).str[0]
-                self.ags_handler.tables[table]['match_id'] += self.ags_handler.tables[table]['batched']
-                self.ags_handler.tables[table].drop(['batched'], axis=1, inplace=True)
-
-                try:
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.ags_handler.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
-                                self.matched = True
-                                self.ags_handler.tables[table]['LOCA_ID'][tablerow] = self.get_spec()['PointID'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_ID'][tablerow] = self.get_spec()['SAMP_ID'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_REF'][tablerow] = self.get_spec()['SAMP_REF'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_TYPE'][tablerow] = self.get_spec()['SAMP_TYPE'][gintrow]
-                                self.ags_handler.tables[table]['SPEC_REF'][tablerow] = self.get_spec()['SPEC_REF'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_TOP'][tablerow] = format(self.get_spec()['SAMP_Depth'][gintrow],'.2f')
-                                self.ags_handler.tables[table]['SPEC_DPTH'][tablerow] = self.get_spec()['Depth'][gintrow]
-                                
-                                for x in self.ags_handler.tables[table].keys():
-                                    if "LAB" in x:
-                                        self.ags_handler.tables[table][x][tablerow] = "Structural Soils Ltd - Bristol Geotech lab"
-                except:
-                    pass
-
-                '''CONG'''
-                if table == 'CONG':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if "undisturbed" in str(self.ags_handler.tables[table]['CONG_COND'][tablerow].lower()):
-                            self.ags_handler.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
-                        if "oed" in str(self.ags_handler.tables[table]['CONG_TYPE'][tablerow].lower()):
-                            self.ags_handler.tables[table]['CONG_TYPE'][tablerow] = "IL OEDOMETER"
-                            self.ags_handler.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
-                        if "#" in str(self.ags_handler.tables[table]['CONG_PDEN'][tablerow].lower()):
-                            self.ags_handler.tables[table]['CONG_PDEN'][tablerow] = str(self.ags_handler.tables[table]['CONG_PDEN'][tablerow]).split('#')[1]
-
-                '''IRSG'''
-                if table == 'IRSG':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if 'IRSG_COND' in self.ags_handler.tables[table]:
-                            self.ags_handler.tables[table]['IRSG_COND'][tablerow] = str(self.ags_handler.tables[table]['IRSG_COND'][tablerow]).upper()
-
-                '''LDYN'''
-                if table == 'LDYN':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        self.ags_handler.tables[table]['LDYN_SG'][tablerow] = int(float(self.ags_handler.tables[table]['LDYN_SG'][tablerow]))
-
-                '''SHBT'''
-                if table == 'SHBT':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if float(self.ags_handler.tables[table]['SHBT_PDIN'][tablerow]) < 0:
-                            self.ags_handler.tables[table]['SHBT_PDIN'][tablerow] = 0
-                        if "#" in str(self.ags_handler.tables[table]['SHBT_PDEN'][tablerow].lower()):
-                            self.ags_handler.tables[table]['SHBT_PDEN'][tablerow] = str(self.ags_handler.tables[table]['SHBT_PDEN'][tablerow]).split('#')[1]
-                        
-
-            except Exception as e:
-                print(f"Couldn't find table or field, skipping... {str(e)}")
-                pass
-
-        self.remove_match_id()
-        self.check_matched_to_gint()
-        self.enable_buttons()
-
-
-    
+    #===PSL===
     def match_unique_id_psl(self):
         self.disable_buttons()
         self.get_gint()
-        self.matched = False
-        self.error = False
 
         if not self.check_gint():
             return
         
+        self.set_text('''Matching PSL AGS to gINT, 
+please wait...''')
         print(f"Matching PSL AGS to gINT... {self.gint_handler.gint_location}") 
 
-        self.get_ags_tables()
-
-        self.get_spec()['Depth'] = self.get_spec()['Depth'].map('{:,.2f}'.format)
-        self.get_spec()['Depth'] = self.get_spec()['Depth'].astype(str)
-        self.get_spec()['match_id'] = self.get_spec()['PointID']
-        self.get_spec()['match_id'] += self.get_spec()['Depth']
-
-        for table in self.ags_handler.ags_tables:
-            try:
-                gint_rows = self.get_spec().shape[0]
-
-                self.ags_handler.tables[table]['match_id'] = self.ags_handler.tables[table]['LOCA_ID']
-                self.ags_handler.tables[table]['match_id'] += self.ags_handler.tables[table]['SAMP_TOP']
-
-                try:
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.ags_handler.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
-                                self.matched = True
-                                self.ags_handler.tables[table]['LOCA_ID'][tablerow] = self.get_spec()['PointID'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_ID'][tablerow] = self.get_spec()['SAMP_ID'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_REF'][tablerow] = self.get_spec()['SAMP_REF'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_TYPE'][tablerow] = self.get_spec()['SAMP_TYPE'][gintrow]
-                                self.ags_handler.tables[table]['SPEC_REF'][tablerow] = self.get_spec()['SPEC_REF'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_TOP'][tablerow] = format(self.get_spec()['SAMP_Depth'][gintrow],'.2f')
-                                self.ags_handler.tables[table]['SPEC_DPTH'][tablerow] = self.get_spec()['Depth'][gintrow]
-                                
-                                for x in self.ags_handler.tables[table].keys():
-                                    if "LAB" in x:
-                                        self.ags_handler.tables[table][x][tablerow] = "PSL"
-                except:
-                    pass
-
-                '''CONG'''
-                if table == 'CONG':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if "undisturbed" in str(self.ags_handler.tables[table]['CONG_COND'][tablerow].lower()):
-                            self.ags_handler.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
-                        if "oed" in str(self.ags_handler.tables[table]['CONG_TYPE'][tablerow].lower()):
-                            self.ags_handler.tables[table]['CONG_TYPE'][tablerow] = "IL OEDOMETER"
-                            self.ags_handler.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
-
-
-                '''TREG'''
-                if table == 'TREG':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if "undisturbed" in str(self.ags_handler.tables[table]['TREG_COND'][tablerow].lower()):
-                            self.ags_handler.tables[table]['TREG_COND'][tablerow] = "UNDISTURBED"
-
-
-                '''TRET'''
-                if table == 'TRET':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if 'TRET_SHST' not in self.ags_handler.tables[table].keys():
-                            self.ags_handler.tables[table].insert(len(self.ags_handler.tables[table].keys()),'TRET_SHST','')
-                        if self.ags_handler.tables[table]['TRET_SHST'][tablerow] == self.ags_handler.tables[table]['TRET_DEVF'][tablerow]:
-                            self.ags_handler.tables[table]['TRET_SHST'][tablerow] = round(float(self.ags_handler.tables[table]['TRET_DEVF'][tablerow]) / 2)
-
-
-                '''PTST'''
-                if table == 'PTST':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if "#" in str(self.ags_handler.tables[table]['PTST_PDEN'][tablerow].lower()):
-                            self.ags_handler.tables[table]['PTST_PDEN'][tablerow] = str(self.ags_handler.tables[table]['PTST_PDEN'][tablerow]).rsplit('#', 2)[1]
-                        if "undisturbed" in str(self.ags_handler.tables[table]['PTST_COND'][tablerow].lower()):
-                            self.ags_handler.tables[table]['PTST_COND'][tablerow] = "UNDISTURBED"
-                        if "remoulded" in str(self.ags_handler.tables[table]['PTST_COND'][tablerow].lower()):
-                            self.ags_handler.tables[table]['PTST_COND'][tablerow] = "REMOULDED"
-                
-            except Exception as e:
-                print(f"Couldn't find table or field, skipping... {str(e)}")
-                pass
-
+        self.handle_tables()
+        self.lab_handler.match_unique_id_psl()
+        self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
-        self.check_matched_to_gint()
         self.enable_buttons()
 
-
+    #===GEOLABS===
     def match_unique_id_geolabs(self):
         self.disable_buttons()
         self.get_gint()
-        self.matched = False
-        self.error = False
 
         if not self.check_gint():
             return
-        
+                
+        self.set_text('''Matching Geolabs AGS to gINT, 
+please wait...''')
         print(f"Matching Geolabs AGS to gINT... {self.gint_handler.gint_location}") 
 
-        self.get_ags_tables()
-
-        self.get_spec()['Depth'] = self.get_spec()['Depth'].map('{:,.2f}'.format)
-        self.get_spec()['Depth'] = self.get_spec()['Depth'].astype(str)
-        self.get_spec()['match_id'] = self.get_spec()['PointID']
-        self.get_spec()['match_id'] += self.get_spec()['Depth']
-
-        for table in self.ags_handler.ags_tables:
-            try:
-                gint_rows = self.get_spec().shape[0]
-
-                self.ags_handler.tables[table]['match_id'] = self.ags_handler.tables[table]['LOCA_ID']
-                self.ags_handler.tables[table]['match_id'] += self.ags_handler.tables[table]['SAMP_TOP']
-
-                try:
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.ags_handler.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
-                                self.matched = True
-                                self.ags_handler.tables[table]['LOCA_ID'][tablerow] = self.get_spec()['PointID'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_ID'][tablerow] = self.get_spec()['SAMP_ID'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_REF'][tablerow] = self.get_spec()['SAMP_REF'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_TYPE'][tablerow] = self.get_spec()['SAMP_TYPE'][gintrow]
-                                self.ags_handler.tables[table]['SPEC_REF'][tablerow] = self.get_spec()['SPEC_REF'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_TOP'][tablerow] = format(self.get_spec()['SAMP_Depth'][gintrow],'.2f')
-                                self.ags_handler.tables[table]['SPEC_DPTH'][tablerow] = self.get_spec()['Depth'][gintrow]
-                                
-                                for x in self.ags_handler.tables[table].keys():
-                                    if "LAB" in x:
-                                        self.ags_handler.tables[table][x][tablerow] = "Geolabs Limited"
-                except:
-                    pass
-
-
-                '''PTST'''
-                if table == 'PTST':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if "#" in str(self.ags_handler.tables[table]['PTST_PDEN'][tablerow].lower()):
-                            self.ags_handler.tables[table]['PTST_PDEN'][tablerow] = str(self.ags_handler.tables[table]['PTST_PDEN'][tablerow]).rsplit('#', 2)[1]
-                        if "undisturbed" in str(self.ags_handler.tables[table]['PTST_COND'][tablerow].lower()):
-                            self.ags_handler.tables[table]['PTST_COND'][tablerow] = "UNDISTURBED"
-                        if "remoulded" in str(self.ags_handler.tables[table]['PTST_COND'][tablerow].lower()):
-                            self.ags_handler.tables[table]['PTST_COND'][tablerow] = "REMOULDED"
-                        if str(self.ags_handler.tables[table]['PTST_TESN'][tablerow]) == '':
-                            self.ags_handler.tables[table]['PTST_TESN'][tablerow] = "1"
-
-            except Exception as e:
-                print(f"Couldn't find table or field, skipping... {str(e)}")
-                pass
-
+        self.handle_tables()
+        self.lab_handler.match_unique_id_geolabs()
+        self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
-        self.check_matched_to_gint()
         self.enable_buttons()
 
-
+    #===GEOLABS FUGRO===
     def match_unique_id_geolabs_fugro(self):
         self.disable_buttons()
         self.get_gint()
-        self.matched = False
-        self.error = False
 
         if not self.check_gint():
             return
         
+        self.set_text('''Matching Geolabs (Fugro) AGS to gINT, 
+please wait...''')
         print(f"Matching Geolabs AGS to gINT... {self.gint_handler.gint_location}") 
 
-        self.get_ags_tables()
-        
-        '''Using for Fugro Boreholes (50HZ samples have different SAMP format including dupe depths)'''
-        self.get_spec()['SAMP_Depth'] = self.get_spec()['SAMP_Depth'].map('{:,.2f}'.format)
-        self.get_spec()['SAMP_Depth'] = self.get_spec()['SAMP_Depth'].astype(str)
-        self.get_spec()['match_id'] = self.get_spec()['PointID']
-        self.get_spec()['match_id'] += self.get_spec()['SAMP_Depth']
-        self.get_spec()['match_id'] += self.get_spec()['SAMP_REF']
-
-        for table in self.ags_handler.ags_tables:
-            try:                
-                if 'Depth' not in self.ags_handler.tables[table]:
-                    self.ags_handler.tables[table].insert(8,'Depth','')
-
-                gint_rows = self.get_spec().shape[0]
-
-                self.ags_handler.tables[table]['match_id'] = self.ags_handler.tables[table]['LOCA_ID']
-                self.ags_handler.tables[table]['match_id'] += self.ags_handler.tables[table]['SAMP_TOP']
-                self.ags_handler.tables[table]['match_id'] += self.ags_handler.tables[table]['SAMP_REF']
-
-                try:
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.ags_handler.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
-                                self.matched = True
-                                self.ags_handler.tables[table]['Depth'][tablerow] = self.ags_handler.tables[table]['SPEC_DPTH'][tablerow]
-                                self.ags_handler.tables[table]['LOCA_ID'][tablerow] = self.get_spec()['PointID'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_ID'][tablerow] = self.get_spec()['SAMP_ID'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_REF'][tablerow] = self.get_spec()['SAMP_REF'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_TYPE'][tablerow] = self.get_spec()['SAMP_TYPE'][gintrow]
-                                self.ags_handler.tables[table]['SPEC_REF'][tablerow] = self.get_spec()['SPEC_REF'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_TOP'][tablerow] = self.get_spec()['SAMP_Depth'][gintrow]
-                                self.ags_handler.tables[table]['SPEC_DPTH'][tablerow] = format(self.get_spec()['Depth'][gintrow],'.2f')
-                                
-                                # for x in self.ags_handler.tables[table].keys():
-                                #     if "LAB" in x:
-                                #         self.ags_handler.tables[table][x][tablerow] = "Geolabs"
-
-                except Exception as e:
-                    print(e)
-                    pass
-
-                '''RPLT'''
-                if table == 'RPLT':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if self.ags_handler.tables[table]['match_id'][tablerow] == self.ags_handler.tables[table]['match_id'][tablerow -1]:
-                            self.ags_handler.tables[table]['Depth'][tablerow] = format(float(self.ags_handler.tables[table]['Depth'][tablerow]) + 0.01,'.2f')
-                        if self.ags_handler.tables[table]['match_id'][tablerow] == self.ags_handler.tables[table]['match_id'][tablerow -2]:
-                            self.ags_handler.tables[table]['Depth'][tablerow] = format(float(self.ags_handler.tables[table]['Depth'][tablerow]) + 0.01,'.2f')
-                        try:
-                            if self.ags_handler.tables[table]['match_id'][tablerow] == self.ags_handler.tables[table]['match_id'][tablerow -3]:
-                                self.ags_handler.tables[table]['Depth'][tablerow] = format(float(self.ags_handler.tables[table]['Depth'][tablerow]) + 0.01,'.2f')
-                        except:
-                            pass
-
-
-                '''PTST'''
-                if table == 'PTST':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if "#" in str(self.ags_handler.tables[table]['PTST_PDEN'][tablerow].lower()):
-                            self.ags_handler.tables[table]['PTST_PDEN'][tablerow] = str(self.ags_handler.tables[table]['PTST_PDEN'][tablerow]).rsplit('#', 2)[1]
-                        if "undisturbed" in str(self.ags_handler.tables[table]['PTST_COND'][tablerow].lower()):
-                            self.ags_handler.tables[table]['PTST_COND'][tablerow] = "UNDISTURBED"
-                        if "remoulded" in str(self.ags_handler.tables[table]['PTST_COND'][tablerow].lower()):
-                            self.ags_handler.tables[table]['PTST_COND'][tablerow] = "REMOULDED"
-                        if str(self.ags_handler.tables[table]['PTST_TESN'][tablerow]) == '':
-                            self.ags_handler.tables[table]['PTST_TESN'][tablerow] = "1"                
-
-            except Exception as e:
-                print(f"Couldn't find table or field, skipping... {str(e)}")
-                pass
-
+        self.handle_tables()
+        self.lab_handler.match_unique_id_geolabs_fugro()
+        self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
-        self.check_matched_to_gint()
         self.enable_buttons()
 
+    #===SOILS PEZ===
+    def match_unique_id_soils_pez(self):
+        self.disable_buttons()
+        self.get_gint()
 
+        if not self.check_gint():
+            return
+        
+        self.set_text('''Matching Soils (PEZ) AGS to gINT, 
+please wait...''')
+        print(f"Matching Structural Soils AGS to gINT... {self.gint_handler.gint_location}") 
+
+        self.handle_tables()
+        self.lab_handler.match_unique_id_soils_pez()
+        self.ags_handler.tables = self.lab_handler.tables
+        self.remove_match_id()
+        self.enable_buttons()
+
+    #===GQM PEZ===
     def match_unique_id_gqm_pez(self):
         self.disable_buttons()
         self.get_gint()
-        self.matched = False
-        self.error = False
 
         if not self.check_gint():
             return
         
+        self.set_text('''Matching Soils (PEZ) AGS to gINT, 
+please wait...''')
         print(f"Matching GM Lab AGS to gINT... {self.gint_handler.gint_location}") 
 
-        self.get_ags_tables()
-
-        if 'GCHM' in self.ags_handler.ags_tables or 'ERES' in self.ags_handler.ags_tables:
-            self.error = True
-            print("GCHM or ERES table(s) found.")
-
-        self.get_spec()['Depth'] = self.get_spec()['Depth'].map('{:,.2f}'.format)
-        self.get_spec()['Depth'] = self.get_spec()['Depth'].astype(str)
-        self.get_spec()['match_id'] = self.get_spec()['PointID']
-        self.get_spec()['match_id'] += self.get_spec()['SPEC_REF']
-        self.get_spec()['match_id'] += self.get_spec()['Depth']
-        self.get_spec()['batched'] = self.get_spec()['SAMP_TYPE'].astype(str).str[0]
-        self.get_spec()['match_id'] += self.get_spec()['batched']
-        self.get_spec().drop(['batched'], axis=1, inplace=True)
-
-        for table in self.ags_handler.ags_tables:
-            try:
-                gint_rows = self.get_spec().shape[0]
-
-                self.ags_handler.tables[table]['match_id'] = self.ags_handler.tables[table]['LOCA_ID']
-                self.ags_handler.tables[table]['match_id'] += self.ags_handler.tables[table]['SAMP_TYPE']
-                self.ags_handler.tables[table]['match_id'] += self.ags_handler.tables[table]['SAMP_TOP']
-                self.ags_handler.tables[table]['batched'] = self.ags_handler.tables[table]['SAMP_REF'].astype(str).str[0]
-                self.ags_handler.tables[table]['match_id'] += self.ags_handler.tables[table]['batched']
-                self.ags_handler.tables[table].drop(['batched'], axis=1, inplace=True)
-                    
-                try:
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        for gintrow in range(0,gint_rows):
-
-                            if self.ags_handler.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
-                                self.matched = True
-
-                                if table == 'CONG':
-                                    if self.ags_handler.tables[table]['SPEC_REF'][tablerow] == "OED" or self.ags_handler.tables[table]['SPEC_REF'][tablerow] == "OEDR" and self.ags_handler.tables[table]['CONG_TYPE'][tablerow] == '':
-                                        self.ags_handler.tables[table]['CONG_TYPE'][tablerow] = self.ags_handler.tables[table]['SPEC_REF'][tablerow]
-
-                                if table == 'SAMP':
-                                    self.ags_handler.tables[table]['SAMP_REM'][tablerow] = self.get_spec()['SPEC_REF'][gintrow]
-
-                                self.ags_handler.tables[table]['SAMP_ID'][tablerow] = self.get_spec()['SAMP_ID'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_REF'][tablerow] = self.get_spec()['SAMP_REF'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_TYPE'][tablerow] = self.get_spec()['SAMP_TYPE'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_TOP'][tablerow] = format(self.get_spec()['SAMP_Depth'][gintrow],'.2f')
-
-                                try:
-                                    self.ags_handler.tables[table]['SPEC_REF'][tablerow] = self.get_spec()['SPEC_REF'][gintrow]
-                                except:
-                                    pass
-
-                                try:
-                                    self.ags_handler.tables[table]['SPEC_DPTH'][tablerow] = self.get_spec()['Depth'][gintrow]
-                                except:
-                                    pass
-
-                                for x in self.ags_handler.tables[table].keys():
-                                    if "LAB" in x:
-                                        self.ags_handler.tables[table][x][tablerow] = "GM Lab"
-
-                except Exception as e:
-                    print(str(e))
-                    pass
-
-                '''SHBG'''
-                if table == 'SHBG':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if "small" in str(self.ags_handler.tables[table]['SHBG_TYPE'][tablerow].lower()):
-                            self.ags_handler.tables[table]['SHBG_REM'][tablerow] += " - " + self.ags_handler.tables[table]['SHBG_TYPE'][tablerow]
-                            self.ags_handler.tables[table]['SHBG_TYPE'][tablerow] = "SMALL SBOX"
-
-                
-                '''SHBT'''
-                if table == 'SHBT':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if self.ags_handler.tables[table]['SHBT_NORM'][tablerow]:
-                            self.ags_handler.tables[table]['SHBT_NORM'][tablerow] = round(float(self.ags_handler.tables[table]['SHBT_NORM'][tablerow]))
-
-
-                '''LLPL'''
-                if table == 'LLPL':
-                    if 'Non-Plastic' not in self.ags_handler.tables[table]:
-                        self.ags_handler.tables[table].insert(13,'Non-Plastic','')
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if self.ags_handler.tables[table]['LLPL_LL'][tablerow] == '' and self.ags_handler.tables[table]['LLPL_PL'][tablerow] == '' and self.ags_handler.tables[table]['LLPL_PI'][tablerow] == '':
-                            self.ags_handler.tables[table]['Non-Plastic'][tablerow] = -1
-
-
-                '''GRAG'''
-                if table == 'GRAG':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if self.ags_handler.tables['GRAG']['GRAG_SILT'][tablerow] == '' and self.ags_handler.tables['GRAG']['GRAG_CLAY'][tablerow] == '':
-                            if self.ags_handler.tables['GRAG']['GRAG_VCRE'][tablerow] == '':
-                                self.ags_handler.tables['GRAG']['GRAG_FINE'][tablerow] = format(100 - (float(self.ags_handler.tables['GRAG']['GRAG_GRAV'][tablerow])) - (float(self.ags_handler.tables['GRAG']['GRAG_SAND'][tablerow])),".1f")
-                            else:
-                                self.ags_handler.tables['GRAG']['GRAG_FINE'][tablerow] = format(100 - (float(self.ags_handler.tables['GRAG']['GRAG_VCRE'][tablerow])) - (float(self.ags_handler.tables['GRAG']['GRAG_GRAV'][tablerow])) - (float(self.ags_handler.tables['GRAG']['GRAG_SAND'][tablerow])),'.1f')
-                        else:
-                            self.ags_handler.tables['GRAG']['GRAG_FINE'][tablerow] = format((float(self.ags_handler.tables['GRAG']['GRAG_SILT'][tablerow]) + float(self.ags_handler.tables['GRAG']['GRAG_CLAY'][tablerow])),'.1f')
-
-
-                '''GRAT'''
-                if table == 'GRAT':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if self.ags_handler.tables[table]['GRAT_PERP'][tablerow]:
-                            self.ags_handler.tables[table]['GRAT_PERP'][tablerow] = round(float(self.ags_handler.tables[table]['GRAT_PERP'][tablerow]))
-
-
-                '''TREG'''
-                if table == 'TREG':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if self.ags_handler.tables[table]['TREG_TYPE'][tablerow] == 'CU' and self.ags_handler.tables[table]['TREG_COH'][tablerow] == '0':
-                            self.ags_handler.tables[table]['TREG_COH'][tablerow] = ''
-                            self.ags_handler.tables[table]['TREG_PHI'][tablerow] = ''
-                            self.ags_handler.tables[table]['TREG_COND'][tablerow] = 'UNDISTURBED'
-                        if self.ags_handler.tables[table]['TREG_TYPE'][tablerow] == 'CD':
-                            self.ags_handler.tables[table]['TREG_COND'][tablerow] = 'REMOULDED'
-                            if self.ags_handler.tables[table]['TREG_PHI'][tablerow] == '':
-                                cid_sample = str(self.ags_handler.tables[table]['SAMP_ID'][tablerow]) + "-" + str(self.ags_handler.tables[table]['SPEC_REF'][tablerow])
-                                print(f'CID result: {cid_sample} - does not have friction angle.')
-
-
-                '''TRET'''
-                if table == 'TRET':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if 'TRET_SHST' in self.ags_handler.tables[table].keys():
-                            if self.ags_handler.tables[table]['TRET_SHST'][tablerow] == '' and self.ags_handler.tables[table]['TRET_DEVF'][tablerow] != '':
-                                if "cell" in str(self.ags_handler.tables['TRET']['TRET_SAT'][tablerow]).lower():
-                                    self.ags_handler.tables[table]['TRET_SHST'][tablerow] = round(float(self.ags_handler.tables[table]['TRET_DEVF'][tablerow]) / 2)
-                        if 'TRET_CELL' in self.ags_handler.tables[table].keys():
-                            if not self.ags_handler.tables[table]['TRET_CELL'][tablerow] == '':
-                                self.ags_handler.tables[table]['TRET_CELL'][tablerow] = round(float(self.ags_handler.tables[table]['TRET_CELL'][tablerow]))
-
-                '''LPDN'''
-                if table == 'LPDN':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if self.ags_handler.tables[table]['LPDN_TYPE'][tablerow] == 'LARGE PKY':
-                            self.ags_handler.tables[table]['LPDN_TYPE'][tablerow] = 'LARGE PYK'
-
-
-                '''CONG'''
-                if table == 'CONG':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if self.ags_handler.tables[table]['CONG_TYPE'][tablerow] == '' and self.ags_handler.tables[table]['CONG_COND'][tablerow] == 'Intact':
-                            self.ags_handler.tables[table]['CONG_TYPE'][tablerow] = 'CRS'
-                            self.ags_handler.tables[table]['CONG_COND'][tablerow] = 'UNDISTURBED'
-                        if "intact" in str(self.ags_handler.tables[table]['CONG_COND'][tablerow].lower()):
-                            self.ags_handler.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
-                        if "oed" in str(self.ags_handler.tables[table]['CONG_TYPE'][tablerow].lower()):
-                            self.ags_handler.tables[table]['CONG_TYPE'][tablerow] = "IL OEDOMETER"
-                            self.ags_handler.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
-                        self.ags_handler.tables[table]['CONG_COND'][tablerow] = str(self.ags_handler.tables[table]['CONG_COND'][tablerow].upper())
-
-
-                '''TRIG & TRIT'''
-                if table == 'TRIG' or table == 'TRIT':
-                    if 'Depth' not in self.ags_handler.tables[table]:
-                        self.ags_handler.tables[table].insert(8,'Depth','')
-                    if table == 'TRIT':
-                        for tablerow in range(2,len(self.ags_handler.tables[table])):
-                            if self.ags_handler.tables[table]['TRIT_DEVF'][tablerow]:
-                                self.ags_handler.tables[table]['TRIT_DEVF'][tablerow] = round(float(self.ags_handler.tables[table]['TRIT_DEVF'][tablerow]))
-                            if self.ags_handler.tables[table]['TRIT_TESN'][tablerow] == '':
-                                self.ags_handler.tables[table]['TRIT_TESN'][tablerow] = 1
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.ags_handler.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
-                                if self.ags_handler.tables['TRIG']['TRIG_COND'][tablerow] == 'REMOULDED':
-                                    self.ags_handler.tables[table]['Depth'][tablerow] = round(float(self.get_spec()['Depth'][gintrow]) + 0.01,2)
-                                else:
-                                    self.ags_handler.tables[table]['Depth'][tablerow] = self.get_spec()['Depth'][gintrow]
-
-
-                '''RELD'''
-                if table == 'RELD':
-                    if 'Depth' not in self.ags_handler.tables[table]:
-                        self.ags_handler.tables[table].insert(8,'Depth','')
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.ags_handler.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
-                                self.ags_handler.tables[table]['Depth'][tablerow] = self.get_spec()['Depth'][gintrow]
-
-
-                '''LDYN'''
-                if table == 'LDYN':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.ags_handler.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
-                                if 'LDYN_SWAV1' in self.ags_handler.tables[table] or 'LDYN_SWAV1SS' in self.ags_handler.tables[table]:
-                                    if self.ags_handler.tables[table]['LDYN_SWAV1SS'][tablerow] == "":
-                                        if self.ags_handler.tables[table]['LDYN_SWAV5'][tablerow] == "":
-                                            self.ags_handler.tables[table]['LDYN_SWAV'][tablerow] = int(mean([int(float(self.ags_handler.tables[table]['LDYN_SWAV1'][tablerow])),
-                                            int(float(self.ags_handler.tables[table]['LDYN_SWAV2'][tablerow])),
-                                            int(float(self.ags_handler.tables[table]['LDYN_SWAV3'][tablerow])),
-                                            int(float(self.ags_handler.tables[table]['LDYN_SWAV4'][tablerow]))
-                                            ]))
-                                        else:
-                                            self.ags_handler.tables[table]['LDYN_SWAV'][tablerow] = int(mean([int(float(self.ags_handler.tables[table]['LDYN_SWAV1'][tablerow])),
-                                            int(float(self.ags_handler.tables[table]['LDYN_SWAV2'][tablerow])),
-                                            int(float(self.ags_handler.tables[table]['LDYN_SWAV3'][tablerow])),
-                                            int(float(self.ags_handler.tables[table]['LDYN_SWAV4'][tablerow])),
-                                            int(float(self.ags_handler.tables[table]['LDYN_SWAV5'][tablerow]))
-                                            ]))
-                                    else:
-                                        if self.ags_handler.tables[table]['LDYN_SWAV5SS'][tablerow] == "":
-                                            self.ags_handler.tables[table]['LDYN_SWAV'][tablerow] = int(mean([int(float(self.ags_handler.tables[table]['LDYN_SWAV1SS'][tablerow])),
-                                            int(float(self.ags_handler.tables[table]['LDYN_SWAV2SS'][tablerow])),
-                                            int(float(self.ags_handler.tables[table]['LDYN_SWAV3SS'][tablerow])),
-                                            int(float(self.ags_handler.tables[table]['LDYN_SWAV4SS'][tablerow]))
-                                            ]))
-                                        else:
-                                            self.ags_handler.tables[table]['LDYN_SWAV'][tablerow] = int(mean([int(float(self.ags_handler.tables[table]['LDYN_SWAV1SS'][tablerow])),
-                                            int(float(self.ags_handler.tables[table]['LDYN_SWAV2SS'][tablerow])),
-                                            int(float(self.ags_handler.tables[table]['LDYN_SWAV3SS'][tablerow])),
-                                            int(float(self.ags_handler.tables[table]['LDYN_SWAV4SS'][tablerow])),
-                                            int(float(self.ags_handler.tables[table]['LDYN_SWAV5SS'][tablerow]))
-                                            ]))
-                            if self.ags_handler.tables[table]['LDYN_REM'][tablerow] == "":
-                                self.ags_handler.tables[table]['LDYN_REM'][tablerow] = "Bender Element"
-
-            except Exception as e:
-                print(f"Couldn't find table or field, skipping... {str(e)}")
-                pass
-
+        self.handle_tables()
+        self.lab_handler.match_unique_id_gqm_pez()
+        self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
-        self.check_matched_to_gint()
         self.enable_buttons()
 
-
+    #===DETS PEZ===
     def match_unique_id_dets_pez(self):
         self.disable_buttons()
         self.get_gint()
-        self.matched = False
-        self.error = False
 
         if not self.check_gint():
             return
         
+        self.set_text('''Matching DETS (PEZ) AGS to gINT, 
+please wait...''')
         print(f"Matching DETS for PEZ AGS to gINT... {self.gint_handler.gint_location}") 
 
-        self.get_ags_tables()
-
-        if 'GCHM' in self.ags_handler.ags_tables or 'ERES' in self.ags_handler.ags_tables:
-            pass
-        else:
-            self.error = True
-            print("Cannot find GCHM or ERES - looks like this AGS is from GM Lab.")
-
-        self.get_spec()['Depth'] = self.get_spec()['Depth'].map('{:,.2f}'.format)
-        self.get_spec()['Depth'] = self.get_spec()['Depth'].astype(str)
-        self.get_spec()['match_id'] = self.get_spec()['PointID']
-        self.get_spec()['match_id'] += self.get_spec()['Depth']
-        self.get_spec()['batched'] = self.get_spec()['SAMP_TYPE'].astype(str).str[0]
-        self.get_spec()['match_id'] += self.get_spec()['batched']
-        self.get_spec().drop(['batched'], axis=1, inplace=True)
-        self.get_spec()['match_id'] += self.get_spec()['SPEC_REF']
-
-        for table in self.ags_handler.ags_tables:
-            try:
-                gint_rows = self.get_spec().shape[0]
-
-                self.ags_handler.tables[table]['LOCA_ID'] = self.ags_handler.tables[table]['LOCA_ID'].str.split(" ", n=1, expand=True)[0]
-                self.ags_handler.tables[table]['match_id'] = self.ags_handler.tables[table]['LOCA_ID']
-                self.ags_handler.tables[table]['match_id'] += self.ags_handler.tables[table]['SAMP_TOP']
-                self.ags_handler.tables[table]['batched'] = self.ags_handler.tables[table]['SAMP_REF'].astype(str).str[0]
-                self.ags_handler.tables[table]['match_id'] += self.ags_handler.tables[table]['batched']
-                self.ags_handler.tables[table].drop(['batched'], axis=1, inplace=True)
-                self.ags_handler.tables[table]['SAMP_REF'] = self.ags_handler.tables[table]['SAMP_REF'].str.split(" ", n=1, expand=True)[1]
-                self.ags_handler.tables[table]['match_id'] += self.ags_handler.tables[table]['SAMP_REF']
-
-                try:
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.ags_handler.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
-                                self.matched = True
-                                if table == 'ERES':
-                                    if 'ERES_REM' not in self.ags_handler.tables[table].keys():
-                                        self.ags_handler.tables[table].insert(len(self.ags_handler.tables[table].keys()),'ERES_REM','')
-                                    self.ags_handler.tables[table]['ERES_REM'][tablerow] = self.ags_handler.tables[table]['SPEC_REF'][tablerow]
-                                self.ags_handler.tables[table]['LOCA_ID'][tablerow] = self.get_spec()['PointID'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_ID'][tablerow] = self.get_spec()['SAMP_ID'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_REF'][tablerow] = self.get_spec()['SAMP_REF'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_TYPE'][tablerow] = self.get_spec()['SAMP_TYPE'][gintrow]
-                                self.ags_handler.tables[table]['SPEC_REF'][tablerow] = self.get_spec()['SPEC_REF'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_TOP'][tablerow] = format(self.get_spec()['SAMP_Depth'][gintrow],'.2f')
-                                self.ags_handler.tables[table]['SPEC_DPTH'][tablerow] = self.get_spec()['Depth'][gintrow]
-                                
-                                for x in self.ags_handler.tables[table].keys():
-                                    if "LAB" in x:
-                                        self.ags_handler.tables[table][x][tablerow] = "DETS"
-                except Exception as e:
-                    print(e)
-                    pass
-
-                '''GCHM'''
-                if table == 'GCHM':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if "ph" in str(self.ags_handler.tables[table]['GCHM_UNIT'][tablerow].lower()):
-                            self.ags_handler.tables[table]['GCHM_UNIT'][tablerow] = "-"
-                        if "co3" in str(self.ags_handler.tables[table]['GCHM_CODE'][tablerow].lower()):
-                            self.ags_handler.tables[table]['GCHM_CODE'][tablerow] = "CACO3"
-
-
-                '''ERES'''
-                if table == 'ERES':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if "<" in str(self.ags_handler.tables[table]['ERES_RTXT'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_RTXT'][tablerow] = str(self.ags_handler.tables[table]['ERES_RTXT'][tablerow]).rsplit(" ", 1)[1]
-                        if "solid_21" in str(self.ags_handler.tables[table]['ERES_REM'][tablerow].lower()) or "2:1" in str(self.ags_handler.tables[table]['ERES_NAME'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_NAME'][tablerow] = "SOLID_21 WATER EXTRACT"
-                        if "solid_wat" in str(self.ags_handler.tables[table]['ERES_REM'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_NAME'][tablerow] = "SOLID_11 WATER EXTRACT"
-                        if "solid_tot" in str(self.ags_handler.tables[table]['ERES_REM'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_NAME'][tablerow] = "SOLID_TOTAL"
-                        if "sulph" in str(self.ags_handler.tables[table]['ERES_TNAM'][tablerow].lower()) and "so4" in str(self.ags_handler.tables[table]['ERES_TNAM'][tablerow].lower()) or "sulf" in str(self.ags_handler.tables[table]['ERES_TNAM'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_TNAM'][tablerow] = "WS"
-                        if "sulph" in str(self.ags_handler.tables[table]['ERES_TNAM'][tablerow].lower()) and "total" in str(self.ags_handler.tables[table]['ERES_TNAM'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_TNAM'][tablerow] = "TS"
-                        if "caco3" in str(self.ags_handler.tables[table]['ERES_TNAM'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_TNAM'][tablerow] = "CACO3"
-                        if "co2" in str(self.ags_handler.tables[table]['ERES_TNAM'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_TNAM'][tablerow] = "CO2"
-                        if "ph" == str(self.ags_handler.tables[table]['ERES_TNAM'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_TNAM'][tablerow] = "PH"
-                        if "chloride" in str(self.ags_handler.tables[table]['ERES_TNAM'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_TNAM'][tablerow] = "Cl"
-                        if "los" in str(self.ags_handler.tables[table]['ERES_TNAM'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_TNAM'][tablerow] = "LOI"
-                        if "ph" in str(self.ags_handler.tables[table]['ERES_RUNI'][tablerow].lower()):
-                            self.ags_handler.tables[table]['ERES_RUNI'][tablerow] = "-"
-
-            except Exception as e:
-                print(f"Couldn't find table or field, skipping... {str(e)}")
-                pass
-
+        self.handle_tables()
+        self.lab_handler.match_unique_id_dets_pez()
+        self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
-        self.check_matched_to_gint()
         self.enable_buttons()
 
-
+    #===SINOTECH===
     def match_unique_id_sinotech(self):
         self.disable_buttons()
         self.get_gint()
-        self.matched = False
-        self.error = False
 
         if not self.check_gint():
             return
         
+        self.set_text('''Matching Sinotech AGS to gINT, 
+please wait...''')
         print(f"Matching Sinotech AGS to gINT... {self.gint_handler.gint_location}") 
 
-        self.get_ags_tables()
-
-        self.get_spec()['Depth'] = self.get_spec()['Depth'].map('{:,.2f}'.format)
-        self.get_spec()['Depth'] = self.get_spec()['Depth'].astype(str)
-        self.get_spec()['match_id'] = self.get_spec()['PointID']
-        self.get_spec()['match_id'] += self.get_spec()['Depth']
-
-
-        for table in self.ags_handler.ags_tables:
-            try:
-                gint_rows = self.get_spec().shape[0]
-
-                self.ags_handler.tables[table]['match_id'] = self.ags_handler.tables[table]['LOCA_ID']
-                self.ags_handler.tables[table]['match_id'] += self.ags_handler.tables[table]['SAMP_TOP']
-
-                try:
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.ags_handler.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
-                                self.matched = True
-                                self.ags_handler.tables[table]['LOCA_ID'][tablerow] = self.get_spec()['PointID'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_ID'][tablerow] = self.get_spec()['SAMP_ID'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_REF'][tablerow] = self.get_spec()['SAMP_REF'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_TYPE'][tablerow] = self.get_spec()['SAMP_TYPE'][gintrow]
-                                self.ags_handler.tables[table]['SPEC_REF'][tablerow] = self.get_spec()['SPEC_REF'][gintrow]
-                                self.ags_handler.tables[table]['SAMP_TOP'][tablerow] = format(self.get_spec()['SAMP_Depth'][gintrow],'.2f')
-                                self.ags_handler.tables[table]['SPEC_DPTH'][tablerow] = self.get_spec()['Depth'][gintrow]
-                                
-                                for x in self.ags_handler.tables[table].keys():
-                                    if "LAB" in x:
-                                        self.ags_handler.tables[table][x][tablerow] = "Sinotech"
-                except:
-                    pass
-
-                '''CONG'''
-                if table == 'CONG':
-                    if 'CONG_TYPE' not in self.ags_handler.tables[table]:
-                        self.ags_handler.tables[table].insert(10,'CONG_TYPE','')
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if "crs" in str(self.ags_handler.tables[table]['FILE_FSET'][tablerow].lower()):
-                            self.ags_handler.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
-                            self.ags_handler.tables[table]['CONG_TYPE'][tablerow] = "CRS"
-                        if "oed" in str(self.ags_handler.tables[table]['FILE_FSET'][tablerow].lower()):
-                            self.ags_handler.tables[table]['CONG_TYPE'][tablerow] = "IL OEDOMETER"
-                            
-                '''LLPL'''
-                if table == 'LLPL':
-                    if 'Non-Plastic' not in self.ags_handler.tables[table]:
-                        self.ags_handler.tables[table].insert(13,'Non-Plastic','')
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if self.ags_handler.tables[table]['LLPL_LL'][tablerow] == '' and self.ags_handler.tables[table]['LLPL_PL'][tablerow] == '' and self.ags_handler.tables[table]['LLPL_PI'][tablerow] == '' or self.ags_handler.tables[table]['LLPL_LL'][tablerow] == "NP":
-                            self.ags_handler.tables[table]['Non-Plastic'][tablerow] = -1
-                            
-                '''TRIG & TRIT'''
-                if table == 'TRIG' or table == 'TRIT':
-                    if 'Depth' not in self.ags_handler.tables[table]:
-                        self.ags_handler.tables[table].insert(8,'Depth','')
-                    if table == 'TRIT':
-                        for tablerow in range(2,len(self.ags_handler.tables[table])):
-                            if self.ags_handler.tables[table]['TRIT_DEVF'][tablerow]:
-                                self.ags_handler.tables[table]['TRIT_DEVF'][tablerow] = round(float(self.ags_handler.tables[table]['TRIT_DEVF'][tablerow]))
-                            if self.ags_handler.tables[table]['TRIT_TESN'][tablerow] == '':
-                                self.ags_handler.tables[table]['TRIT_TESN'][tablerow] = 1
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.ags_handler.tables[table]['match_id'][tablerow] == self.get_spec()['match_id'][gintrow]:
-                                if self.ags_handler.tables['TRIG']['TRIG_COND'][tablerow] == 'REMOULDED':
-                                    self.ags_handler.tables[table]['Depth'][tablerow] = round(float(self.get_spec()['Depth'][gintrow]) + 0.01,2)
-                                else:
-                                    self.ags_handler.tables[table]['Depth'][tablerow] = self.get_spec()['Depth'][gintrow]
-                                    
-                '''TRET'''
-                if table == 'TRET':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if float(self.ags_handler.tables[table]['TRET_DDEN'][tablerow]) > 4.0:
-                            self.ags_handler.tables[table]['TRET_DDEN'][tablerow] = round(float(self.ags_handler.tables[table]['TRET_DDEN'][tablerow]) / 9.81, 2)
-                            
-                '''RELD'''
-                if table == 'RELD':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if float(self.ags_handler.tables[table]['RELD_DMAX'][tablerow]) > 4.0:
-                            self.ags_handler.tables[table]['RELD_DMAX'][tablerow] = float(self.ags_handler.tables[table]['RELD_DMAX'][tablerow]) / 900.81
-                            self.ags_handler.tables[table]['RELD_DMIN'][tablerow] = float(self.ags_handler.tables[table]['RELD_DMIN'][tablerow]) / 900.81
-                            
-                '''LDEN'''
-                if table == 'LDEN':
-                    for tablerow in range(2,len(self.ags_handler.tables[table])):
-                        if not self.ags_handler.tables[table]['LDEN_BDEN'][tablerow] == "":
-                            if float(self.ags_handler.tables[table]['LDEN_BDEN'][tablerow]) > 4.0:
-                                self.ags_handler.tables[table]['LDEN_BDEN'][tablerow] = float(self.ags_handler.tables[table]['LDEN_BDEN'][tablerow]) / 9.81
-                        if not self.ags_handler.tables[table]['LDEN_DDEN'][tablerow] == "":
-                            if float(self.ags_handler.tables[table]['LDEN_DDEN'][tablerow]) > 4.0:
-                                self.ags_handler.tables[table]['LDEN_DDEN'][tablerow] = float(self.ags_handler.tables[table]['LDEN_DDEN'][tablerow]) / 9.81
-
-                            
-            except Exception as e:
-                print(f"Couldn't find table or field, skipping... {str(e)}")
-                pass
-
+        self.handle_tables()
+        self.lab_handler.match_unique_id_sinotech()
+        self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
-        self.check_matched_to_gint()
         self.enable_buttons()
             
-
 
     def export_cpt_only(self):
         self.ags_handler.del_non_cpt_tables()
