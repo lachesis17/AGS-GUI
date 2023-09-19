@@ -82,7 +82,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lab_handler._disable.connect(self.disable_buttons)
         self.lab_handler._enable.connect(self.enable_buttons)
         
-        #set window size
+        'set window size'
         self.installEventFilter(self)
         self.set_size()
 
@@ -180,7 +180,7 @@ AGS file loaded.''')
         self.ags_handler.export_results()
 
     def remove_match_id(self):
-        self.ags_handler.remove_match_id()
+        self.lab_handler.remove_match_id()
 
 
     def setup_tables(self):
@@ -294,6 +294,7 @@ please wait...''')
         self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
         self.enable_buttons()
+        self.tables_table.resizeColumnsToContents()
             
     #===DETS===
     def match_unique_id_dets(self):
@@ -312,6 +313,7 @@ please wait...''')
         self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
         self.enable_buttons()
+        self.tables_table.resizeColumnsToContents()
 
 
     #===SOILS===
@@ -331,6 +333,7 @@ please wait...''')
         self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
         self.enable_buttons()
+        self.tables_table.resizeColumnsToContents()
 
     #===PSL===
     def match_unique_id_psl(self):
@@ -349,6 +352,7 @@ please wait...''')
         self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
         self.enable_buttons()
+        self.tables_table.resizeColumnsToContents()
 
     #===GEOLABS===
     def match_unique_id_geolabs(self):
@@ -367,6 +371,7 @@ please wait...''')
         self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
         self.enable_buttons()
+        self.tables_table.resizeColumnsToContents()
 
     #===GEOLABS FUGRO===
     def match_unique_id_geolabs_fugro(self):
@@ -385,6 +390,7 @@ please wait...''')
         self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
         self.enable_buttons()
+        self.tables_table.resizeColumnsToContents()
 
     #===SOILS PEZ===
     def match_unique_id_soils_pez(self):
@@ -403,6 +409,7 @@ please wait...''')
         self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
         self.enable_buttons()
+        self.tables_table.resizeColumnsToContents()
 
     #===GQM PEZ===
     def match_unique_id_gqm_pez(self):
@@ -421,6 +428,7 @@ please wait...''')
         self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
         self.enable_buttons()
+        self.tables_table.resizeColumnsToContents()
 
     #===DETS PEZ===
     def match_unique_id_dets_pez(self):
@@ -439,6 +447,7 @@ please wait...''')
         self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
         self.enable_buttons()
+        self.tables_table.resizeColumnsToContents()
 
     #===SINOTECH===
     def match_unique_id_sinotech(self):
@@ -457,6 +466,7 @@ please wait...''')
         self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
         self.enable_buttons()
+        self.tables_table.resizeColumnsToContents()
             
 
     def export_cpt_only(self):
@@ -466,42 +476,9 @@ please wait...''')
     def export_lab_only(self):
         self.ags_handler.export_lab_only()
         self.setup_tables()
-
     
     def convert_excel(self):
-        try:
-            fname = QtWidgets.QFileDialog.getSaveFileName(self, "Save AGS as excel...", os.path.dirname(self.file_location), "Excel file *.xlsx;")
-        except:
-            fname = QtWidgets.QFileDialog.getSaveFileName(self, "Save AGS as excel...", os.getcwd(), "Excel file *.xlsx;")
-        
-        if fname[0] == '':
-            return
-
-        final_dataframes = [(k,v) for (k,v) in self.ags_handler.tables.items() if not v.empty]
-        final_dataframes = dict(final_dataframes)
-        empty_dataframes = [k for (k,v) in self.ags_handler.tables.items() if v.empty]
-
-        print(f"""------------------------------------------------------
-Saving AGS to excel file...
-------------------------------------------------------""")
-
-        #create the excel file with the first dataframe from dict, so pd.excelwriter can be called (can only be used on existing excel workbook to append more sheets)
-        if not len(final_dataframes.keys()) < 1:
-            next(iter(final_dataframes.values())).to_excel(f"{fname[0]}", sheet_name=(f"{next(iter(final_dataframes))}"), index=None, index_label=None)
-            final_writer = pd.ExcelWriter(f"{fname[0]}", engine="openpyxl", mode="a", if_sheet_exists="replace")
-        else:
-            print(f"All selected tables are empty! Please select others. Tables selected: {empty_dataframes}")
-            self.enable_buttons()
-            return
-
-        #for every key (table name) and value (table data) in the AGS, append to excel sheet and update progress bar, saving only at the end for performance
-        for (k,v) in final_dataframes.items():
-            print(f"Writing {k} to excel...")
-            v.to_excel(final_writer, sheet_name=(f"{str(k)}"), index=None, index_label=None)
-            time.sleep(0.01)
-        final_writer.close()
-
-        print(f"""AGS saved as Excel file: {fname[0]}""")
+        self.ags_handler.convert_excel()
 
       
     def play_coin(self):

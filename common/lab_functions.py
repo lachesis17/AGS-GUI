@@ -34,6 +34,11 @@ Did you select the correct gINT or AGS?''')
             print("Unable to match sample data from gINT.") 
             self._enable.emit()
 
+    def remove_match_id(self):
+        for table in self.ags_tables:
+            if "match_id" in self.tables[table]:
+                self.tables[table].drop(['match_id'], axis=1, inplace=True)
+
 
     def match_unique_id_gqm(self):
         self.matched = False
