@@ -13,6 +13,7 @@ class GintHandler(QWidget):
     _disable = pyqtSignal()
     _enable = pyqtSignal()
     _update_text = pyqtSignal(str)
+    _gint_error_flag = pyqtSignal(bool)
 
     def __init__(self):
         super(QWidget, self).__init__()
@@ -44,21 +45,25 @@ class GintHandler(QWidget):
         if len(driver_check) == 0:
             msgBox = QMessageBox()
             msgBox.setIcon(QMessageBox.Information)
-            msgBox.setText("Access Driver Error")
-            msgBox.setWindowTitle("64-bit Access Driver not found.")
+            msgBox.setText('''64-bit Access Driver not found.
+Please contact Infinity to install this driver.''')
+            msgBox.setWindowTitle("Access Driver Error")
             msgBox.setStandardButtons(QMessageBox.Ok)
             msgBox.exec()
-            return
+            self._enable.emit()
+            return self._gint_error_flag.emit(True)
         try:
             conn = pyodbc.connect(r'Driver={Microsoft Access Driver (*.mdb, *.accdb)};DBQ='+self.gint_location+';')
             query = "SELECT * FROM SPEC"
             self.gint_spec = pd.read_sql(query, conn)
+            self._gint_error_flag.emit(False)
         except Exception as e:
             print(e)
             print("Uhh.... either that's the wrong gINT, or something went wrong.")
             self._update_text.emit('''Uhh.... something went wrong.
 ''')
-            
+            self._enable.emit()
+        
     
 
 class AGSHandler(QWidget):

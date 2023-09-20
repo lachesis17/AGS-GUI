@@ -69,6 +69,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.gint_handler._disable.connect(self.disable_buttons)
         self.gint_handler._enable.connect(self.enable_buttons)
         self.gint_handler._update_text.connect(self.set_text)
+        self.gint_handler._gint_error_flag.connect(lambda x: self.check_gint_error(x))
         self.ags_handler._disable.connect(self.disable_buttons)
         self.ags_handler._enable.connect(self.enable_buttons)
         self.ags_handler._update_text.connect(self.set_text)
@@ -97,10 +98,19 @@ class MainWindow(QtWidgets.QMainWindow):
     def get_spec(self):
         return self.gint_handler.gint_spec
     
+    def check_gint_error(self, err:bool):
+        self.gint_err: bool = None
+        self.gint_err = err
+
     def check_gint(self):
         if len(self.gint_handler.gint_location[0]) == 0:
             self.set_text('''No gINT selected!
 AGS file loaded.''')
+            return False
+        if self.gint_err:
+            self.set_text('''64-bit Access Driver not found.
+''')
+            print('64-bit Access Driver not found.')
             return False
         return True
 
