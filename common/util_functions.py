@@ -78,7 +78,7 @@ class AGSHandler(QWidget):
     _table_setup = pyqtSignal()
 
     def __init__(self):
-        #super(AGSHandler, self).__init__()
+        super(AGSHandler, self).__init__()
         self.gint_location: str = None
         self.gint_spec: pd.DataFrame = None
         self.config: object = None
