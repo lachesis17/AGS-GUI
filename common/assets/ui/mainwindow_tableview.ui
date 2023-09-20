@@ -866,6 +866,9 @@ QComboBox:enabled {
     color: white;
 }</string>
                      </property>
+                     <property name="maxVisibleItems">
+                      <number>15</number>
+                     </property>
                      <item>
                       <property name="text">
                        <string>Select a Lab</string>
@@ -919,6 +922,11 @@ QComboBox:enabled {
                      <item>
                       <property name="text">
                        <string>Sinotech TW</string>
+                      </property>
+                     </item>
+                     <item>
+                      <property name="text">
+                       <string>Mewo</string>
                       </property>
                      </item>
                     </widget>

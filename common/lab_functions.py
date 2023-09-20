@@ -1154,3 +1154,57 @@ Did you select the correct gINT or AGS?''')
                 pass
 
         self.check_matched_to_gint()
+
+    def match_unique_id_mewo(self):
+        self.matched = False
+        self.error = False
+
+        self.spec['SPEC_DEPTH2'] = self.spec['SPEC_DEPTH2'].map('{:,.2f}'.format)
+        self.spec['SPEC_DEPTH2'] = self.spec['SPEC_DEPTH2'].astype(str)
+        self.spec['match_id'] = self.spec['PointID']
+        self.spec['match_id'] += self.spec['SPEC_DEPTH2']
+
+        for table in self.ags_tables:
+            try:
+                gint_rows = self.spec.shape[0]
+
+                self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
+                self.tables[table]['match_id'] += self.tables[table]['SPEC_DPTH']
+
+                try:
+                    for tablerow in range(2,len(self.tables[table])):
+                        for gintrow in range(0,gint_rows):
+                            if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
+                                self.matched = True
+                                self.tables[table]['LOCA_ID'][tablerow] = self.spec['PointID'][gintrow]
+                                self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
+                                self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
+                                self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
+                                #self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
+                                self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
+                                self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['SPEC_DEPTH2'][gintrow]
+                                
+                                for x in self.tables[table].keys():
+                                    if "LAB" in x:
+                                        self.tables[table][x][tablerow] = "Mewo"
+                
+                    '''TXTG'''
+                    if table == 'TXTG':
+                        for tablerow in range(2,len(self.tables[table])):
+                            if "cd" in str(self.tables[table]['TXTG_TYPE'][tablerow].lower()):
+                                self.tables[table]['TXTG_TYPE'][tablerow] = "CID"
+                            if "cuc" in str(self.tables[table]['TXTG_TYPE'][tablerow].lower()):
+                                self.tables[table]['TXTG_TYPE'][tablerow] = "CAUc"
+                            if "cue" in str(self.tables[table]['TXTG_TYPE'][tablerow].lower()):
+                                self.tables[table]['TXTG_TYPE'][tablerow] = "CAUe"
+
+                    
+                except:
+                    pass
+                
+            except Exception as e:
+                print(f"Couldn't find table or field, skipping... {str(e)}")
+                pass
+
+        self.check_matched_to_gint()
+

@@ -153,6 +153,9 @@ AGS file loaded.''')
         elif self.get_selected_lab() == "Sinotech TW":
             print('Sinotech (Taiwan) AGS selected to match to gINT.')
             self.match_unique_id_sinotech()
+        elif self.get_selected_lab() == "Mewo":
+            print('Mewo AGS selected to match to gINT.')
+            self.match_unique_id_mewo()
 
     def update_result_model(self, df):
         model = PandasModel(df)
@@ -463,6 +466,26 @@ please wait...''')
 
         self.handle_tables()
         self.lab_handler.match_unique_id_sinotech()
+        self.ags_handler.tables = self.lab_handler.tables
+        self.remove_match_id()
+        self.enable_buttons()
+        self.tables_table.resizeColumnsToContents()
+
+
+    #===MEWO===
+    def match_unique_id_mewo(self):
+        self.disable_buttons()
+        self.get_gint()
+
+        if not self.check_gint():
+            return
+        
+        self.set_text('''Matching Mewo AGS to gINT, 
+please wait...''')
+        print(f"Matching Mewo AGS to gINT... {self.gint_handler.gint_location}") 
+
+        self.handle_tables()
+        self.lab_handler.match_unique_id_mewo()
         self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
         self.enable_buttons()

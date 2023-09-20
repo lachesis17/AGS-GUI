@@ -89,7 +89,7 @@ class AGSHandler(QWidget):
         'CONG','CONS','CODG','CODT','LDYN','LLPL','LPDN','LPEN','LRES','LTCH','LTHC',
         'LVAN','LHVN','RELD','SHBG','SHBT','TREG','TRET','DSSG','DSST','IRSG','IRST',
         'GCHM','ERES','RESG','REST','RESV','RESD','TORV','PTST','RPLT','RCAG','RDEN',
-        'RUCS', 'RWCO', 'IRSV']
+        'RUCS', 'RWCO', 'IRSV', 'TXTG', 'TXTT', 'SSTG', 'SSTT']
 
         self.core_tables = ["TRAN","PROJ","UNIT","ABBR","TYPE","DICT","LOCA"]
 
@@ -279,7 +279,7 @@ Please select an AGS with "Open File..."''')
 
         lab_tables = ['TRIG','LNMC','LDEN','GRAT','CONG','LDYN','LLPL','LPDN','LPEN',
         'LRES','LTCH','LVAN','RELD','SHBG','TREG','DSSG','IRSG','PTST','GCHM','RESG',
-        'ERES','RCAG','RDEN','RUCS','RPLT','LHVN'
+        'ERES','RCAG','RDEN','RUCS','RPLT','LHVN','TXTG', 'SSTG'
         ]
 
         all_results = []
@@ -315,6 +315,10 @@ Please select an AGS with "Open File..."''')
                         test_type_df = pd.DataFrame.from_dict(list(self.tables[table]['TREG_TYPE'][2:]))
                     elif 'ERES' in table:
                         test_type_df = pd.DataFrame.from_dict(list(self.tables[table]['ERES_TNAM'][2:]))
+                    elif 'TXTG' in table:
+                        test_type_df = pd.DataFrame.from_dict(list(self.tables[table]['TXTG_TYPE'][2:]))
+                    elif 'SSTG' in table:
+                        test_type_df = pd.DataFrame.from_dict(list(self.tables[table]['SSTG_TYPE'][2:]))
                     elif 'GRAT'in table:
                         test_type = list(self.tables[table]['GRAT_TYPE'][2:])
                         #turning into a dataframe to drop all the duplcicates per test type per sample, using the test type from that list as the count
