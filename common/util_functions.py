@@ -16,7 +16,7 @@ class GintHandler(QWidget):
     _gint_error_flag = pyqtSignal(bool)
 
     def __init__(self):
-        super(QWidget, self).__init__()
+        super(GintHandler, self).__init__()
         self.gint_location: str = None
         self.gint_spec: pd.DataFrame = None
         self.config: object = None
@@ -78,7 +78,7 @@ class AGSHandler(QWidget):
     _table_setup = pyqtSignal()
 
     def __init__(self):
-        super(QWidget, self).__init__()
+        #super(AGSHandler, self).__init__()
         self.gint_location: str = None
         self.gint_spec: pd.DataFrame = None
         self.config: object = None

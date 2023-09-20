@@ -11,7 +11,7 @@ class LabHandler(QWidget):
     _enable = pyqtSignal()
 
     def __init__(self):
-        super(QWidget, self).__init__()
+        super(LabHandler, self).__init__()
         self.tables: dict = None
         self.spec: pd.DataFrame = None
         self.ags_tables: list = []
