@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QUrl, QEvent, QTimer, QSize, QObject
+from PyQt5.QtCore import QUrl, QEvent, QTimer, QSize, QObject, QThread, pyqtSignal
 from PyQt5.QtGui import QResizeEvent
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from common.pandas_table import PandasModel
@@ -34,6 +34,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.gint_handler = GintHandler()
         self.ags_handler = AGSHandler()
         self.lab_handler = LabHandler()
+        self.error_handle = ErrorHandler()
 
         self.player = QMediaPlayer()
         self.config = configparser.ConfigParser()
@@ -499,13 +500,16 @@ please wait...''')
         print(f"Matching Mewo AGS to gINT... {self.gint_handler.gint_location}") 
 
         self.handle_tables()
-        self.lab_handler.match_unique_id_mewo()
+        self.error_handle.error_ocurred.connect(self.error_handle.show_err)
+        self.error_handle.func = self.lab_handler.match_unique_id_mewo
+        self.error_handle.start()
+        self.error_handle.run_func()
         self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
         self.enable_buttons()
         self.tables_table.resizeColumnsToContents()
-            
-
+        
+        
     def export_cpt_only(self):
         self.ags_handler.del_non_cpt_tables()
         self.setup_tables()
@@ -625,6 +629,22 @@ please wait...''')
         height = self.config['Window']['height']
         self.resize(QSize(int(width),int(height)))
         self.resizing = False
+
+class ErrorHandler(QThread):
+    error_ocurred = pyqtSignal(Exception)
+    def __init__(self):
+        super(ErrorHandler, self).__init__()
+        self.func: function
+
+    def run_func(self):
+        try:
+            return self.func()
+        except Exception as e:
+            return self.error_ocurred.emit(e)
+        
+    def show_err(self, exception):
+        print(f'look u broke this: {exception}')
+        self.terminate()
         
 
 def except_hook(cls, exception, traceback):
