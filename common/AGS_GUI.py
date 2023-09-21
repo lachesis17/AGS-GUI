@@ -87,6 +87,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lab_handler._nice.connect(self.play_nice)
         self.lab_handler._disable.connect(self.disable_buttons)
         self.lab_handler._enable.connect(self.enable_buttons)
+        self.error_handle.error_ocurred.connect(self.error_handle.show_err)
         
         'set window size'
         self.installEventFilter(self)
@@ -500,7 +501,6 @@ please wait...''')
         print(f"Matching Mewo AGS to gINT... {self.gint_handler.gint_location}") 
 
         self.handle_tables()
-        self.error_handle.error_ocurred.connect(self.error_handle.show_err)
         self.error_handle.func = self.lab_handler.match_unique_id_mewo
         self.error_handle.start()
         self.error_handle.run_func()
@@ -630,8 +630,10 @@ please wait...''')
         self.resize(QSize(int(width),int(height)))
         self.resizing = False
 
+
 class ErrorHandler(QThread):
     error_ocurred = pyqtSignal(Exception)
+
     def __init__(self):
         super(ErrorHandler, self).__init__()
         self.func: function
@@ -643,8 +645,8 @@ class ErrorHandler(QThread):
             return self.error_ocurred.emit(e)
         
     def show_err(self, exception):
-        print(f'look u broke this: {exception}')
-        self.terminate()
+        print(f'Error: {exception}')
+        #self.terminate()
         
 
 def except_hook(cls, exception, traceback):
