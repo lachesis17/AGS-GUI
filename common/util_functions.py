@@ -587,7 +587,6 @@ Saving AGS to excel file...
             final_writer = pd.ExcelWriter(f"{fname[0]}", engine="openpyxl", mode="a", if_sheet_exists="replace")
         else:
             print(f"All selected tables are empty! Please select others. Tables selected: {empty_dataframes}")
-            self.enable_buttons()
             return
 
         #for every key (table name) and value (table data) in the AGS, append to excel sheet and update progress bar, saving only at the end for performance

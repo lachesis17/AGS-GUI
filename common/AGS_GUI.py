@@ -11,21 +11,25 @@ import sys
 import os
 import pandas as pd
 import configparser
-import time
 import webbrowser
+import ctypes
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 pd.options.mode.chained_assignment = None
+
+'window and icon scaling'
 QApplication.setHighDpiScaleFactorRoundingPolicy(QtCore.Qt.HighDpiScaleFactorRoundingPolicy.PassThrough) 
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
+appid = 'ags_gui.v.4.5'
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid)
 
 class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
 
         uic.loadUi("common/assets/ui/mainwindow_tableview.ui", self)
-        self.setWindowIcon(QtGui.QIcon('common/images/geobig.ico'))
+        self.setWindowIcon(QtGui.QIcon('common/images/geo.ico'))
     
         self.gint_handler = GintHandler()
         self.ags_handler = AGSHandler()
