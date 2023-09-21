@@ -18,6 +18,13 @@
 
 <img src="common/images/AGS-GUI-readme.png" data-canonical-src="common/images/AGS-GUI-readme.png" width="75%"/>
 
+```
+Installation:
+pip install -r 'requirements.txt'
+Replace Python/Lib/site-packages/python-ags4/AGS4.py with AGS-GUI/common/AGS4_package_edit.py and rename to AGS4.py
+Compile with auto-py-to-exe using AGS-GUI/common/auto_py_to_exe_config.json
+```
+
 #### Open and Save
   - Open File: opens any valid AGS files
     - Use the 'AGS4_package_edit.py' file to replace 'AGS4.py' in <i>Python/lib/site-packages/python_ags4/</i>
