@@ -9,6 +9,8 @@ class LabHandler(QWidget):
     _nice = pyqtSignal()
     _disable = pyqtSignal()
     _enable = pyqtSignal()
+    _progress_max = pyqtSignal(int)
+    _progress_current = pyqtSignal(int)
 
     def __init__(self):
         super(LabHandler, self).__init__()
@@ -43,56 +45,46 @@ Did you select the correct gINT or AGS?''')
     def match_unique_id_gqm(self):
         self.matched = False
         self.error = False
+        progress = 0
+        progress_total = len(self.tables.keys()) - 2
+        self._progress_max.emit(progress_total)
+        self._progress_current.emit(progress)   
 
-        self.spec['Depth'] = self.spec['Depth'].map('{:,.2f}'.format)
-        self.spec['Depth'] = self.spec['Depth'].astype(str)
-        self.spec['match_id'] = self.spec['PointID']
-        self.spec['match_id'] += self.spec['SPEC_REF']
-        self.spec['match_id'] += self.spec['Depth']
+        try:
+            self.spec['Depth'] = self.spec['Depth'].map('{:,.2f}'.format)
+            self.spec['Depth'] = self.spec['Depth'].astype(str)
+            self.spec['match_id'] = self.spec['PointID']
+            self.spec['match_id'] += self.spec['SPEC_REF']
+            self.spec['match_id'] += self.spec['Depth']
 
-        for table in self.ags_tables:
-            try:
-                gint_rows = self.spec.shape[0]
-
+            for table in self.ags_tables:
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TYPE']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
 
-                try:
-                    for tablerow in range(2,len(self.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
-                                self.matched = True
+                for tablerow in range(2,len(self.tables[table])):
+                    for gintrow in range(0,self.spec.shape[0]):
+                        if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
+                            self.matched = True
 
-                                if table == 'CONG':
-                                    if self.tables[table]['SPEC_REF'][tablerow] == "OED" or self.tables[table]['SPEC_REF'][tablerow] == "OEDR" and self.tables[table]['CONG_TYPE'][tablerow] == '':
-                                        self.tables[table]['CONG_TYPE'][tablerow] = self.tables[table]['SPEC_REF'][tablerow]
+                            if table == 'CONG':
+                                if self.tables[table]['SPEC_REF'][tablerow] == "OED" or self.tables[table]['SPEC_REF'][tablerow] == "OEDR" and self.tables[table]['CONG_TYPE'][tablerow] == '':
+                                    self.tables[table]['CONG_TYPE'][tablerow] = self.tables[table]['SPEC_REF'][tablerow]
 
-                                if table == 'SAMP':
-                                    self.tables[table]['SAMP_REM'][tablerow] = self.spec['SPEC_REF'][gintrow]
+                            if table == 'SAMP':
+                                self.tables[table]['SAMP_REM'][tablerow] = self.spec['SPEC_REF'][gintrow]
 
-                                self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
-                                self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
-                                self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
-                                self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
+                            self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
+                            self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
+                            self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
+                            self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
+                            self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
+                            self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['Depth'][gintrow]
 
-                                try:
-                                    self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
-                                except:
-                                    pass
 
-                                try:
-                                    self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['Depth'][gintrow]
-                                except:
-                                    pass
-
-                                for x in self.tables[table].keys():
-                                    if "LAB" in x:
-                                        self.tables[table][x][tablerow] = "GM Lab"
-
-                except Exception as e:
-                    print(str(e))
-                    pass
+                            for x in self.tables[table].keys():
+                                if "LAB" in x:
+                                    self.tables[table][x][tablerow] = "GM Lab"
 
                 '''SHBG'''
                 if table == 'SHBG':
@@ -100,14 +92,12 @@ Did you select the correct gINT or AGS?''')
                         if "small" in str(self.tables[table]['SHBG_TYPE'][tablerow].lower()):
                             self.tables[table]['SHBG_REM'][tablerow] += " - " + self.tables[table]['SHBG_TYPE'][tablerow]
                             self.tables[table]['SHBG_TYPE'][tablerow] = "SMALL SBOX"
-
                 
                 '''SHBT'''
                 if table == 'SHBT':
                     for tablerow in range(2,len(self.tables[table])):
                         if self.tables[table]['SHBT_NORM'][tablerow]:
                             self.tables[table]['SHBT_NORM'][tablerow] = round(float(self.tables[table]['SHBT_NORM'][tablerow]))
-
 
                 '''LLPL'''
                 if table == 'LLPL':
@@ -116,7 +106,6 @@ Did you select the correct gINT or AGS?''')
                     for tablerow in range(2,len(self.tables[table])):
                         if self.tables[table]['LLPL_LL'][tablerow] == '' and self.tables[table]['LLPL_PL'][tablerow] == '' and self.tables[table]['LLPL_PI'][tablerow] == '':
                             self.tables[table]['Non-Plastic'][tablerow] = -1
-
 
                 '''GRAG'''
                 if table == 'GRAG':
@@ -129,13 +118,11 @@ Did you select the correct gINT or AGS?''')
                         else:
                             self.tables['GRAG']['GRAG_FINE'][tablerow] = format((float(self.tables['GRAG']['GRAG_SILT'][tablerow]) + float(self.tables['GRAG']['GRAG_CLAY'][tablerow])),'.1f')
 
-
                 '''GRAT'''
                 if table == 'GRAT':
                     for tablerow in range(2,len(self.tables[table])):
                         if self.tables[table]['GRAT_PERP'][tablerow]:
                             self.tables[table]['GRAT_PERP'][tablerow] = round(float(self.tables[table]['GRAT_PERP'][tablerow]))
-
 
                 '''TREG'''
                 if table == 'TREG':
@@ -149,7 +136,6 @@ Did you select the correct gINT or AGS?''')
                             if self.tables[table]['TREG_PHI'][tablerow] == '':
                                 cid_sample = str(self.tables[table]['SAMP_ID'][tablerow]) + "-" + str(self.tables[table]['SPEC_REF'][tablerow])
                                 print(f'CID result: {cid_sample} - does not have friction angle.')
-
 
                 '''TRET'''
                 if table == 'TRET':
@@ -169,7 +155,6 @@ Did you select the correct gINT or AGS?''')
                         if self.tables[table]['LPDN_TYPE'][tablerow] == 'LARGE PKY':
                             self.tables[table]['LPDN_TYPE'][tablerow] = 'LARGE PYK'
 
-
                 '''CONG'''
                 if table == 'CONG':
                     for tablerow in range(2,len(self.tables[table])):
@@ -183,7 +168,6 @@ Did you select the correct gINT or AGS?''')
                             self.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
                         self.tables[table]['CONG_COND'][tablerow] = str(self.tables[table]['CONG_COND'][tablerow].upper())
 
-
                 '''TRIG & TRIT'''
                 if table == 'TRIG' or table == 'TRIT':
                     if 'Depth' not in self.tables[table]:
@@ -195,52 +179,47 @@ Did you select the correct gINT or AGS?''')
                             if self.tables[table]['TRIT_TESN'][tablerow] == '':
                                 self.tables[table]['TRIT_TESN'][tablerow] = 1
                     for tablerow in range(2,len(self.tables[table])):
-                        for gintrow in range(0,gint_rows):
+                        for gintrow in range(0,self.spec.shape[0]):
                             if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
                                 if self.tables['TRIG']['TRIG_COND'][tablerow] == 'REMOULDED':
                                     self.tables[table]['Depth'][tablerow] = round(float(self.spec['Depth'][gintrow]) + 0.01,2)
                                 else:
                                     self.tables[table]['Depth'][tablerow] = self.spec['Depth'][gintrow]
 
-
                 '''RELD'''
                 if table == 'RELD':
                     if 'Depth' not in self.tables[table]:
                         self.tables[table].insert(8,'Depth','')
                     for tablerow in range(2,len(self.tables[table])):
-                        for gintrow in range(0,gint_rows):
+                        for gintrow in range(0,self.spec.shape[0]):
                             if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
                                 self.tables[table]['Depth'][tablerow] = self.spec['Depth'][gintrow]
-
-
 
                 '''RPLT'''
                 if table == 'RPLT':
                     if 'Depth' not in self.tables[table]:
                         self.tables[table].insert(8,'Depth','')
                     for tablerow in range(2,len(self.tables[table])):
-                        for gintrow in range(0,gint_rows):
+                        for gintrow in range(0,self.spec.shape[0]):
                             if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
                                 self.tables[table]['Depth'][tablerow] = self.spec['Depth'][gintrow]
                             if "RPLT_FAIL" in self.tables[table]:
                                 if "." in str(self.tables[table]['RPLT_FAIL'][tablerow]):
                                     self.tables[table]['RPLT_FAIL'][tablerow] = float(self.tables[table]['RPLT_FAIL'][tablerow] * 1000) 
 
-
                 '''RDEN'''
                 if table == 'RDEN':
                     for tablerow in range(2,len(self.tables[table])):
-                        for gintrow in range(0,gint_rows):
+                        for gintrow in range(0,self.spec.shape[0]):
                             if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
                                 if float(self.tables[table]['RDEN_DDEN'][tablerow]) <= 0:
                                     self.tables[table]['RDEN_DDEN'][tablerow] = 0
                                     self.tables[table]['RDEN_PORO'][tablerow] = 0
 
-
                 '''LDYN'''
                 if table == 'LDYN':
                     for tablerow in range(2,len(self.tables[table])):
-                        for gintrow in range(0,gint_rows):
+                        for gintrow in range(0,self.spec.shape[0]):
                             if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
                                 if 'LDYN_SWAV1' in self.tables[table] or 'LDYN_SWAV1SS' in self.tables[table]:
                                     if self.tables[table]['LDYN_SWAV1SS'][tablerow] == "":
@@ -280,10 +259,12 @@ Did you select the correct gINT or AGS?''')
                         if self.tables[table]['LRES_TEMP'][tablerow] != '':
                             self.tables[table]['LRES_TEMP'][tablerow] = int(round(float(self.tables[table]['LRES_TEMP'][tablerow]),0))
 
+                progress += 1
+                self._progress_current.emit(progress)  
 
-            except Exception as e:
-                print(f"Couldn't find table or field, skipping... {str(e)}")
-                pass
+        except Exception as e:
+            print(f"Couldn't find table or field, skipping... {str(e)}")
+            pass
 
         self.check_matched_to_gint()
 
@@ -291,49 +272,46 @@ Did you select the correct gINT or AGS?''')
     def match_unique_id_dets(self):
         self.matched = False
         self.error = False
-
-        self.spec['Depth'] = self.spec['Depth'].map('{:,.2f}'.format)
-        self.spec['Depth'] = self.spec['Depth'].astype(str)
-        self.spec['match_id'] = self.spec['PointID']
-        self.spec['match_id'] += self.spec['Depth']
+        progress = 0
+        progress_total = len(self.tables.keys()) - 2
+        self._progress_max.emit(progress_total)
+        self._progress_current.emit(progress)   
 
         if 'GCHM' in self.ags_tables or 'ERES' in self.ags_tables:
             pass
         else:
             self.error = True
             print("Cannot find GCHM or ERES - looks like this AGS is from GM Lab.")
+        try:
+            self.spec['Depth'] = self.spec['Depth'].map('{:,.2f}'.format)
+            self.spec['Depth'] = self.spec['Depth'].astype(str)
+            self.spec['match_id'] = self.spec['PointID']
+            self.spec['match_id'] += self.spec['Depth']
 
-        for table in self.ags_tables:
-            try:
-                gint_rows = self.spec.shape[0]
-
+            for table in self.ags_tables:
                 self.tables[table]['LOCA_ID'] = self.tables[table]['LOCA_ID'].str.split(" ", n=1, expand=True)[0]
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
 
-                try:
-                    for tablerow in range(2,len(self.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
-                                self.matched = True
-                                if table == 'ERES':
-                                    if 'ERES_REM' not in self.tables[table].keys():
-                                        self.tables[table].insert(len(self.tables[table].keys()),'ERES_REM','')
-                                    self.tables[table]['ERES_REM'][tablerow] = self.tables[table]['SPEC_REF'][tablerow]
-                                self.tables[table]['LOCA_ID'][tablerow] = self.spec['PointID'][gintrow]
-                                self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
-                                self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
-                                self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
-                                self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
-                                self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
-                                self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['Depth'][gintrow]
-                                
-                                for x in self.tables[table].keys():
-                                    if "LAB" in x:
-                                        self.tables[table][x][tablerow] = "DETS"
-                except Exception as e:
-                    print(e)
-                    pass
+                for tablerow in range(2,len(self.tables[table])):
+                    for gintrow in range(0,self.spec.shape[0]):
+                        if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
+                            self.matched = True
+                            if table == 'ERES':
+                                if 'ERES_REM' not in self.tables[table].keys():
+                                    self.tables[table].insert(len(self.tables[table].keys()),'ERES_REM','')
+                                self.tables[table]['ERES_REM'][tablerow] = self.tables[table]['SPEC_REF'][tablerow]
+                            self.tables[table]['LOCA_ID'][tablerow] = self.spec['PointID'][gintrow]
+                            self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
+                            self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
+                            self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
+                            self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
+                            self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
+                            self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['Depth'][gintrow]
+                            
+                            for x in self.tables[table].keys():
+                                if "LAB" in x:
+                                    self.tables[table][x][tablerow] = "DETS"
 
                 '''GCHM'''
                 if table == 'GCHM':
@@ -342,7 +320,6 @@ Did you select the correct gINT or AGS?''')
                             self.tables[table]['GCHM_UNIT'][tablerow] = "-"
                         if "co3" in str(self.tables[table]['GCHM_CODE'][tablerow].lower()):
                             self.tables[table]['GCHM_CODE'][tablerow] = "CACO3"
-
 
                 '''ERES'''
                 if table == 'ERES':
@@ -372,9 +349,12 @@ Did you select the correct gINT or AGS?''')
                         if "ph" in str(self.tables[table]['ERES_RUNI'][tablerow].lower()):
                             self.tables[table]['ERES_RUNI'][tablerow] = "-"
 
-            except Exception as e:
-                print(f"Couldn't find table or field, skipping... {str(e)}")
-                pass
+                progress += 1
+                self._progress_current.emit(progress)  
+
+        except Exception as e:
+            print(f"Couldn't find table or field, skipping... {str(e)}")
+            pass
 
         self.check_matched_to_gint()
 
@@ -382,38 +362,36 @@ Did you select the correct gINT or AGS?''')
     def match_unique_id_soils(self):
         self.matched = False
         self.error = False
+        progress = 0
+        progress_total = len(self.tables.keys()) - 2
+        self._progress_max.emit(progress_total)
+        self._progress_current.emit(progress)   
 
-        self.tables['Depth'] = self.tables['Depth'].map('{:,.2f}'.format)
-        self.tables['Depth'] = self.tables['Depth'].astype(str)
-        self.tables['match_id'] = self.tables['PointID']
-        self.tables['match_id'] += self.tables['Depth']
+        try:
+            self.spec['Depth'] = self.spec['Depth'].map('{:,.2f}'.format)
+            self.spec['Depth'] = self.spec['Depth'].astype(str)
+            self.spec['match_id'] = self.spec['PointID']
+            self.spec['match_id'] += self.spec['Depth']
 
-
-        for table in self.ags_tables:
-            try:
-                gint_rows = self.tables.shape[0]
-
+            for table in self.ags_tables:
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
 
-                try:
-                    for tablerow in range(2,len(self.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.tables[table]['match_id'][tablerow] == self.tables['match_id'][gintrow]:
-                                self.matched = True
-                                self.tables[table]['LOCA_ID'][tablerow] = self.tables['PointID'][gintrow]
-                                self.tables[table]['SAMP_ID'][tablerow] = self.tables['SAMP_ID'][gintrow]
-                                self.tables[table]['SAMP_REF'][tablerow] = self.tables['SAMP_REF'][gintrow]
-                                self.tables[table]['SAMP_TYPE'][tablerow] = self.tables['SAMP_TYPE'][gintrow]
-                                self.tables[table]['SPEC_REF'][tablerow] = self.tables['SPEC_REF'][gintrow]
-                                self.tables[table]['SAMP_TOP'][tablerow] = format(self.tables['SAMP_Depth'][gintrow],'.2f')
-                                self.tables[table]['SPEC_DPTH'][tablerow] = self.tables['Depth'][gintrow]
-                                
-                                for x in self.tables[table].keys():
-                                    if "LAB" in x:
-                                        self.tables[table][x][tablerow] = "Structural Soils"
-                except:
-                    pass
+                for tablerow in range(2,len(self.tables[table])):
+                    for gintrow in range(0,self.spec.shape[0]):
+                        if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
+                            self.matched = True
+                            self.tables[table]['LOCA_ID'][tablerow] = self.spec['PointID'][gintrow]
+                            self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
+                            self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
+                            self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
+                            self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
+                            self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
+                            self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['Depth'][gintrow]
+                            
+                            for x in self.tables[table].keys():
+                                if "LAB" in x:
+                                    self.tables[table][x][tablerow] = "Structural Soils"
 
                 '''CONG'''
                 if table == 'CONG':
@@ -426,50 +404,49 @@ Did you select the correct gINT or AGS?''')
                         if "#" in str(self.tables[table]['CONG_PDEN'][tablerow].lower()):
                             self.tables[table]['CONG_PDEN'][tablerow] = str(self.tables[table]['CONG_PDEN'][tablerow]).split('#')[1]
 
-            except Exception as e:
-                print(f"Couldn't find table or field, skipping... {str(e)}")
-                pass
+                progress += 1
+                self._progress_current.emit(progress)  
+
+        except Exception as e:
+            print(f"Couldn't find table or field, skipping... {str(e)}")
+            pass
 
         self.check_matched_to_gint()
-
-
-    
 
 
     def match_unique_id_psl(self):
         self.matched = False
         self.error = False
+        progress = 0
+        progress_total = len(self.tables.keys()) - 2
+        self._progress_max.emit(progress_total)
+        self._progress_current.emit(progress)   
 
-        self.spec['Depth'] = self.spec['Depth'].map('{:,.2f}'.format)
-        self.spec['Depth'] = self.spec['Depth'].astype(str)
-        self.spec['match_id'] = self.spec['PointID']
-        self.spec['match_id'] += self.spec['Depth']
+        try:
+            self.spec['Depth'] = self.spec['Depth'].map('{:,.2f}'.format)
+            self.spec['Depth'] = self.spec['Depth'].astype(str)
+            self.spec['match_id'] = self.spec['PointID']
+            self.spec['match_id'] += self.spec['Depth']
 
-        for table in self.ags_tables:
-            try:
-                gint_rows = self.spec.shape[0]
-
+            for table in self.ags_tables:
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
 
-                try:
-                    for tablerow in range(2,len(self.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
-                                self.matched = True
-                                self.tables[table]['LOCA_ID'][tablerow] = self.spec['PointID'][gintrow]
-                                self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
-                                self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
-                                self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
-                                self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
-                                self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
-                                self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['Depth'][gintrow]
-                                
-                                for x in self.tables[table].keys():
-                                    if "LAB" in x:
-                                        self.tables[table][x][tablerow] = "PSL"
-                except:
-                    pass
+                for tablerow in range(2,len(self.tables[table])):
+                    for gintrow in range(0,self.spec.shape[0]):
+                        if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
+                            self.matched = True
+                            self.tables[table]['LOCA_ID'][tablerow] = self.spec['PointID'][gintrow]
+                            self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
+                            self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
+                            self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
+                            self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
+                            self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
+                            self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['Depth'][gintrow]
+                            
+                            for x in self.tables[table].keys():
+                                if "LAB" in x:
+                                    self.tables[table][x][tablerow] = "PSL"
 
                 '''CONG'''
                 if table == 'CONG':
@@ -480,13 +457,11 @@ Did you select the correct gINT or AGS?''')
                             self.tables[table]['CONG_TYPE'][tablerow] = "IL OEDOMETER"
                             self.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
 
-
                 '''TREG'''
                 if table == 'TREG':
                     for tablerow in range(2,len(self.tables[table])):
                         if "undisturbed" in str(self.tables[table]['TREG_COND'][tablerow].lower()):
                             self.tables[table]['TREG_COND'][tablerow] = "UNDISTURBED"
-
 
                 '''TRET'''
                 if table == 'TRET':
@@ -495,7 +470,6 @@ Did you select the correct gINT or AGS?''')
                             self.tables[table].insert(len(self.tables[table].keys()),'TRET_SHST','')
                         if self.tables[table]['TRET_SHST'][tablerow] == self.tables[table]['TRET_DEVF'][tablerow]:
                             self.tables[table]['TRET_SHST'][tablerow] = round(float(self.tables[table]['TRET_DEVF'][tablerow]) / 2)
-
 
                 '''PTST'''
                 if table == 'PTST':
@@ -506,10 +480,13 @@ Did you select the correct gINT or AGS?''')
                             self.tables[table]['PTST_COND'][tablerow] = "UNDISTURBED"
                         if "remoulded" in str(self.tables[table]['PTST_COND'][tablerow].lower()):
                             self.tables[table]['PTST_COND'][tablerow] = "REMOULDED"
-                
-            except Exception as e:
-                print(f"Couldn't find table or field, skipping... {str(e)}")
-                pass
+
+                progress += 1
+                self._progress_current.emit(progress)  
+
+        except Exception as e:
+            print(f"Couldn't find table or field, skipping... {str(e)}")
+            pass
 
         self.check_matched_to_gint()
 
@@ -517,38 +494,36 @@ Did you select the correct gINT or AGS?''')
     def match_unique_id_geolabs(self):
         self.matched = False
         self.error = False
+        progress = 0
+        progress_total = len(self.tables.keys()) - 2
+        self._progress_max.emit(progress_total)
+        self._progress_current.emit(progress)   
 
-        self.spec['Depth'] = self.spec['Depth'].map('{:,.2f}'.format)
-        self.spec['Depth'] = self.spec['Depth'].astype(str)
-        self.spec['match_id'] = self.spec['PointID']
-        self.spec['match_id'] += self.spec['Depth']
+        try:
+            self.spec['Depth'] = self.spec['Depth'].map('{:,.2f}'.format)
+            self.spec['Depth'] = self.spec['Depth'].astype(str)
+            self.spec['match_id'] = self.spec['PointID']
+            self.spec['match_id'] += self.spec['Depth']
 
-        for table in self.ags_tables:
-            try:
-                gint_rows = self.spec.shape[0]
-
+            for table in self.ags_tables:
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
 
-                try:
-                    for tablerow in range(2,len(self.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
-                                self.matched = True
-                                self.tables[table]['LOCA_ID'][tablerow] = self.spec['PointID'][gintrow]
-                                self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
-                                self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
-                                self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
-                                self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
-                                self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
-                                self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['Depth'][gintrow]
-                                
-                                for x in self.tables[table].keys():
-                                    if "LAB" in x:
-                                        self.tables[table][x][tablerow] = "Geolabs Limited"
-                except:
-                    pass
-
+                for tablerow in range(2,len(self.tables[table])):
+                    for gintrow in range(0,self.spec.shape[0]):
+                        if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
+                            self.matched = True
+                            self.tables[table]['LOCA_ID'][tablerow] = self.spec['PointID'][gintrow]
+                            self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
+                            self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
+                            self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
+                            self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
+                            self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
+                            self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['Depth'][gintrow]
+                            
+                            for x in self.tables[table].keys():
+                                if "LAB" in x:
+                                    self.tables[table][x][tablerow] = "Geolabs Limited"
 
                 '''PTST'''
                 if table == 'PTST':
@@ -562,9 +537,12 @@ Did you select the correct gINT or AGS?''')
                         if str(self.tables[table]['PTST_TESN'][tablerow]) == '':
                             self.tables[table]['PTST_TESN'][tablerow] = "1"
 
-            except Exception as e:
-                print(f"Couldn't find table or field, skipping... {str(e)}")
-                pass
+                progress += 1
+                self._progress_current.emit(progress)  
+
+        except Exception as e:
+            print(f"Couldn't find table or field, skipping... {str(e)}")
+            pass
 
         self.check_matched_to_gint()
 
@@ -572,46 +550,39 @@ Did you select the correct gINT or AGS?''')
     def match_unique_id_geolabs_fugro(self):
         self.matched = False
         self.error = False
+        progress = 0
+        progress_total = len(self.tables.keys()) - 2
+        self._progress_max.emit(progress_total)
+        self._progress_current.emit(progress)   
         
-        '''Using for Fugro Boreholes (50HZ samples have different SAMP format including dupe depths)'''
-        self.spec['SAMP_Depth'] = self.spec['SAMP_Depth'].map('{:,.2f}'.format)
-        self.spec['SAMP_Depth'] = self.spec['SAMP_Depth'].astype(str)
-        self.spec['match_id'] = self.spec['PointID']
-        self.spec['match_id'] += self.spec['SAMP_Depth']
-        self.spec['match_id'] += self.spec['SAMP_REF']
+        try:
+            '''Using for Fugro Boreholes (50HZ samples have different SAMP format including dupe depths)'''
+            self.spec['SAMP_Depth'] = self.spec['SAMP_Depth'].map('{:,.2f}'.format)
+            self.spec['SAMP_Depth'] = self.spec['SAMP_Depth'].astype(str)
+            self.spec['match_id'] = self.spec['PointID']
+            self.spec['match_id'] += self.spec['SAMP_Depth']
+            self.spec['match_id'] += self.spec['SAMP_REF']
 
-        for table in self.ags_tables:
-            try:                
+            for table in self.ags_tables:
                 if 'Depth' not in self.tables[table]:
                     self.tables[table].insert(8,'Depth','')
-
-                gint_rows = self.spec.shape[0]
 
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_REF']
 
-                try:
-                    for tablerow in range(2,len(self.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
-                                self.matched = True
-                                self.tables[table]['Depth'][tablerow] = self.tables[table]['SPEC_DPTH'][tablerow]
-                                self.tables[table]['LOCA_ID'][tablerow] = self.spec['PointID'][gintrow]
-                                self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
-                                self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
-                                self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
-                                self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
-                                self.tables[table]['SAMP_TOP'][tablerow] = self.spec['SAMP_Depth'][gintrow]
-                                self.tables[table]['SPEC_DPTH'][tablerow] = format(self.spec['Depth'][gintrow],'.2f')
-                                
-                                # for x in self.tables[table].keys():
-                                #     if "LAB" in x:
-                                #         self.tables[table][x][tablerow] = "Geolabs"
-
-                except Exception as e:
-                    print(e)
-                    pass
+                for tablerow in range(2,len(self.tables[table])):
+                    for gintrow in range(0,self.spec.shape[0]):
+                        if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
+                            self.matched = True
+                            self.tables[table]['Depth'][tablerow] = self.tables[table]['SPEC_DPTH'][tablerow]
+                            self.tables[table]['LOCA_ID'][tablerow] = self.spec['PointID'][gintrow]
+                            self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
+                            self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
+                            self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
+                            self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
+                            self.tables[table]['SAMP_TOP'][tablerow] = self.spec['SAMP_Depth'][gintrow]
+                            self.tables[table]['SPEC_DPTH'][tablerow] = format(self.spec['Depth'][gintrow],'.2f')   
 
                 '''RPLT'''
                 if table == 'RPLT':
@@ -626,7 +597,6 @@ Did you select the correct gINT or AGS?''')
                         except:
                             pass
 
-
                 '''PTST'''
                 if table == 'PTST':
                     for tablerow in range(2,len(self.tables[table])):
@@ -638,10 +608,13 @@ Did you select the correct gINT or AGS?''')
                             self.tables[table]['PTST_COND'][tablerow] = "REMOULDED"
                         if str(self.tables[table]['PTST_TESN'][tablerow]) == '':
                             self.tables[table]['PTST_TESN'][tablerow] = "1"                
+                
+                progress += 1
+                self._progress_current.emit(progress)  
 
-            except Exception as e:
-                print(f"Couldn't find table or field, skipping... {str(e)}")
-                pass
+        except Exception as e:
+            print(f"Couldn't find table or field, skipping... {str(e)}")
+            pass
 
         self.check_matched_to_gint()
 
@@ -649,43 +622,42 @@ Did you select the correct gINT or AGS?''')
     def match_unique_id_soils_pez(self):
         self.matched = False
         self.error = False
+        progress = 0
+        progress_total = len(self.tables.keys()) - 2
+        self._progress_max.emit(progress_total)
+        self._progress_current.emit(progress)   
 
-        self.spec['Depth'] = self.spec['Depth'].map('{:,.2f}'.format)
-        self.spec['Depth'] = self.spec['Depth'].astype(str)
-        self.spec['match_id'] = self.spec['PointID']
-        self.spec['match_id'] += self.spec['Depth']
-        self.spec['batched'] = self.spec['SAMP_TYPE'].astype(str).str[0]
-        self.spec['match_id'] += self.spec['batched']
-        self.spec.drop(['batched'], axis=1, inplace=True)
-
-        for table in self.ags_tables:
-            try:
-                gint_rows = self.spec.shape[0]
-
+        try:
+            self.spec['Depth'] = self.spec['Depth'].map('{:,.2f}'.format)
+            self.spec['Depth'] = self.spec['Depth'].astype(str)
+            self.spec['match_id'] = self.spec['PointID']
+            self.spec['match_id'] += self.spec['Depth']
+            self.spec['batched'] = self.spec['SAMP_TYPE'].astype(str).str[0]
+            self.spec['match_id'] += self.spec['batched']
+            self.spec.drop(['batched'], axis=1, inplace=True)
+            
+            for table in self.ags_tables:
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SPEC_DPTH']
                 self.tables[table]['batched'] = self.tables[table]['SAMP_TYPE'].astype(str).str[0]
                 self.tables[table]['match_id'] += self.tables[table]['batched']
                 self.tables[table].drop(['batched'], axis=1, inplace=True)
 
-                try:
-                    for tablerow in range(2,len(self.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
-                                self.matched = True
-                                self.tables[table]['LOCA_ID'][tablerow] = self.spec['PointID'][gintrow]
-                                self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
-                                self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
-                                self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
-                                self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
-                                self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
-                                self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['Depth'][gintrow]
-                                
-                                for x in self.tables[table].keys():
-                                    if "LAB" in x:
-                                        self.tables[table][x][tablerow] = "Structural Soils Ltd - Bristol Geotech lab"
-                except:
-                    pass
+                for tablerow in range(2,len(self.tables[table])):
+                    for gintrow in range(0,self.spec.shape[0]):
+                        if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
+                            self.matched = True
+                            self.tables[table]['LOCA_ID'][tablerow] = self.spec['PointID'][gintrow]
+                            self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
+                            self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
+                            self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
+                            self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
+                            self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
+                            self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['Depth'][gintrow]
+                            
+                            for x in self.tables[table].keys():
+                                if "LAB" in x:
+                                    self.tables[table][x][tablerow] = "Structural Soils Ltd - Bristol Geotech lab"
 
                 '''CONG'''
                 if table == 'CONG':
@@ -717,10 +689,12 @@ Did you select the correct gINT or AGS?''')
                         if "#" in str(self.tables[table]['SHBT_PDEN'][tablerow].lower()):
                             self.tables[table]['SHBT_PDEN'][tablerow] = str(self.tables[table]['SHBT_PDEN'][tablerow]).split('#')[1]
                         
+                progress += 1
+                self._progress_current.emit(progress)  
 
-            except Exception as e:
-                print(f"Couldn't find table or field, skipping... {str(e)}")
-                pass
+        except Exception as e:
+            print(f"Couldn't find table or field, skipping... {str(e)}")
+            pass
 
         self.check_matched_to_gint()
 
@@ -728,67 +702,55 @@ Did you select the correct gINT or AGS?''')
     def match_unique_id_gqm_pez(self):
         self.matched = False
         self.error = False
-
-        self.spec['Depth'] = self.spec['Depth'].map('{:,.2f}'.format)
-        self.spec['Depth'] = self.spec['Depth'].astype(str)
-        self.spec['match_id'] = self.spec['PointID']
-        self.spec['match_id'] += self.spec['SPEC_REF']
-        self.spec['match_id'] += self.spec['Depth']
-        self.spec['batched'] = self.spec['SAMP_TYPE'].astype(str).str[0]
-        self.spec['match_id'] += self.spec['batched']
-        self.spec.drop(['batched'], axis=1, inplace=True)
+        progress = 0
+        progress_total = len(self.tables.keys()) - 2
+        self._progress_max.emit(progress_total)
+        self._progress_current.emit(progress)   
 
         if 'GCHM' in self.ags_tables or 'ERES' in self.ags_tables:
             self.error = True
             print("GCHM or ERES table(s) found.")
 
-        for table in self.ags_tables:
-            try:
-                gint_rows = self.spec.shape[0]
+        try:
+            self.spec['Depth'] = self.spec['Depth'].map('{:,.2f}'.format)
+            self.spec['Depth'] = self.spec['Depth'].astype(str)
+            self.spec['match_id'] = self.spec['PointID']
+            self.spec['match_id'] += self.spec['SPEC_REF']
+            self.spec['match_id'] += self.spec['Depth']
+            self.spec['batched'] = self.spec['SAMP_TYPE'].astype(str).str[0]
+            self.spec['match_id'] += self.spec['batched']
+            self.spec.drop(['batched'], axis=1, inplace=True)
 
+            for table in self.ags_tables:
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TYPE']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
                 self.tables[table]['batched'] = self.tables[table]['SAMP_REF'].astype(str).str[0]
                 self.tables[table]['match_id'] += self.tables[table]['batched']
                 self.tables[table].drop(['batched'], axis=1, inplace=True)
-                    
-                try:
-                    for tablerow in range(2,len(self.tables[table])):
-                        for gintrow in range(0,gint_rows):
+                
+                for tablerow in range(2,len(self.tables[table])):
+                    for gintrow in range(0,self.spec.shape[0]):
+                        if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
+                            self.matched = True
 
-                            if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
-                                self.matched = True
+                            if table == 'CONG':
+                                if self.tables[table]['SPEC_REF'][tablerow] == "OED" or self.tables[table]['SPEC_REF'][tablerow] == "OEDR" and self.tables[table]['CONG_TYPE'][tablerow] == '':
+                                    self.tables[table]['CONG_TYPE'][tablerow] = self.tables[table]['SPEC_REF'][tablerow]
 
-                                if table == 'CONG':
-                                    if self.tables[table]['SPEC_REF'][tablerow] == "OED" or self.tables[table]['SPEC_REF'][tablerow] == "OEDR" and self.tables[table]['CONG_TYPE'][tablerow] == '':
-                                        self.tables[table]['CONG_TYPE'][tablerow] = self.tables[table]['SPEC_REF'][tablerow]
+                            if table == 'SAMP':
+                                self.tables[table]['SAMP_REM'][tablerow] = self.spec['SPEC_REF'][gintrow]
 
-                                if table == 'SAMP':
-                                    self.tables[table]['SAMP_REM'][tablerow] = self.spec['SPEC_REF'][gintrow]
+                            self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
+                            self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
+                            self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
+                            self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
+                            self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
+                            self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['Depth'][gintrow]
 
-                                self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
-                                self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
-                                self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
-                                self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
-
-                                try:
-                                    self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
-                                except:
-                                    pass
-
-                                try:
-                                    self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['Depth'][gintrow]
-                                except:
-                                    pass
-
-                                for x in self.tables[table].keys():
-                                    if "LAB" in x:
-                                        self.tables[table][x][tablerow] = "GM Lab"
-
-                except Exception as e:
-                    print(str(e))
-                    pass
+                            for x in self.tables[table].keys():
+                                if "LAB" in x:
+                                    self.tables[table][x][tablerow] = "GM Lab"
 
                 '''SHBG'''
                 if table == 'SHBG':
@@ -796,14 +758,12 @@ Did you select the correct gINT or AGS?''')
                         if "small" in str(self.tables[table]['SHBG_TYPE'][tablerow].lower()):
                             self.tables[table]['SHBG_REM'][tablerow] += " - " + self.tables[table]['SHBG_TYPE'][tablerow]
                             self.tables[table]['SHBG_TYPE'][tablerow] = "SMALL SBOX"
-
                 
                 '''SHBT'''
                 if table == 'SHBT':
                     for tablerow in range(2,len(self.tables[table])):
                         if self.tables[table]['SHBT_NORM'][tablerow]:
                             self.tables[table]['SHBT_NORM'][tablerow] = round(float(self.tables[table]['SHBT_NORM'][tablerow]))
-
 
                 '''LLPL'''
                 if table == 'LLPL':
@@ -812,7 +772,6 @@ Did you select the correct gINT or AGS?''')
                     for tablerow in range(2,len(self.tables[table])):
                         if self.tables[table]['LLPL_LL'][tablerow] == '' and self.tables[table]['LLPL_PL'][tablerow] == '' and self.tables[table]['LLPL_PI'][tablerow] == '':
                             self.tables[table]['Non-Plastic'][tablerow] = -1
-
 
                 '''GRAG'''
                 if table == 'GRAG':
@@ -825,13 +784,11 @@ Did you select the correct gINT or AGS?''')
                         else:
                             self.tables['GRAG']['GRAG_FINE'][tablerow] = format((float(self.tables['GRAG']['GRAG_SILT'][tablerow]) + float(self.tables['GRAG']['GRAG_CLAY'][tablerow])),'.1f')
 
-
                 '''GRAT'''
                 if table == 'GRAT':
                     for tablerow in range(2,len(self.tables[table])):
                         if self.tables[table]['GRAT_PERP'][tablerow]:
                             self.tables[table]['GRAT_PERP'][tablerow] = round(float(self.tables[table]['GRAT_PERP'][tablerow]))
-
 
                 '''TREG'''
                 if table == 'TREG':
@@ -845,7 +802,6 @@ Did you select the correct gINT or AGS?''')
                             if self.tables[table]['TREG_PHI'][tablerow] == '':
                                 cid_sample = str(self.tables[table]['SAMP_ID'][tablerow]) + "-" + str(self.tables[table]['SPEC_REF'][tablerow])
                                 print(f'CID result: {cid_sample} - does not have friction angle.')
-
 
                 '''TRET'''
                 if table == 'TRET':
@@ -864,7 +820,6 @@ Did you select the correct gINT or AGS?''')
                         if self.tables[table]['LPDN_TYPE'][tablerow] == 'LARGE PKY':
                             self.tables[table]['LPDN_TYPE'][tablerow] = 'LARGE PYK'
 
-
                 '''CONG'''
                 if table == 'CONG':
                     for tablerow in range(2,len(self.tables[table])):
@@ -878,7 +833,6 @@ Did you select the correct gINT or AGS?''')
                             self.tables[table]['CONG_COND'][tablerow] = "UNDISTURBED"
                         self.tables[table]['CONG_COND'][tablerow] = str(self.tables[table]['CONG_COND'][tablerow].upper())
 
-
                 '''TRIG & TRIT'''
                 if table == 'TRIG' or table == 'TRIT':
                     if 'Depth' not in self.tables[table]:
@@ -890,28 +844,26 @@ Did you select the correct gINT or AGS?''')
                             if self.tables[table]['TRIT_TESN'][tablerow] == '':
                                 self.tables[table]['TRIT_TESN'][tablerow] = 1
                     for tablerow in range(2,len(self.tables[table])):
-                        for gintrow in range(0,gint_rows):
+                        for gintrow in range(0,self.spec.shape[0]):
                             if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
                                 if self.tables['TRIG']['TRIG_COND'][tablerow] == 'REMOULDED':
                                     self.tables[table]['Depth'][tablerow] = round(float(self.spec['Depth'][gintrow]) + 0.01,2)
                                 else:
                                     self.tables[table]['Depth'][tablerow] = self.spec['Depth'][gintrow]
 
-
                 '''RELD'''
                 if table == 'RELD':
                     if 'Depth' not in self.tables[table]:
                         self.tables[table].insert(8,'Depth','')
                     for tablerow in range(2,len(self.tables[table])):
-                        for gintrow in range(0,gint_rows):
+                        for gintrow in range(0,self.spec.shape[0]):
                             if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
                                 self.tables[table]['Depth'][tablerow] = self.spec['Depth'][gintrow]
-
 
                 '''LDYN'''
                 if table == 'LDYN':
                     for tablerow in range(2,len(self.tables[table])):
-                        for gintrow in range(0,gint_rows):
+                        for gintrow in range(0,self.spec.shape[0]):
                             if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
                                 if 'LDYN_SWAV1' in self.tables[table] or 'LDYN_SWAV1SS' in self.tables[table]:
                                     if self.tables[table]['LDYN_SWAV1SS'][tablerow] == "":
@@ -945,9 +897,12 @@ Did you select the correct gINT or AGS?''')
                             if self.tables[table]['LDYN_REM'][tablerow] == "":
                                 self.tables[table]['LDYN_REM'][tablerow] = "Bender Element"
 
-            except Exception as e:
-                print(f"Couldn't find table or field, skipping... {str(e)}")
-                pass
+                progress += 1
+                self._progress_current.emit(progress)  
+
+        except Exception as e:
+            print(f"Couldn't find table or field, skipping... {str(e)}")
+            pass
 
         self.check_matched_to_gint()
 
@@ -955,15 +910,10 @@ Did you select the correct gINT or AGS?''')
     def match_unique_id_dets_pez(self):
         self.matched = False
         self.error = False
-
-        self.spec['Depth'] = self.spec['Depth'].map('{:,.2f}'.format)
-        self.spec['Depth'] = self.spec['Depth'].astype(str)
-        self.spec['match_id'] = self.spec['PointID']
-        self.spec['match_id'] += self.spec['Depth']
-        self.spec['batched'] = self.spec['SAMP_TYPE'].astype(str).str[0]
-        self.spec['match_id'] += self.spec['batched']
-        self.spec.drop(['batched'], axis=1, inplace=True)
-        self.spec['match_id'] += self.spec['SPEC_REF']
+        progress = 0
+        progress_total = len(self.tables.keys()) - 2
+        self._progress_max.emit(progress_total)
+        self._progress_current.emit(progress)   
 
         if 'GCHM' in self.ags_tables or 'ERES' in self.ags_tables:
             pass
@@ -971,10 +921,17 @@ Did you select the correct gINT or AGS?''')
             self.error = True
             print("Cannot find GCHM or ERES - looks like this AGS is from GM Lab.")
 
-        for table in self.ags_tables:
-            try:
-                gint_rows = self.spec.shape[0]
+        try:
+            self.spec['Depth'] = self.spec['Depth'].map('{:,.2f}'.format)
+            self.spec['Depth'] = self.spec['Depth'].astype(str)
+            self.spec['match_id'] = self.spec['PointID']
+            self.spec['match_id'] += self.spec['Depth']
+            self.spec['batched'] = self.spec['SAMP_TYPE'].astype(str).str[0]
+            self.spec['match_id'] += self.spec['batched']
+            self.spec.drop(['batched'], axis=1, inplace=True)
+            self.spec['match_id'] += self.spec['SPEC_REF']
 
+            for table in self.ags_tables:
                 self.tables[table]['LOCA_ID'] = self.tables[table]['LOCA_ID'].str.split(" ", n=1, expand=True)[0]
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
@@ -984,29 +941,25 @@ Did you select the correct gINT or AGS?''')
                 self.tables[table]['SAMP_REF'] = self.tables[table]['SAMP_REF'].str.split(" ", n=1, expand=True)[1]
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_REF']
 
-                try:
-                    for tablerow in range(2,len(self.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
-                                self.matched = True
-                                if table == 'ERES':
-                                    if 'ERES_REM' not in self.tables[table].keys():
-                                        self.tables[table].insert(len(self.tables[table].keys()),'ERES_REM','')
-                                    self.tables[table]['ERES_REM'][tablerow] = self.tables[table]['SPEC_REF'][tablerow]
-                                self.tables[table]['LOCA_ID'][tablerow] = self.spec['PointID'][gintrow]
-                                self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
-                                self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
-                                self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
-                                self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
-                                self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
-                                self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['Depth'][gintrow]
-                                
-                                for x in self.tables[table].keys():
-                                    if "LAB" in x:
-                                        self.tables[table][x][tablerow] = "DETS"
-                except Exception as e:
-                    print(e)
-                    pass
+                for tablerow in range(2,len(self.tables[table])):
+                    for gintrow in range(0,self.spec.shape[0]):
+                        if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
+                            self.matched = True
+                            if table == 'ERES':
+                                if 'ERES_REM' not in self.tables[table].keys():
+                                    self.tables[table].insert(len(self.tables[table].keys()),'ERES_REM','')
+                                self.tables[table]['ERES_REM'][tablerow] = self.tables[table]['SPEC_REF'][tablerow]
+                            self.tables[table]['LOCA_ID'][tablerow] = self.spec['PointID'][gintrow]
+                            self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
+                            self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
+                            self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
+                            self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
+                            self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
+                            self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['Depth'][gintrow]
+                            
+                            for x in self.tables[table].keys():
+                                if "LAB" in x:
+                                    self.tables[table][x][tablerow] = "DETS"
 
                 '''GCHM'''
                 if table == 'GCHM':
@@ -1015,7 +968,6 @@ Did you select the correct gINT or AGS?''')
                             self.tables[table]['GCHM_UNIT'][tablerow] = "-"
                         if "co3" in str(self.tables[table]['GCHM_CODE'][tablerow].lower()):
                             self.tables[table]['GCHM_CODE'][tablerow] = "CACO3"
-
 
                 '''ERES'''
                 if table == 'ERES':
@@ -1045,9 +997,12 @@ Did you select the correct gINT or AGS?''')
                         if "ph" in str(self.tables[table]['ERES_RUNI'][tablerow].lower()):
                             self.tables[table]['ERES_RUNI'][tablerow] = "-"
 
-            except Exception as e:
-                print(f"Couldn't find table or field, skipping... {str(e)}")
-                pass
+                progress += 1
+                self._progress_current.emit(progress)  
+
+        except Exception as e:
+            print(f"Couldn't find table or field, skipping... {str(e)}")
+            pass
 
         self.check_matched_to_gint()
 
@@ -1055,38 +1010,36 @@ Did you select the correct gINT or AGS?''')
     def match_unique_id_sinotech(self):
         self.matched = False
         self.error = False
+        progress = 0
+        progress_total = len(self.tables.keys()) - 2
+        self._progress_max.emit(progress_total)
+        self._progress_current.emit(progress)
 
-        self.spec['Depth'] = self.spec['Depth'].map('{:,.2f}'.format)
-        self.spec['Depth'] = self.spec['Depth'].astype(str)
-        self.spec['match_id'] = self.spec['PointID']
-        self.spec['match_id'] += self.spec['Depth']
+        try:
+            self.spec['Depth'] = self.spec['Depth'].map('{:,.2f}'.format)
+            self.spec['Depth'] = self.spec['Depth'].astype(str)
+            self.spec['match_id'] = self.spec['PointID']
+            self.spec['match_id'] += self.spec['Depth']
 
-
-        for table in self.ags_tables:
-            try:
-                gint_rows = self.spec.shape[0]
-
+            for table in self.ags_tables:
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
 
-                try:
-                    for tablerow in range(2,len(self.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
-                                self.matched = True
-                                self.tables[table]['LOCA_ID'][tablerow] = self.spec['PointID'][gintrow]
-                                self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
-                                self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
-                                self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
-                                self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
-                                self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
-                                self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['Depth'][gintrow]
-                                
-                                for x in self.tables[table].keys():
-                                    if "LAB" in x:
-                                        self.tables[table][x][tablerow] = "Sinotech"
-                except:
-                    pass
+                for tablerow in range(2,len(self.tables[table])):
+                    for gintrow in range(0,self.spec.shape[0]):
+                        if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
+                            self.matched = True
+                            self.tables[table]['LOCA_ID'][tablerow] = self.spec['PointID'][gintrow]
+                            self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
+                            self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
+                            self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
+                            self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
+                            self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
+                            self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['Depth'][gintrow]
+                            
+                            for x in self.tables[table].keys():
+                                if "LAB" in x:
+                                    self.tables[table][x][tablerow] = "Sinotech"
 
                 '''CONG'''
                 if table == 'CONG':
@@ -1118,7 +1071,7 @@ Did you select the correct gINT or AGS?''')
                             if self.tables[table]['TRIT_TESN'][tablerow] == '':
                                 self.tables[table]['TRIT_TESN'][tablerow] = 1
                     for tablerow in range(2,len(self.tables[table])):
-                        for gintrow in range(0,gint_rows):
+                        for gintrow in range(0,self.spec.shape[0]):
                             if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
                                 if self.tables['TRIG']['TRIG_COND'][tablerow] == 'REMOULDED':
                                     self.tables[table]['Depth'][tablerow] = round(float(self.spec['Depth'][gintrow]) + 0.01,2)
@@ -1148,63 +1101,65 @@ Did you select the correct gINT or AGS?''')
                             if float(self.tables[table]['LDEN_DDEN'][tablerow]) > 4.0:
                                 self.tables[table]['LDEN_DDEN'][tablerow] = float(self.tables[table]['LDEN_DDEN'][tablerow]) / 9.81
 
-                            
-            except Exception as e:
-                print(f"Couldn't find table or field, skipping... {str(e)}")
-                pass
+                progress += 1
+                self._progress_current.emit(progress)  
+
+        except Exception as e:
+            print(f"Couldn't find table or field, skipping... {str(e)}")
+            pass
 
         self.check_matched_to_gint()
 
     def match_unique_id_mewo(self):
         self.matched = False
         self.error = False
+        progress = 0
+        progress_total = len(self.tables.keys()) - 2
+        self._progress_max.emit(progress_total)
+        self._progress_current.emit(progress)
 
-        self.spec['SPEC_DEPTH2'] = self.spec['SPEC_DEPTH2'].map('{:,.2f}'.format)
-        self.spec['SPEC_DEPTH2'] = self.spec['SPEC_DEPTH2'].astype(str)
-        self.spec['match_id'] = self.spec['PointID']
-        self.spec['match_id'] += self.spec['SPEC_DEPTH2']
+        try:
+            self.spec['SPEC_DEPTH2'] = self.spec['SPEC_DEPTH2'].map('{:,.2f}'.format)
+            self.spec['SPEC_DEPTH2'] = self.spec['SPEC_DEPTH2'].astype(str)
+            self.spec['match_id'] = self.spec['PointID']
+            self.spec['match_id'] += self.spec['SPEC_DEPTH2']
 
-        for table in self.ags_tables:
-            try:
-                gint_rows = self.spec.shape[0]
-
+            for table in self.ags_tables:
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SPEC_DPTH']
 
-                try:
+                for tablerow in range(2,len(self.tables[table])):
+                    for gintrow in range(0,self.spec.shape[0]):
+                        if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
+                            self.matched = True
+                            self.tables[table]['LOCA_ID'][tablerow] = self.spec['PointID'][gintrow]
+                            self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
+                            self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
+                            self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
+                            #self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
+                            self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
+                            self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['SPEC_DEPTH2'][gintrow]
+                            
+                            for x in self.tables[table].keys():
+                                if "LAB" in x:
+                                    self.tables[table][x][tablerow] = "Mewo"
+                
+                '''TXTG'''
+                if table == 'TXTG':
                     for tablerow in range(2,len(self.tables[table])):
-                        for gintrow in range(0,gint_rows):
-                            if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
-                                self.matched = True
-                                self.tables[table]['LOCA_ID'][tablerow] = self.spec['PointID'][gintrow]
-                                self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
-                                self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
-                                self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
-                                #self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
-                                self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
-                                self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['SPEC_DEPTH2'][gintrow]
-                                
-                                for x in self.tables[table].keys():
-                                    if "LAB" in x:
-                                        self.tables[table][x][tablerow] = "Mewo"
-                
-                    '''TXTG'''
-                    if table == 'TXTG':
-                        for tablerow in range(2,len(self.tables[table])):
-                            if "cd" in str(self.tables[table]['TXTG_TYPE'][tablerow].lower()):
-                                self.tables[table]['TXTG_TYPE'][tablerow] = "CID"
-                            if "cuc" in str(self.tables[table]['TXTG_TYPE'][tablerow].lower()):
-                                self.tables[table]['TXTG_TYPE'][tablerow] = "CAUc"
-                            if "cue" in str(self.tables[table]['TXTG_TYPE'][tablerow].lower()):
-                                self.tables[table]['TXTG_TYPE'][tablerow] = "CAUe"
+                        if "cd" in str(self.tables[table]['TXTG_TYPE'][tablerow].lower()):
+                            self.tables[table]['TXTG_TYPE'][tablerow] = "CID"
+                        if "cuc" in str(self.tables[table]['TXTG_TYPE'][tablerow].lower()):
+                            self.tables[table]['TXTG_TYPE'][tablerow] = "CAUc"
+                        if "cue" in str(self.tables[table]['TXTG_TYPE'][tablerow].lower()):
+                            self.tables[table]['TXTG_TYPE'][tablerow] = "CAUe"
 
-                    
-                except:
-                    pass
-                
-            except Exception as e:
-                print(f"Couldn't find table or field, skipping... {str(e)}")
-                pass
+                progress += 1
+                self._progress_current.emit(progress)    
+
+        except Exception as e:
+            print(f"Couldn't find table or field, skipping... {str(e)}")
+            pass
 
         self.check_matched_to_gint()
 
