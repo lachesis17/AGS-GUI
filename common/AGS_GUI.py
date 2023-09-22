@@ -28,13 +28,14 @@ class MainWindow(QtWidgets.QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
 
-        uic.loadUi("common/assets/ui/mainwindow_tableview.ui", self)
+        uic.loadUi("common/assets/ui/mainwindow.ui", self)
         self.setWindowIcon(QtGui.QIcon('common/images/geo.ico'))
     
         self.gint_handler = GintHandler()
         self.ags_handler = AGSHandler()
         self.lab_handler = LabHandler()
         self.error_handle = ErrorHandler()
+        self.match_thread = ThreadHandler()
 
         self.player = QMediaPlayer()
         self.config = configparser.ConfigParser()
@@ -59,7 +60,6 @@ class MainWindow(QtWidgets.QMainWindow):
         self.button_export_results.clicked.connect(self.export_results)
         self.button_export_error.clicked.connect(self.export_errors)
         self.button_convert_excel.clicked.connect(self.convert_excel)
-        self.github.clicked.connect(self.promote)
 
         'table connects'
         self.headings_table.clicked.connect(self.refresh_table)
@@ -79,6 +79,7 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ags_handler._enable.connect(self.enable_buttons)
         self.ags_handler._update_text.connect(self.set_text)
         self.ags_handler._open.connect(lambda x: self.button_open.setEnabled(x))
+        self.ags_handler._open.connect(lambda x: self.tabWidget.setTabEnabled(1, x))
         self.ags_handler._enable_error_export.connect(lambda x: self.button_export_error.setEnabled(x))
         self.ags_handler._enable_results_export.connect(lambda x: self.button_export_results.setEnabled(x))
         self.ags_handler._set_model.connect(lambda x: self.update_result_model(x))
@@ -87,7 +88,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lab_handler._nice.connect(self.play_nice)
         self.lab_handler._disable.connect(self.disable_buttons)
         self.lab_handler._enable.connect(self.enable_buttons)
-        self.error_handle.error_ocurred.connect(self.error_handle.show_err)
+        self.lab_handler._progress_max.connect(lambda x: self.update_progress_max(x))
+        self.lab_handler._progress_current.connect(lambda x: self.update_progress_bar(x))
+        self.error_handle.err.connect(self.error_handle.show_err)
+        self.match_thread.finished.connect(self.lab_match_cleanup)
         
         'set window size'
         self.installEventFilter(self)
@@ -121,6 +125,8 @@ AGS file loaded.''')
         return True
 
     def get_ags(self):
+        self.progress_bar.setTextVisible(True)
+        self.progress_bar.reset()
         self.ags_handler.load_ags_file()
         if len(self.ags_handler.file_location[0]) == 0:
             return
@@ -309,11 +315,8 @@ please wait...''')
         print(f"Matching Geoquip Lab AGS to gINT... {self.gint_handler.gint_location}") 
 
         self.handle_tables()
-        self.lab_handler.match_unique_id_gqm()
-        self.ags_handler.tables = self.lab_handler.tables
-        self.remove_match_id()
-        self.enable_buttons()
-        self.tables_table.resizeColumnsToContents()
+        self.match_thread.func = self.lab_handler.match_unique_id_gqm
+        self.match_thread.start()
             
     #===DETS===
     def match_unique_id_dets(self):
@@ -328,11 +331,8 @@ please wait...''')
         print(f"Matching DETS AGS to gINT... {self.gint_handler.gint_location}") 
 
         self.handle_tables()
-        self.lab_handler.match_unique_id_dets()
-        self.ags_handler.tables = self.lab_handler.tables
-        self.remove_match_id()
-        self.enable_buttons()
-        self.tables_table.resizeColumnsToContents()
+        self.match_thread.func = self.lab_handler.match_unique_id_dets
+        self.match_thread.start()
 
 
     #===SOILS===
@@ -348,11 +348,8 @@ please wait...''')
         print(f"Matching Structural Soils AGS to gINT... {self.gint_handler.gint_location}") 
 
         self.handle_tables()
-        self.lab_handler.match_unique_id_soils()
-        self.ags_handler.tables = self.lab_handler.tables
-        self.remove_match_id()
-        self.enable_buttons()
-        self.tables_table.resizeColumnsToContents()
+        self.match_thread.func = self.lab_handler.match_unique_id_soils
+        self.match_thread.start()
 
     #===PSL===
     def match_unique_id_psl(self):
@@ -367,11 +364,8 @@ please wait...''')
         print(f"Matching PSL AGS to gINT... {self.gint_handler.gint_location}") 
 
         self.handle_tables()
-        self.lab_handler.match_unique_id_psl()
-        self.ags_handler.tables = self.lab_handler.tables
-        self.remove_match_id()
-        self.enable_buttons()
-        self.tables_table.resizeColumnsToContents()
+        self.match_thread.func = self.lab_handler.match_unique_id_psl
+        self.match_thread.start()
 
     #===GEOLABS===
     def match_unique_id_geolabs(self):
@@ -386,11 +380,8 @@ please wait...''')
         print(f"Matching Geolabs AGS to gINT... {self.gint_handler.gint_location}") 
 
         self.handle_tables()
-        self.lab_handler.match_unique_id_geolabs()
-        self.ags_handler.tables = self.lab_handler.tables
-        self.remove_match_id()
-        self.enable_buttons()
-        self.tables_table.resizeColumnsToContents()
+        self.match_thread.func = self.lab_handler.match_unique_id_geolabs
+        self.match_thread.start()
 
     #===GEOLABS FUGRO===
     def match_unique_id_geolabs_fugro(self):
@@ -405,11 +396,8 @@ please wait...''')
         print(f"Matching Geolabs AGS to gINT... {self.gint_handler.gint_location}") 
 
         self.handle_tables()
-        self.lab_handler.match_unique_id_geolabs_fugro()
-        self.ags_handler.tables = self.lab_handler.tables
-        self.remove_match_id()
-        self.enable_buttons()
-        self.tables_table.resizeColumnsToContents()
+        self.match_thread.func = self.lab_handler.match_unique_id_geolabs_fugro
+        self.match_thread.start()
 
     #===SOILS PEZ===
     def match_unique_id_soils_pez(self):
@@ -424,11 +412,8 @@ please wait...''')
         print(f"Matching Structural Soils AGS to gINT... {self.gint_handler.gint_location}") 
 
         self.handle_tables()
-        self.lab_handler.match_unique_id_soils_pez()
-        self.ags_handler.tables = self.lab_handler.tables
-        self.remove_match_id()
-        self.enable_buttons()
-        self.tables_table.resizeColumnsToContents()
+        self.match_thread.func = self.lab_handler.match_unique_id_soils_pez
+        self.match_thread.start()
 
     #===GQM PEZ===
     def match_unique_id_gqm_pez(self):
@@ -443,11 +428,8 @@ please wait...''')
         print(f"Matching GM Lab AGS to gINT... {self.gint_handler.gint_location}") 
 
         self.handle_tables()
-        self.lab_handler.match_unique_id_gqm_pez()
-        self.ags_handler.tables = self.lab_handler.tables
-        self.remove_match_id()
-        self.enable_buttons()
-        self.tables_table.resizeColumnsToContents()
+        self.match_thread.func = self.lab_handler.match_unique_id_gqm_pez
+        self.match_thread.start()
 
     #===DETS PEZ===
     def match_unique_id_dets_pez(self):
@@ -462,11 +444,8 @@ please wait...''')
         print(f"Matching DETS for PEZ AGS to gINT... {self.gint_handler.gint_location}") 
 
         self.handle_tables()
-        self.lab_handler.match_unique_id_dets_pez()
-        self.ags_handler.tables = self.lab_handler.tables
-        self.remove_match_id()
-        self.enable_buttons()
-        self.tables_table.resizeColumnsToContents()
+        self.match_thread.func = self.lab_handler.match_unique_id_dets_pez
+        self.match_thread.start()
 
     #===SINOTECH===
     def match_unique_id_sinotech(self):
@@ -481,11 +460,8 @@ please wait...''')
         print(f"Matching Sinotech AGS to gINT... {self.gint_handler.gint_location}") 
 
         self.handle_tables()
-        self.lab_handler.match_unique_id_sinotech()
-        self.ags_handler.tables = self.lab_handler.tables
-        self.remove_match_id()
-        self.enable_buttons()
-        self.tables_table.resizeColumnsToContents()
+        self.match_thread.func = self.lab_handler.match_unique_id_sinotech
+        self.match_thread.start()
 
 
     #===MEWO===
@@ -501,15 +477,23 @@ please wait...''')
         print(f"Matching Mewo AGS to gINT... {self.gint_handler.gint_location}") 
 
         self.handle_tables()
-        self.error_handle.func = self.lab_handler.match_unique_id_mewo
-        self.error_handle.start()
-        self.error_handle.run_func()
+        self.match_thread.func = self.lab_handler.match_unique_id_mewo
+        self.match_thread.start()
+
+
+    def lab_match_cleanup(self):
         self.ags_handler.tables = self.lab_handler.tables
         self.remove_match_id()
         self.enable_buttons()
         self.tables_table.resizeColumnsToContents()
-        
-        
+
+    def update_progress_max(self, val):
+        self.progress_bar.setTextVisible(True)
+        self.progress_bar.setMaximum(val)
+
+    def update_progress_bar(self, val):
+        self.progress_bar.setValue(val)
+
     def export_cpt_only(self):
         self.ags_handler.del_non_cpt_tables()
         self.setup_tables()
@@ -567,6 +551,7 @@ please wait...''')
         self.button_export_results.setEnabled(False)
         self.button_export_error.setEnabled(False)
         self.button_convert_excel.setEnabled(False)
+        self.tabWidget.setTabEnabled(1, False)
 
 
     def enable_buttons(self):
@@ -581,6 +566,7 @@ please wait...''')
         self.lab_select.setEnabled(True)
         self.button_match_lab.setEnabled(True)
         self.button_convert_excel.setEnabled(True)
+        self.tabWidget.setTabEnabled(1, True)
 
 
     def eventFilter(self, object: QObject, event: QEvent) -> bool:
@@ -632,23 +618,43 @@ please wait...''')
 
 
 class ErrorHandler(QThread):
-    error_ocurred = pyqtSignal(Exception)
+    err = pyqtSignal(Exception)
 
     def __init__(self):
         super(ErrorHandler, self).__init__()
         self.func: function
+        '''to run a function'''
+        # self.error_handle.func = self.lab_handler.match_unique_id_mewo   #error handling test
+        # self.error_handle.start()
+        # self.error_handle.run_func()
 
     def run_func(self):
         try:
             return self.func()
         except Exception as e:
-            return self.error_ocurred.emit(e)
+            return self.err.emit(e)
         
     def show_err(self, exception):
         print(f'Error: {exception}')
         #self.terminate()
-        
 
+
+class ThreadHandler(QThread):
+    def __init__(self):
+        super(ThreadHandler, self).__init__()
+        self.func: function
+
+    def run(self):
+        try:
+            return self.func()
+        except Exception as e:
+            print(e)
+            pass
+
+    def quit(self):
+        pass
+        
+        
 def except_hook(cls, exception, traceback):
     sys.__excepthook__(cls, exception, traceback)
 
@@ -663,7 +669,3 @@ def main():
 if __name__ == '__main__':
     sys.excepthook = except_hook
     main()
-
-#articles on threading - need to implement both this and dataframe column assigning instead of creating a billion loops
-#https://www.pythonguis.com/faq/real-time-change-of-widgets/
-#https://nikolak.com/pyqt-threading-tutorial/

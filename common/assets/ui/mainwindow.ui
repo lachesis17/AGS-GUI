@@ -23,7 +23,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>AGS GUI v4.5</string>
+   <string>AGS GUI v4.6</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="minimumSize">
@@ -838,7 +838,7 @@ QPushButton:disabled {
                      </property>
                      <property name="styleSheet">
                       <string notr="true">QComboBox {
-	font: 9pt &quot;Segoe UI&quot;;
+	font: 9pt &quot;Segoe UI&quot;;	
     background: #2b4768;
     color: white;
     border-radius: 10px;
@@ -864,6 +864,14 @@ QComboBox:disabled {
 
 QComboBox:enabled { 
     color: white;
+}
+
+QComboBox QAbstractItemView{
+	font: 9pt &quot;Segoe UI&quot;;	
+	background-color: #f0f0f0;
+	selection-background-color: #6bb7dd;
+    border-radius: 0px;
+	padding: 2px;
 }</string>
                      </property>
                      <property name="maxVisibleItems">
@@ -1084,21 +1092,27 @@ QPushButton:disabled {
           <item>
            <widget class="QGraphicsView" name="top_spacer_4">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
-              <horstretch>0</horstretch>
-              <verstretch>1</verstretch>
+             <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+              <horstretch>1</horstretch>
+              <verstretch>100</verstretch>
              </sizepolicy>
             </property>
             <property name="minimumSize">
              <size>
               <width>0</width>
-              <height>4</height>
+              <height>12</height>
              </size>
             </property>
             <property name="maximumSize">
              <size>
               <width>16777215</width>
-              <height>20</height>
+              <height>24</height>
+             </size>
+            </property>
+            <property name="sizeIncrement">
+             <size>
+              <width>0</width>
+              <height>2</height>
              </size>
             </property>
             <property name="styleSheet">
@@ -1110,34 +1124,74 @@ QPushButton:disabled {
            </widget>
           </item>
           <item>
-           <widget class="GitButton" name="github">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
-              <horstretch>0</horstretch>
-              <verstretch>5</verstretch>
-             </sizepolicy>
-            </property>
-            <property name="minimumSize">
-             <size>
-              <width>25</width>
-              <height>25</height>
-             </size>
-            </property>
-            <property name="maximumSize">
-             <size>
-              <width>25</width>
-              <height>25</height>
-             </size>
-            </property>
-            <property name="styleSheet">
-             <string notr="true">border : 0;
-background: transparent;
-padding: 18px;</string>
-            </property>
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
+           <layout class="QHBoxLayout" name="horizontalLayout_25">
+            <item>
+             <spacer name="horizontalSpacer_16">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QProgressBar" name="progress_bar">
+              <property name="minimumSize">
+               <size>
+                <width>200</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="font">
+               <font>
+                <family>Segoe UI</family>
+                <pointsize>9</pointsize>
+                <weight>75</weight>
+                <bold>true</bold>
+               </font>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QProgressBar {
+	border-radius:6px;
+}
+
+QProgressBar::chunk {
+    background: #6bb7dd;
+    border-radius: 6px;
+}</string>
+              </property>
+              <property name="value">
+               <number>0</number>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+              <property name="textVisible">
+               <bool>false</bool>
+              </property>
+              <property name="invertedAppearance">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_33">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
           </item>
          </layout>
         </item>
@@ -1940,11 +1994,6 @@ QPushButton:disabled {
   <customwidget>
    <class>HeadersView</class>
    <extends>QTableView</extends>
-   <header>common.pandas_table</header>
-  </customwidget>
-  <customwidget>
-   <class>GitButton</class>
-   <extends>QPushButton</extends>
    <header>common.pandas_table</header>
   </customwidget>
  </customwidgets>
