@@ -26,7 +26,7 @@ Compile with auto-py-to-exe using AGS-GUI/common/auto_py_to_exe_config.json
 
 #### Open and Save
   - Open File: opens any valid AGS files
-    - Use the 'AGS4_package_edit.py' file to replace 'AGS4.py' in <i>Python/lib/site-packages/python_ags4/</i>
+    - <i>'common/AGS4_package_edit.py'</i> is a modification of [python-ags4](https://pypi.org/project/python-ags4/)
         - This allows misplaced carriage returns characters (line-breaks) to be concatenated onto the line above<br>
         <i>Bugfix for - Error: Line x does not have the same number of entries as the HEADING.</i>
         - This commonly occurs in remark fields '_REM' or comments and prevents the file from being opened with the python_ags4 library
