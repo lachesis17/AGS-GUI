@@ -372,7 +372,8 @@ Please select an AGS with "Open File..."''')
                         lab_count_on = len(lab_count_on)
                         if not lab_count_none == 0:
                             if "GRAT" in table:
-                                valcount = table_results.shape[0] - 1
+                                valcount = len(list(set(list(zip(samp_id,samp_depth)))))
+                                #valcount = table_results.shape[0] - 1
                                 count = [f"{count}, Onshore:{valcount}"]
                             else:
                                 count = [f"{count}, Offshore:{lab_count_off}, Onshore:{lab_count_on}, None:{lab_count_none}"]

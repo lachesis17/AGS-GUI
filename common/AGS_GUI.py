@@ -214,7 +214,7 @@ AGS file loaded.''')
     def setup_tables(self):
         '''setting up the models for groups and tables'''
         table_keys = [k for k in self.ags_handler.tables.keys()]
-        table_shapes = [str(f"({v.shape[0]} x {v.shape[1]})") for k,v in self.ags_handler.tables.items()]
+        table_shapes = [str(f"(x{v.shape[0] - 2})") for k,v in self.ags_handler.tables.items()]
         headings_with_shapes = list(zip(table_keys,table_shapes))
         headings_df = pd.DataFrame.from_dict(headings_with_shapes)
         headings_df.sort_values(0, ascending=True, kind='mergesort', inplace=True, key=lambda col: col.str.lower())
