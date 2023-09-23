@@ -1,6 +1,6 @@
 from PyQt5 import QtWidgets, uic, QtCore, QtGui
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtCore import QUrl, QEvent, QTimer, QSize, QObject, QThread, pyqtSignal
+from PyQt5.QtCore import QUrl, QEvent, QTimer, QSize, QObject, QThread, pyqtSignal, QPropertyAnimation, QEasingCurve
 from PyQt5.QtGui import QResizeEvent
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from common.pandas_table import PandasModel
@@ -10,9 +10,10 @@ import numpy as np
 import sys
 import os
 import pandas as pd
-import configparser
+from configparser import ConfigParser
 import webbrowser
 import ctypes
+from rich import print as rprint
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 pd.options.mode.chained_assignment = None
@@ -36,9 +37,9 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lab_handler = LabHandler()
         self.error_handle = ErrorHandler()
         self.match_thread = ThreadHandler()
-
         self.player = QMediaPlayer()
-        self.config = configparser.ConfigParser()
+        self.config = ConfigParser()
+        
         self.config.read('common/assets/settings.ini')
         self.gint_handler.config = self.config
         self.ags_handler.config = self.config
@@ -84,6 +85,8 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ags_handler._enable_results_export.connect(lambda x: self.button_export_results.setEnabled(x))
         self.ags_handler._set_model.connect(lambda x: self.update_result_model(x))
         self.ags_handler._coin.connect(self.play_coin)
+        self.ags_handler._progress_max.connect(lambda x: self.update_progress_max(x))
+        self.ags_handler._progress_current.connect(lambda x: self.update_progress_bar(x))
         self.lab_handler._update_text.connect(self.set_text)
         self.lab_handler._nice.connect(self.play_nice)
         self.lab_handler._disable.connect(self.disable_buttons)
@@ -120,7 +123,7 @@ AGS file loaded.''')
         if self.gint_err:
             self.set_text('''64-bit Access Driver not found.
 ''')
-            print('64-bit Access Driver not found.')
+            rprint('[red]64-bit Access Driver not found.[/red]')
             return False
         return True
 
@@ -144,39 +147,39 @@ AGS file loaded.''')
 
     def select_lab_match(self):
         if self.get_selected_lab() == "Select a Lab" or self.get_selected_lab() == "":
-            print("Please selected a Lab to match AGS results to gINT.")
+            rprint("[bold]Please selected a Lab to match AGS results to gINT.[bold]")
         elif self.get_selected_lab() == "GM Lab":
-            print('GM Lab AGS selected to match to gINT.')
+            rprint('[purple][bold]GM Lab AGS[/purple][/bold] selected to match to gINT.')
             self.match_unique_id_gqm()
         elif self.get_selected_lab() == "GM Lab PEZ":
-            print('GM Lab AGS for PEZ selected to match to gINT.')
+            rprint('[purple][bold]GM Lab AGS for PEZ[/purple][/bold] selected to match to gINT.')
             self.match_unique_id_gqm_pez()
         elif self.get_selected_lab() == "DETS":
-            print('DETS AGS selected to match to gINT.')
+            rprint('[purple][bold]DETS AGS[/purple][/bold] selected to match to gINT.')
             self.match_unique_id_dets()
         elif self.get_selected_lab() == "DETS PEZ":
-            print('DETS AGS for PEZ selected to match to gINT.')
+            rprint('[purple][bold]DETS AGS for PEZ[/purple][/bold] selected to match to gINT.')
             self.match_unique_id_dets_pez()
         elif self.get_selected_lab() == "Structural Soils":
-            print('Structural Soils Soils AGS selected to match to gINT.')
+            rprint('[purple][bold]Structural Soils Soils AGS[/purple][/bold] selected to match to gINT.')
             self.match_unique_id_soils()
         elif self.get_selected_lab() == "Structural Soils PEZ":
-            print('Structural Soils Soils AGS for PEZ selected to match to gINT.')
+            rprint('[purple][bold]Structural Soils Soils AGS for PEZ[/purple][/bold] selected to match to gINT.')
             self.match_unique_id_soils_pez()
         elif self.get_selected_lab() == "PSL":
-            print('PSL AGS selected to match to gINT.')
+            rprint('[purple][bold]PSL AGS[/purple][/bold] selected to match to gINT.')
             self.match_unique_id_psl()
         elif self.get_selected_lab() == "Geolabs":
-            print('Geolabs AGS selected to match to gINT.')
+            rprint('[purple][bold]Geolabs AGS[/purple][/bold] selected to match to gINT.')
             self.match_unique_id_geolabs()
         elif self.get_selected_lab() == "Geolabs (50HZ Fugro)":
-            print('Geolabs (50HZ Fugro) AGS selected to match to gINT.')
+            print('[purple][bold]Geolabs (50HZ Fugro) AGS[/purple][/bold] selected to match to gINT.')
             self.match_unique_id_geolabs_fugro()
         elif self.get_selected_lab() == "Sinotech TW":
-            print('Sinotech (Taiwan) AGS selected to match to gINT.')
+            rprint('[purple][bold]Sinotech (Taiwan) AGS[/purple][/bold] selected to match to gINT.')
             self.match_unique_id_sinotech()
         elif self.get_selected_lab() == "Mewo":
-            print('Mewo AGS selected to match to gINT.')
+            rprint('[purple][bold]Mewo AGS[/purple][/bold] selected to match to gINT.')
             self.match_unique_id_mewo()
 
     def update_result_model(self, df):
@@ -423,7 +426,7 @@ please wait...''')
         if not self.check_gint():
             return
         
-        self.set_text('''Matching Soils (PEZ) AGS to gINT, 
+        self.set_text('''Matching GM Lab (PEZ) AGS to gINT, 
 please wait...''')
         print(f"Matching GM Lab AGS to gINT... {self.gint_handler.gint_location}") 
 
@@ -488,11 +491,23 @@ please wait...''')
         self.tables_table.resizeColumnsToContents()
 
     def update_progress_max(self, val):
-        self.progress_bar.setTextVisible(True)
+        self.progress_bar.reset()
         self.progress_bar.setMaximum(val)
+        self.progress_bar.setTextVisible(True)
+        self.animation = QPropertyAnimation(targetObject=self.progress_bar, propertyName=b"value")
+        curve = QEasingCurve()
+        curve.setType(QEasingCurve.InOutQuad)
+        curve.setAmplitude(0.50)
+        curve.setOvershoot(1.70)
+        curve.setPeriod(0.50)
+        self.animation.setEasingCurve(curve)
 
     def update_progress_bar(self, val):
-        self.progress_bar.setValue(val)
+        self.animation.setDuration(100)
+        self.animation.setStartValue(self.progress_bar.value())
+        self.animation.setEndValue(val)
+        self.animation.start()
+
 
     def export_cpt_only(self):
         self.ags_handler.del_non_cpt_tables()

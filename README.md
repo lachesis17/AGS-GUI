@@ -21,7 +21,6 @@
 ```
 Installation:
 pip install -r 'requirements.txt'
-Replace Python/Lib/site-packages/python-ags4/AGS4.py with AGS-GUI/common/AGS4_package_edit.py and rename to AGS4.py
 Compile with auto-py-to-exe using AGS-GUI/common/auto_py_to_exe_config.json
 ```
 

@@ -3,6 +3,7 @@ import numpy as np
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtCore import pyqtSignal
 from statistics import mean
+from rich import print as rprint
 
 class LabHandler(QWidget):
     _update_text = pyqtSignal(str)
@@ -24,7 +25,7 @@ class LabHandler(QWidget):
         if self.matched:
             self._update_text.emit('''Matching complete! Check the data with 'View Data'
 Click: 'Save AGS file'.''')
-            print("Matching complete!")
+            rprint(f"[green][bold]Matching complete![/bold][green]")
             self._nice.emit()
             self._enable.emit()
             if self.error == True:
@@ -33,7 +34,7 @@ Re-open the AGS and select correct lab.''')
         else:    
             self._update_text.emit('''Couldn't match sample data.
 Did you select the correct gINT or AGS?''')
-            print("Unable to match sample data from gINT.") 
+            rprint(f"[red][bold]Unable to match sample data from gINT.[/bold][red]")
             self._enable.emit()
 
     def remove_match_id(self):
@@ -41,12 +42,21 @@ Did you select the correct gINT or AGS?''')
             if "match_id" in self.tables[table]:
                 self.tables[table].drop(['match_id'], axis=1, inplace=True)
 
+    def filter_spec(self):
+        #since i'm forcing myself to use a nested loop to match ids, might as well reduce the size of SPEC to speed things by filtering it on only the samples in the ags
+        bhs = [list(self.tables[table]['match_id'])[2:] for table in self.ags_tables if 'match_id' in self.tables[table]]
+        bhs = list(set([x for y in bhs for x in y]))
+        self.spec = self.spec[self.spec['match_id'].isin(bhs)]
+        self.spec.reset_index(drop=True, inplace=True)
+        if self.spec.shape[0] == 0:
+            return rprint('[red][bold]NO MATCH TO GINT![bold][red]')
+
 
     def match_unique_id_gqm(self):
         self.matched = False
         self.error = False
         progress = 0
-        progress_total = len(self.tables.keys()) - 2
+        progress_total = (len(self.tables.keys()) - 2) * 100
         self._progress_max.emit(progress_total)
         self._progress_current.emit(progress)   
 
@@ -61,6 +71,11 @@ Did you select the correct gINT or AGS?''')
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TYPE']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
+
+            self.filter_spec()
+
+            for table in self.ags_tables:
+                rprint(f"[yellow]Matching [bold]{table}[/bold]...[yellow]")
 
                 for tablerow in range(2,len(self.tables[table])):
                     for gintrow in range(0,self.spec.shape[0]):
@@ -259,7 +274,7 @@ Did you select the correct gINT or AGS?''')
                         if self.tables[table]['LRES_TEMP'][tablerow] != '':
                             self.tables[table]['LRES_TEMP'][tablerow] = int(round(float(self.tables[table]['LRES_TEMP'][tablerow]),0))
 
-                progress += 1
+                progress += 100
                 self._progress_current.emit(progress)  
 
         except Exception as e:
@@ -273,7 +288,7 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
         progress = 0
-        progress_total = len(self.tables.keys()) - 2
+        progress_total = (len(self.tables.keys()) - 2) * 100
         self._progress_max.emit(progress_total)
         self._progress_current.emit(progress)   
 
@@ -282,6 +297,7 @@ Did you select the correct gINT or AGS?''')
         else:
             self.error = True
             print("Cannot find GCHM or ERES - looks like this AGS is from GM Lab.")
+
         try:
             self.spec['Depth'] = self.spec['Depth'].map('{:,.2f}'.format)
             self.spec['Depth'] = self.spec['Depth'].astype(str)
@@ -292,6 +308,11 @@ Did you select the correct gINT or AGS?''')
                 self.tables[table]['LOCA_ID'] = self.tables[table]['LOCA_ID'].str.split(" ", n=1, expand=True)[0]
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
+
+            self.filter_spec()
+
+            for table in self.ags_tables:
+                rprint(f"[yellow]Matching [bold]{table}[/bold]...[yellow]")
 
                 for tablerow in range(2,len(self.tables[table])):
                     for gintrow in range(0,self.spec.shape[0]):
@@ -349,7 +370,7 @@ Did you select the correct gINT or AGS?''')
                         if "ph" in str(self.tables[table]['ERES_RUNI'][tablerow].lower()):
                             self.tables[table]['ERES_RUNI'][tablerow] = "-"
 
-                progress += 1
+                progress += 100
                 self._progress_current.emit(progress)  
 
         except Exception as e:
@@ -363,7 +384,7 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
         progress = 0
-        progress_total = len(self.tables.keys()) - 2
+        progress_total = (len(self.tables.keys()) - 2) * 100
         self._progress_max.emit(progress_total)
         self._progress_current.emit(progress)   
 
@@ -372,10 +393,16 @@ Did you select the correct gINT or AGS?''')
             self.spec['Depth'] = self.spec['Depth'].astype(str)
             self.spec['match_id'] = self.spec['PointID']
             self.spec['match_id'] += self.spec['Depth']
+            self.spec['SAMP_Depth'] = self.spec['SAMP_Depth'].astype(str)
 
             for table in self.ags_tables:
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
+
+            self.filter_spec()
+
+            for table in self.ags_tables:
+                rprint(f"[yellow]Matching [bold]{table}[/bold]...[yellow]")
 
                 for tablerow in range(2,len(self.tables[table])):
                     for gintrow in range(0,self.spec.shape[0]):
@@ -404,7 +431,7 @@ Did you select the correct gINT or AGS?''')
                         if "#" in str(self.tables[table]['CONG_PDEN'][tablerow].lower()):
                             self.tables[table]['CONG_PDEN'][tablerow] = str(self.tables[table]['CONG_PDEN'][tablerow]).split('#')[1]
 
-                progress += 1
+                progress += 100
                 self._progress_current.emit(progress)  
 
         except Exception as e:
@@ -418,7 +445,7 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
         progress = 0
-        progress_total = len(self.tables.keys()) - 2
+        progress_total = (len(self.tables.keys()) - 2) * 100
         self._progress_max.emit(progress_total)
         self._progress_current.emit(progress)   
 
@@ -431,6 +458,11 @@ Did you select the correct gINT or AGS?''')
             for table in self.ags_tables:
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
+
+            self.filter_spec()
+
+            for table in self.ags_tables:
+                rprint(f"[yellow]Matching [bold]{table}[/bold]...[yellow]")
 
                 for tablerow in range(2,len(self.tables[table])):
                     for gintrow in range(0,self.spec.shape[0]):
@@ -481,7 +513,7 @@ Did you select the correct gINT or AGS?''')
                         if "remoulded" in str(self.tables[table]['PTST_COND'][tablerow].lower()):
                             self.tables[table]['PTST_COND'][tablerow] = "REMOULDED"
 
-                progress += 1
+                progress += 100
                 self._progress_current.emit(progress)  
 
         except Exception as e:
@@ -495,7 +527,7 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
         progress = 0
-        progress_total = len(self.tables.keys()) - 2
+        progress_total = (len(self.tables.keys()) - 2) * 100
         self._progress_max.emit(progress_total)
         self._progress_current.emit(progress)   
 
@@ -508,6 +540,11 @@ Did you select the correct gINT or AGS?''')
             for table in self.ags_tables:
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
+
+            self.filter_spec()
+
+            for table in self.ags_tables:
+                rprint(f"[yellow]Matching [bold]{table}[/bold]...[yellow]")
 
                 for tablerow in range(2,len(self.tables[table])):
                     for gintrow in range(0,self.spec.shape[0]):
@@ -537,7 +574,7 @@ Did you select the correct gINT or AGS?''')
                         if str(self.tables[table]['PTST_TESN'][tablerow]) == '':
                             self.tables[table]['PTST_TESN'][tablerow] = "1"
 
-                progress += 1
+                progress += 100
                 self._progress_current.emit(progress)  
 
         except Exception as e:
@@ -551,7 +588,7 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
         progress = 0
-        progress_total = len(self.tables.keys()) - 2
+        progress_total = (len(self.tables.keys()) - 2) * 100
         self._progress_max.emit(progress_total)
         self._progress_current.emit(progress)   
         
@@ -570,6 +607,11 @@ Did you select the correct gINT or AGS?''')
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_REF']
+
+            self.filter_spec()
+
+            for table in self.ags_tables:
+                rprint(f"[yellow]Matching [bold]{table}[/bold]...[yellow]")
 
                 for tablerow in range(2,len(self.tables[table])):
                     for gintrow in range(0,self.spec.shape[0]):
@@ -609,7 +651,7 @@ Did you select the correct gINT or AGS?''')
                         if str(self.tables[table]['PTST_TESN'][tablerow]) == '':
                             self.tables[table]['PTST_TESN'][tablerow] = "1"                
                 
-                progress += 1
+                progress += 100
                 self._progress_current.emit(progress)  
 
         except Exception as e:
@@ -623,7 +665,7 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
         progress = 0
-        progress_total = len(self.tables.keys()) - 2
+        progress_total = (len(self.tables.keys()) - 2) * 100
         self._progress_max.emit(progress_total)
         self._progress_current.emit(progress)   
 
@@ -642,6 +684,11 @@ Did you select the correct gINT or AGS?''')
                 self.tables[table]['batched'] = self.tables[table]['SAMP_TYPE'].astype(str).str[0]
                 self.tables[table]['match_id'] += self.tables[table]['batched']
                 self.tables[table].drop(['batched'], axis=1, inplace=True)
+
+            self.filter_spec()
+
+            for table in self.ags_tables:
+                rprint(f"[yellow]Matching [bold]{table}[/bold]...[yellow]")
 
                 for tablerow in range(2,len(self.tables[table])):
                     for gintrow in range(0,self.spec.shape[0]):
@@ -689,7 +736,7 @@ Did you select the correct gINT or AGS?''')
                         if "#" in str(self.tables[table]['SHBT_PDEN'][tablerow].lower()):
                             self.tables[table]['SHBT_PDEN'][tablerow] = str(self.tables[table]['SHBT_PDEN'][tablerow]).split('#')[1]
                         
-                progress += 1
+                progress += 100
                 self._progress_current.emit(progress)  
 
         except Exception as e:
@@ -703,7 +750,7 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
         progress = 0
-        progress_total = len(self.tables.keys()) - 2
+        progress_total = (len(self.tables.keys()) - 2) * 100
         self._progress_max.emit(progress_total)
         self._progress_current.emit(progress)   
 
@@ -728,7 +775,12 @@ Did you select the correct gINT or AGS?''')
                 self.tables[table]['batched'] = self.tables[table]['SAMP_REF'].astype(str).str[0]
                 self.tables[table]['match_id'] += self.tables[table]['batched']
                 self.tables[table].drop(['batched'], axis=1, inplace=True)
-                
+
+            self.filter_spec()
+
+            for table in self.ags_tables:
+                rprint(f"[yellow]Matching [bold]{table}[/bold]...[yellow]")
+
                 for tablerow in range(2,len(self.tables[table])):
                     for gintrow in range(0,self.spec.shape[0]):
                         if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
@@ -747,7 +799,6 @@ Did you select the correct gINT or AGS?''')
                             self.tables[table]['SAMP_TOP'][tablerow] = format(self.spec['SAMP_Depth'][gintrow],'.2f')
                             self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
                             self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['Depth'][gintrow]
-
                             for x in self.tables[table].keys():
                                 if "LAB" in x:
                                     self.tables[table][x][tablerow] = "GM Lab"
@@ -897,7 +948,7 @@ Did you select the correct gINT or AGS?''')
                             if self.tables[table]['LDYN_REM'][tablerow] == "":
                                 self.tables[table]['LDYN_REM'][tablerow] = "Bender Element"
 
-                progress += 1
+                progress += 100
                 self._progress_current.emit(progress)  
 
         except Exception as e:
@@ -911,7 +962,7 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
         progress = 0
-        progress_total = len(self.tables.keys()) - 2
+        progress_total = (len(self.tables.keys()) - 2) * 100
         self._progress_max.emit(progress_total)
         self._progress_current.emit(progress)   
 
@@ -940,6 +991,11 @@ Did you select the correct gINT or AGS?''')
                 self.tables[table].drop(['batched'], axis=1, inplace=True)
                 self.tables[table]['SAMP_REF'] = self.tables[table]['SAMP_REF'].str.split(" ", n=1, expand=True)[1]
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_REF']
+
+            self.filter_spec()
+
+            for table in self.ags_tables:
+                rprint(f"[yellow]Matching [bold]{table}[/bold]...[yellow]")
 
                 for tablerow in range(2,len(self.tables[table])):
                     for gintrow in range(0,self.spec.shape[0]):
@@ -997,7 +1053,7 @@ Did you select the correct gINT or AGS?''')
                         if "ph" in str(self.tables[table]['ERES_RUNI'][tablerow].lower()):
                             self.tables[table]['ERES_RUNI'][tablerow] = "-"
 
-                progress += 1
+                progress += 100
                 self._progress_current.emit(progress)  
 
         except Exception as e:
@@ -1011,7 +1067,7 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
         progress = 0
-        progress_total = len(self.tables.keys()) - 2
+        progress_total = (len(self.tables.keys()) - 2) * 100
         self._progress_max.emit(progress_total)
         self._progress_current.emit(progress)
 
@@ -1024,6 +1080,11 @@ Did you select the correct gINT or AGS?''')
             for table in self.ags_tables:
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SAMP_TOP']
+
+            self.filter_spec()
+
+            for table in self.ags_tables:
+                rprint(f"[yellow]Matching [bold]{table}[/bold]...[yellow]")
 
                 for tablerow in range(2,len(self.tables[table])):
                     for gintrow in range(0,self.spec.shape[0]):
@@ -1101,7 +1162,7 @@ Did you select the correct gINT or AGS?''')
                             if float(self.tables[table]['LDEN_DDEN'][tablerow]) > 4.0:
                                 self.tables[table]['LDEN_DDEN'][tablerow] = float(self.tables[table]['LDEN_DDEN'][tablerow]) / 9.81
 
-                progress += 1
+                progress += 100
                 self._progress_current.emit(progress)  
 
         except Exception as e:
@@ -1114,7 +1175,7 @@ Did you select the correct gINT or AGS?''')
         self.matched = False
         self.error = False
         progress = 0
-        progress_total = len(self.tables.keys()) - 2
+        progress_total = (len(self.tables.keys()) - 2) * 100
         self._progress_max.emit(progress_total)
         self._progress_current.emit(progress)
 
@@ -1127,6 +1188,11 @@ Did you select the correct gINT or AGS?''')
             for table in self.ags_tables:
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SPEC_DPTH']
+
+            self.filter_spec()
+
+            for table in self.ags_tables:
+                rprint(f"[yellow]Matching [bold]{table}[/bold]...[yellow]")
 
                 for tablerow in range(2,len(self.tables[table])):
                     for gintrow in range(0,self.spec.shape[0]):
@@ -1154,7 +1220,7 @@ Did you select the correct gINT or AGS?''')
                         if "cue" in str(self.tables[table]['TXTG_TYPE'][tablerow].lower()):
                             self.tables[table]['TXTG_TYPE'][tablerow] = "CAUe"
 
-                progress += 1
+                progress += 100
                 self._progress_current.emit(progress)    
 
         except Exception as e:

@@ -2,10 +2,11 @@ import pyodbc
 import pandas as pd
 import os
 import time
-from python_ags4 import AGS4
+import common.AGS4_package_edit as AGS4 # had to edit this to concat linebreaks - credits to python_ags4, asitha-sena, https://gitlab.com/ags-data-format-wg/ags-python-library
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox, QWidget
 from PyQt5.QtCore import pyqtSignal
+from rich import print as rprint
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
 
@@ -76,6 +77,8 @@ class AGSHandler(QWidget):
     _set_model = pyqtSignal(pd.DataFrame)
     _coin = pyqtSignal()
     _table_setup = pyqtSignal()
+    _progress_max = pyqtSignal(int)
+    _progress_current = pyqtSignal(int)
 
     def __init__(self):
         super(AGSHandler, self).__init__()
@@ -132,7 +135,7 @@ Please select an AGS with "Open File..."''')
             print("Uh, something went wrong. Was that an AGS file? Send help.")
             self._open.emit(True)
         finally:
-            print(f"AGS file loaded: {self.file_location}")
+            rprint(f"[green]AGS file loaded: [/green][white]{self.file_location}[/white]")
             self._coin.emit()
             self._enable.emit()
             return self.tables, self.headings
@@ -160,11 +163,11 @@ Please select an AGS with "Open File..."''')
         for table in list(self.tables):
             if table not in self.ags_tables and not table == 'TRAN' and not table == 'PROJ':
                 del self.tables[table]
-                print(f"{str(table)} table deleted.")
+                rprint(f"[bold]{str(table)}[/bold] table [red]deleted.[/red]")
             try:
                 if table == 'SAMP' or table == 'SPEC':
                     del self.tables[table]
-                    print(f"{str(table)} table deleted.")
+                    rprint(f"[bold]{str(table)}[/bold] table [red]deleted.[/red]")
             except:
                 pass
         self._update_text.emit('''Deleted non-lab testing tables,
@@ -577,6 +580,11 @@ Check the AGS with "View data".''')
         final_dataframes = dict(final_dataframes)
         empty_dataframes = [k for (k,v) in self.tables.items() if v.empty]
 
+        progress = 0
+        progress_total = (len(self.tables.keys())) * 100
+        self._progress_max.emit(progress_total)
+        self._progress_current.emit(progress)   
+
         print(f"""------------------------------------------------------
 Saving AGS to excel file...
 ------------------------------------------------------""")
@@ -591,9 +599,15 @@ Saving AGS to excel file...
 
         #for every key (table name) and value (table data) in the AGS, append to excel sheet and update progress bar, saving only at the end for performance
         for (k,v) in final_dataframes.items():
-            print(f"Writing {k} to excel...")
+            progress += 100
+            self._progress_current.emit(progress)  
+            rprint(f"[green]Writing [bold]{k}[/bold] to excel...[green]")
+            self._update_text.emit(f'''Writing {k} to excel...
+''')
             v.to_excel(final_writer, sheet_name=(f"{str(k)}"), index=None, index_label=None)
             time.sleep(0.01)
         final_writer.close()
 
         print(f"""AGS saved as Excel file: {fname[0]}""")
+        self._update_text.emit(f'''AGS saved as Excel file.
+''')
