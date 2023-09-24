@@ -135,7 +135,7 @@ Please select an AGS with "Open File..."''')
             print("Uh, something went wrong. Was that an AGS file? Send help.")
             self._open.emit(True)
         finally:
-            rprint(f"[green]AGS file loaded: [/green][white]{self.file_location}[/white]")
+            rprint(f"[green]AGS file loaded: [/green][white][i][b]{self.file_location}[/b][/i][/white]")
             self._coin.emit()
             self._enable.emit()
             return self.tables, self.headings
@@ -269,12 +269,16 @@ Please select an AGS with "Open File..."''')
             newFileName = QtWidgets.QFileDialog.getSaveFileName(self,'Save AGS file as...', os.getcwd(), '*.ags')
         try:
             newFileName = newFileName[0]
+
+            rprint(f"""[cyan]------------------------------------------------------
+Saving AGS file...
+------------------------------------------------------[/cyan]""")
+            
             AGS4.dataframe_to_AGS4(self.tables, self.tables, newFileName)
-            print('Done.')
             self._update_text.emit('''AGS saved.
 ''')
         
-            print(f"""AGS saved: {newFileName}""")
+            rprint(f"""[green][bold]AGS saved:[/bold][/green] [white][i]{newFileName}""")
             self._enable.emit()
         except:
             self._enable.emit()
@@ -586,9 +590,9 @@ Check the AGS with "View data".''')
         self._progress_max.emit(progress_total)
         self._progress_current.emit(progress)   
 
-        print(f"""------------------------------------------------------
+        rprint(f"""[cyan]------------------------------------------------------
 Saving AGS to excel file...
-------------------------------------------------------""")
+------------------------------------------------------[/cyan]""")
 
         #create the excel file with the first dataframe from dict, so pd.excelwriter can be called (can only be used on existing excel workbook to append more sheets)
         if not len(final_dataframes.keys()) < 1:
@@ -609,6 +613,6 @@ Saving AGS to excel file...
             time.sleep(0.01)
         final_writer.close()
 
-        print(f"""AGS saved as Excel file: {fname[0]}""")
+        rprint(f"""[green][bold]AGS saved as Excel file:[/bold][/green] [white][i]{fname[0]}""")
         self._update_text.emit(f'''AGS saved as Excel file.
 ''')

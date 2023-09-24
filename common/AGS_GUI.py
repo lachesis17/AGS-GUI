@@ -107,9 +107,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
     def get_gint(self):
         self.gint_handler.get_gint()
-
-    def get_spec(self):
-        return self.gint_handler.gint_spec
     
     def check_gint_error(self, err:bool):
         self.gint_err: bool = None
@@ -315,7 +312,7 @@ AGS file loaded.''')
         
         self.set_text('''Matching Geoquip Lab AGS to gINT,
 please wait...''')
-        print(f"Matching Geoquip Lab AGS to gINT... {self.gint_handler.gint_location}") 
+        rprint(f"Matching [purple][b]Geoquip Lab[/b][/purple] AGS to gINT... [white][i]{self.gint_handler.gint_location}") 
 
         self.handle_tables()
         self.match_thread.func = self.lab_handler.match_unique_id_gqm
@@ -331,7 +328,7 @@ please wait...''')
 
         self.set_text('''Matching DETS AGS to gINT,
 please wait...''')
-        print(f"Matching DETS AGS to gINT... {self.gint_handler.gint_location}") 
+        rprint(f"Matching [purple][b]DETS[/purple][/b] AGS to gINT... [white][i]{self.gint_handler.gint_location}") 
 
         self.handle_tables()
         self.match_thread.func = self.lab_handler.match_unique_id_dets
@@ -348,7 +345,7 @@ please wait...''')
         
         self.set_text('''Matching Structural Soils AGS to gINT, 
 please wait...''')
-        print(f"Matching Structural Soils AGS to gINT... {self.gint_handler.gint_location}") 
+        rprint(f"Matching [purple][b]Structural Soils[/purple][/b] AGS to gINT... [white][i]{self.gint_handler.gint_location}") 
 
         self.handle_tables()
         self.match_thread.func = self.lab_handler.match_unique_id_soils
@@ -364,7 +361,7 @@ please wait...''')
         
         self.set_text('''Matching PSL AGS to gINT, 
 please wait...''')
-        print(f"Matching PSL AGS to gINT... {self.gint_handler.gint_location}") 
+        rprint(f"Matching [purple][b]PSL[/purple][b] AGS to gINT... [white][i]{self.gint_handler.gint_location}") 
 
         self.handle_tables()
         self.match_thread.func = self.lab_handler.match_unique_id_psl
@@ -380,7 +377,7 @@ please wait...''')
                 
         self.set_text('''Matching Geolabs AGS to gINT, 
 please wait...''')
-        print(f"Matching Geolabs AGS to gINT... {self.gint_handler.gint_location}") 
+        rprint(f"Matching [purple][b]Geolabs AGS[/purple][/b] to gINT... [white][i]{self.gint_handler.gint_location}") 
 
         self.handle_tables()
         self.match_thread.func = self.lab_handler.match_unique_id_geolabs
@@ -396,7 +393,7 @@ please wait...''')
         
         self.set_text('''Matching Geolabs (Fugro) AGS to gINT, 
 please wait...''')
-        print(f"Matching Geolabs AGS to gINT... {self.gint_handler.gint_location}") 
+        rprint(f"Matching [purple][b]Geolabs[/purple][/b] AGS to gINT... [white][i]{self.gint_handler.gint_location}") 
 
         self.handle_tables()
         self.match_thread.func = self.lab_handler.match_unique_id_geolabs_fugro
@@ -412,7 +409,7 @@ please wait...''')
         
         self.set_text('''Matching Soils (PEZ) AGS to gINT, 
 please wait...''')
-        print(f"Matching Structural Soils AGS to gINT... {self.gint_handler.gint_location}") 
+        rprint(f"Matching [purple][b]Structural Soils[/purple][/b] AGS to gINT... [white][i]{self.gint_handler.gint_location}") 
 
         self.handle_tables()
         self.match_thread.func = self.lab_handler.match_unique_id_soils_pez
@@ -428,7 +425,7 @@ please wait...''')
         
         self.set_text('''Matching GM Lab (PEZ) AGS to gINT, 
 please wait...''')
-        print(f"Matching GM Lab AGS to gINT... {self.gint_handler.gint_location}") 
+        rprint(f"Matching [purple][b]GM Lab (PEZ)[/purple][/b] AGS to gINT... [white][i]{self.gint_handler.gint_location}") 
 
         self.handle_tables()
         self.match_thread.func = self.lab_handler.match_unique_id_gqm_pez
@@ -444,7 +441,7 @@ please wait...''')
         
         self.set_text('''Matching DETS (PEZ) AGS to gINT, 
 please wait...''')
-        print(f"Matching DETS for PEZ AGS to gINT... {self.gint_handler.gint_location}") 
+        rprint(f"Matching [purple][b]DETS for PEZ[/purple][/b] AGS to gINT... [white][i]{self.gint_handler.gint_location}") 
 
         self.handle_tables()
         self.match_thread.func = self.lab_handler.match_unique_id_dets_pez
@@ -460,7 +457,7 @@ please wait...''')
         
         self.set_text('''Matching Sinotech AGS to gINT, 
 please wait...''')
-        print(f"Matching Sinotech AGS to gINT... {self.gint_handler.gint_location}") 
+        rprint(f"Matching [purple][b]Sinotech[/purple][/b] AGS to gINT... [white][i]{self.gint_handler.gint_location}") 
 
         self.handle_tables()
         self.match_thread.func = self.lab_handler.match_unique_id_sinotech
@@ -477,7 +474,7 @@ please wait...''')
         
         self.set_text('''Matching Mewo AGS to gINT, 
 please wait...''')
-        print(f"Matching Mewo AGS to gINT... {self.gint_handler.gint_location}") 
+        rprint(f"Matching [purple][b]Mewo[/purple][/b] AGS to gINT... [white][i]{self.gint_handler.gint_location}") 
 
         self.handle_tables()
         self.match_thread.func = self.lab_handler.match_unique_id_mewo
