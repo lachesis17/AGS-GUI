@@ -281,7 +281,7 @@ Did you select the correct gINT or AGS?''')
                 self._progress_current.emit(progress)  
 
         except Exception as e:
-            print(f"Couldn't find table or field, skipping... {str(e)}")
+            rprint(f"[red]ERROR[/red] matching in [red]{table}[/red]... Please check the data. Error: [white]{str(e)}[/white]")
             pass
 
         self.check_matched_to_gint()
@@ -380,7 +380,7 @@ Did you select the correct gINT or AGS?''')
                 self._progress_current.emit(progress)  
 
         except Exception as e:
-            print(f"Couldn't find table or field, skipping... {str(e)}")
+            rprint(f"[red]ERROR[/red] matching in [red]{table}[/red]... Please check the data. Error: [white]{str(e)}[/white]")
             pass
 
         self.check_matched_to_gint()
@@ -444,7 +444,7 @@ Did you select the correct gINT or AGS?''')
                 self._progress_current.emit(progress)  
 
         except Exception as e:
-            print(f"Couldn't find table or field, skipping... {str(e)}")
+            rprint(f"[red]ERROR[/red] matching in [red]{table}[/red]... Please check the data. Error: [white]{str(e)}[/white]")
             pass
 
         self.check_matched_to_gint()
@@ -529,7 +529,7 @@ Did you select the correct gINT or AGS?''')
                 self._progress_current.emit(progress)  
 
         except Exception as e:
-            print(f"Couldn't find table or field, skipping... {str(e)}")
+            rprint(f"[red]ERROR[/red] matching in [red]{table}[/red]... Please check the data. Error: [white]{str(e)}[/white]")
             pass
 
         self.check_matched_to_gint()
@@ -593,7 +593,7 @@ Did you select the correct gINT or AGS?''')
                 self._progress_current.emit(progress)  
 
         except Exception as e:
-            print(f"Couldn't find table or field, skipping... {str(e)}")
+            rprint(f"[red]ERROR[/red] matching in [red]{table}[/red]... Please check the data. Error: [white]{str(e)}[/white]")
             pass
 
         self.check_matched_to_gint()
@@ -673,7 +673,7 @@ Did you select the correct gINT or AGS?''')
                 self._progress_current.emit(progress)  
 
         except Exception as e:
-            print(f"Couldn't find table or field, skipping... {str(e)}")
+            rprint(f"[red]ERROR[/red] matching in [red]{table}[/red]... Please check the data. Error: [white]{str(e)}[/white]")
             pass
 
         self.check_matched_to_gint()
@@ -761,7 +761,7 @@ Did you select the correct gINT or AGS?''')
                 self._progress_current.emit(progress)  
 
         except Exception as e:
-            print(f"Couldn't find table or field, skipping... {str(e)}")
+            rprint(f"[red]ERROR[/red] matching in [red]{table}[/red]... Please check the data. Error: [white]{str(e)}[/white]")
             pass
 
         self.check_matched_to_gint()
@@ -976,7 +976,7 @@ Did you select the correct gINT or AGS?''')
                 self._progress_current.emit(progress)  
 
         except Exception as e:
-            print(f"Couldn't find table or field, skipping... {str(e)}")
+            rprint(f"[red]ERROR[/red] matching in [red]{table}[/red]... Please check the data. Error: [white]{str(e)}[/white]")
             pass
 
         self.check_matched_to_gint()
@@ -1084,7 +1084,7 @@ Did you select the correct gINT or AGS?''')
                 self._progress_current.emit(progress)  
 
         except Exception as e:
-            print(f"Couldn't find table or field, skipping... {str(e)}")
+            rprint(f"[red]ERROR[/red] matching in [red]{table}[/red]... Please check the data. Error: [white]{str(e)}[/white]")
             pass
 
         self.check_matched_to_gint()
@@ -1196,7 +1196,7 @@ Did you select the correct gINT or AGS?''')
                 self._progress_current.emit(progress)  
 
         except Exception as e:
-            print(f"Couldn't find table or field, skipping... {str(e)}")
+            rprint(f"[red]ERROR[/red] matching in [red]{table}[/red]... Please check the data. Error: [white]{str(e)}[/white]")
             pass
 
         self.check_matched_to_gint()
@@ -1257,7 +1257,7 @@ Did you select the correct gINT or AGS?''')
                 self._progress_current.emit(progress)    
 
         except Exception as e:
-            print(f"Couldn't find table or field, skipping... {str(e)}")
+            rprint(f"[red]ERROR[/red] matching in [red]{table}[/red]... Please check the data. Error: [white]{str(e)}[/white]")
             pass
 
         self.check_matched_to_gint()
