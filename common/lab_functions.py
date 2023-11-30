@@ -1340,7 +1340,7 @@ Did you select the correct gINT or AGS?''')
                             if "ph" == str(self.tables[table]['ERES_TNAM'][tablerow].lower()):
                                 self.tables[table]['ERES_TNAM'][tablerow] = "PH"
                             if "stones" in str(self.tables[table]['ERES_TNAM'][tablerow].lower()):
-                                self.tables[table]['ERES_TNAM'][tablerow] = "???"
+                                self.tables[table]['ERES_TNAM'][tablerow] = "% Stones"
                             if "chloride" in str(self.tables[table]['ERES_TNAM'][tablerow].lower()):
                                 self.tables[table]['ERES_TNAM'][tablerow] = "Cl"
                             if "los" in str(self.tables[table]['ERES_TNAM'][tablerow].lower()):
