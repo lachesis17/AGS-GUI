@@ -937,6 +937,11 @@ QComboBox QAbstractItemView{
                        <string>Mewo</string>
                       </property>
                      </item>
+                     <item>
+                      <property name="text">
+                       <string>Enviro</string>
+                      </property>
+                     </item>
                     </widget>
                    </item>
                    <item>
@@ -1979,7 +1984,7 @@ QPushButton:disabled {
      <x>0</x>
      <y>0</y>
      <width>450</width>
-     <height>21</height>
+     <height>22</height>
     </rect>
    </property>
   </widget>

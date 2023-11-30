@@ -1262,3 +1262,102 @@ Did you select the correct gINT or AGS?''')
 
         self.check_matched_to_gint()
 
+    def match_unique_id_Enviro(self):
+        self.matched = False
+        self.error = False
+        progress = 0
+        progress_total = (len(self.tables.keys()) - 2) * 100
+        self._progress_max.emit(progress_total)
+        self._progress_current.emit(progress)   
+
+        if 'GCHM' in self.ags_tables or 'ERES' in self.ags_tables:
+            pass
+        else:
+            self.error = True
+            print("Cannot find GCHM or ERES - looks like this AGS is from GM Lab.")
+
+        try:
+            self.spec['Depth'] = self.spec['Depth'].map('{:,.2f}'.format)
+            self.spec['Depth'] = self.spec['Depth'].astype(str)
+            self.spec['match_id'] = self.spec['PointID']
+            self.spec['match_id'] += self.spec['Depth']
+
+            for table in self.ags_tables:
+                self.tables[table]['LOCA_ID'] = self.tables[table]['LOCA_ID'].str.split("-", n=1, expand=True)[0]
+                
+                self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
+                self.tables[table]['match_id'] += self.tables[table]['SPEC_DPTH']
+
+            self.filter_spec()
+
+            for table in self.ags_tables:
+                rprint(f"[yellow]Matching [bold]{table}[/bold]...[yellow]")
+
+                for tablerow in range(2,len(self.tables[table])):
+                    for gintrow in range(0,self.spec.shape[0]):
+                        if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
+                            self.matched = True
+                            if table == 'ERES':
+                                if 'ERES_REM' not in self.tables[table].keys():
+                                    self.tables[table].insert(len(self.tables[table].keys()),'ERES_REM','')
+                                self.tables[table]['ERES_REM'][tablerow] = self.tables[table]['SPEC_REF'][tablerow]
+                            self.tables[table]['LOCA_ID'][tablerow] = self.spec['PointID'][gintrow]
+                            self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
+                            self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
+                            self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
+                            self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
+                            self.tables[table]['SAMP_TOP'][tablerow] = format(float(self.spec['SAMP_Depth'][gintrow]),'.2f')
+                            self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['Depth'][gintrow]
+                            
+                            for x in self.tables[table].keys():
+                                if "LAB" in x:
+                                    self.tables[table][x][tablerow] = "Enviro"
+                try:
+                    '''GCHM'''
+                    if table == 'GCHM':
+                        for tablerow in range(2,len(self.tables[table])):
+                            if "ph" in str(self.tables[table]['GCHM_UNIT'][tablerow].lower()):
+                                self.tables[table]['GCHM_UNIT'][tablerow] = "-"
+                            if "co3" in str(self.tables[table]['GCHM_CODE'][tablerow].lower()):
+                                self.tables[table]['GCHM_CODE'][tablerow] = "CACO3"
+
+                    '''ERES'''
+                    if table == 'ERES':
+                        self.tables[table]['ERES_TNAM'] = self.tables[table]['ERES_NAME']
+                        for tablerow in range(2,len(self.tables[table])):
+                            if "<" in str(self.tables[table]['ERES_RTXT'][tablerow].lower()):
+                                self.tables[table]['ERES_RTXT'][tablerow] = str(self.tables[table]['ERES_RTXT'][tablerow]).rsplit("<", 1)[1]
+                            if "solid" in str(self.tables[table]['ERES_MATX'][tablerow].lower()):
+                                self.tables[table]['ERES_NAME'][tablerow] = "SOLID_TOTAL"
+                            if "sulph" in str(self.tables[table]['ERES_TNAM'][tablerow].lower()) and "so4" in str(self.tables[table]['ERES_TNAM'][tablerow].lower()) or "sulf" in str(self.tables[table]['ERES_TNAM'][tablerow].lower()):
+                                self.tables[table]['ERES_TNAM'][tablerow] = "WS"
+                            if "sulph" in str(self.tables[table]['ERES_TNAM'][tablerow].lower()) and "total" in str(self.tables[table]['ERES_TNAM'][tablerow].lower()):
+                                self.tables[table]['ERES_TNAM'][tablerow] = "TS"
+                            if "caco3" in str(self.tables[table]['ERES_TNAM'][tablerow].lower()):
+                                self.tables[table]['ERES_TNAM'][tablerow] = "CACO3"
+                            if "co2" in str(self.tables[table]['ERES_TNAM'][tablerow].lower()):
+                                self.tables[table]['ERES_TNAM'][tablerow] = "CO2"
+                            if "ph" == str(self.tables[table]['ERES_TNAM'][tablerow].lower()):
+                                self.tables[table]['ERES_TNAM'][tablerow] = "PH"
+                            if "stones" in str(self.tables[table]['ERES_TNAM'][tablerow].lower()):
+                                self.tables[table]['ERES_TNAM'][tablerow] = "???"
+                            if "chloride" in str(self.tables[table]['ERES_TNAM'][tablerow].lower()):
+                                self.tables[table]['ERES_TNAM'][tablerow] = "Cl"
+                            if "los" in str(self.tables[table]['ERES_TNAM'][tablerow].lower()):
+                                self.tables[table]['ERES_TNAM'][tablerow] = "LOI"
+                            if "ph" in str(self.tables[table]['ERES_RUNI'][tablerow].lower()):
+                                self.tables[table]['ERES_RUNI'][tablerow] = "-"
+                            if "%" in str(self.tables[table]['ERES_RUNI'][tablerow].lower()):
+                                self.tables[table]['ERES_RUNI'][tablerow] = "%"
+
+                except Exception as e:
+                    rprint(f'[red][b]ERROR[b][/red] in [red]{table}[/red]: Error: {e}')
+
+                progress += 100
+                self._progress_current.emit(progress)  
+
+        except Exception as e:
+            rprint(f"[red]ERROR[/red] matching in [red]{table}[/red]... Please check the data. Error: [white]{str(e)}[/white]")
+            pass
+
+        self.check_matched_to_gint()

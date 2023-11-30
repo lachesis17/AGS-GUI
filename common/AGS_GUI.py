@@ -178,6 +178,9 @@ AGS file loaded.''')
         elif self.get_selected_lab() == "Mewo":
             rprint('[purple][bold]Mewo AGS[/purple][/bold] selected to match to gINT.')
             self.match_unique_id_mewo()
+        elif self.get_selected_lab() == "Enviro":
+            rprint('[purple][bold]Enviro Lab AGS[/purple][/bold] selected to match to gINT.')
+            self.match_unique_id_Enviro()
 
     def update_result_model(self, df):
         model = PandasModel(df)
@@ -480,6 +483,21 @@ please wait...''')
         self.match_thread.func = self.lab_handler.match_unique_id_mewo
         self.match_thread.start()
 
+    #===ENVIRO LAB===
+    def match_unique_id_Enviro(self):
+        self.disable_buttons()
+        self.get_gint()
+
+        if not self.check_gint():
+            return
+        
+        self.set_text('''Matching Enviro Lab AGS to gINT, 
+please wait...''')
+        rprint(f"Matching [purple][b]Enviro Lab[/purple][/b] AGS to gINT... [white][i]{self.gint_handler.gint_location}") 
+
+        self.handle_tables()
+        self.match_thread.func = self.lab_handler.match_unique_id_Enviro
+        self.match_thread.start()
 
     def lab_match_cleanup(self):
         self.ags_handler.tables = self.lab_handler.tables
