@@ -1,11 +1,13 @@
 import pyodbc
 import pandas as pd
+import numpy as np
 import os
 import time
 import common.AGS4_package_edit as AGS4 # had to edit this to concat linebreaks - credits to python_ags4, asitha-sena, https://gitlab.com/ags-data-format-wg/ags-python-library
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import QMessageBox, QWidget
 from PyQt5.QtCore import pyqtSignal
+from PyQt5 import QtCore, QtGui, uic
 from rich import print as rprint
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -616,3 +618,383 @@ Saving AGS to excel file...
         rprint(f"""[green][bold]AGS saved as Excel file:[/bold][/green] [white][i]{fname[0]}""")
         self._update_text.emit(f'''AGS saved as Excel file.
 ''')
+        
+
+class DataframeProcessor:
+    def __init__(self):
+        pass
+
+    def search_dataframe(self, value, df, table):
+        data = df
+
+        if isinstance(value, str):
+            mask = data.astype(str) == value
+        else:
+            mask = data == value
+
+        search_result = np.where(mask)
+
+        if search_result[0].size == 0:
+            print("Value not found")
+            return None, None
+        else:
+            first_row, first_col = search_result[0][0], search_result[1][0]
+            match_value = data.iloc[first_row, first_col]
+            print(f"Value: {match_value}\nRow: {first_row}\nColumn: {first_col}")
+            return first_row, first_col
+
+    def fill_df(self, df, table):
+        df.replace([None, ''], np.nan, inplace=True)
+
+        def convert_float_ints(col): # need vals as nan to use ffill(), but adding nan to cols with ints and empty strings turns col to float - this will convert floats to int in those cols
+            if all(isinstance(x, float) and x.is_integer() for x in col if isinstance(x, float)):
+                return col.apply(lambda x: int(x) if isinstance(x, float) and (x).is_integer() else x)
+            return col
+        
+        for column in df.columns:
+            non_null_count = df[column].notna().sum()
+            
+            # if non_null_count == 1:
+            #     df[column].ffill(inplace=True)
+            # else:
+            df[column].fillna("", inplace=True)
+            df[column] = convert_float_ints(df[column])
+            
+        table.model().df = df
+        table.model().layoutChanged.emit()
+
+    def sample_fill(self, df, table):
+        columns = self.get_current_columns_multiple(table)
+
+        if not columns:
+            return
+
+        df[columns] = df[columns].replace([None, '', np.nan], np.nan).ffill()
+
+        table.model().df = df
+        table.model().layoutChanged.emit()
+
+    def replace_df(self, df, table, find_text, replace_text, df_radio, col_radio, cell_radio):
+        if not cell_radio:
+            df_head = df.iloc[:2].copy()
+            df = df.iloc[2:].copy()
+
+        find_type = self.validate_text_type(find_text)
+        replace_type = self.validate_text_type(replace_text)
+
+        column_name = self.get_current_columns_multiple(table)
+        cell_iloc = self.get_current_cell_iloc(table)
+
+        def replace_value(x):
+            if pd.isna(x) and find_text.lower() == "nan":
+                return replace_text
+            if isinstance(x, list):
+                return x
+            try:
+                return str(replace_type) if float(x) == find_type else x
+            except ValueError:
+                return x.replace(find_text, replace_text) if isinstance(x, str) else x
+
+        if df_radio:
+            df = df.applymap(replace_value)
+        elif col_radio:
+            if column_name:
+                for col in column_name:
+                    df[col] = df[col].apply(replace_value)
+        elif cell_radio:
+            if cell_iloc:
+                for (row, col) in cell_iloc:
+                    if pd.isna(df.iat[row, col]):
+                        df.iat[row, col] = replace_text
+                    else:
+                        df.iat[row, col] = replace_value(df.iat[row, col])
+
+        if not cell_radio:
+            df = pd.concat([df_head, df], ignore_index=True)
+        table.model().df = df
+        table.model().layoutChanged.emit()
+
+    def format_df(self, df, table, decimal_places, df_radio, col_radio, cell_radio):
+        if not cell_radio:
+            df_head = df.iloc[:2].copy()
+            df = df.iloc[2:].copy()
+    
+        def round_value(x):
+            if pd.isna(x):
+                return ""
+            try:
+                if decimal_places == 0:
+                    return int(round(float(x)))
+                else:
+                    return round(float(x), decimal_places)
+            except (ValueError, TypeError):
+                return x
+
+        column_name = self.get_current_columns_multiple(table)
+        cell_iloc = self.get_current_cell_iloc(table)
+
+        if df_radio:
+            df = df.applymap(round_value)
+        elif col_radio:
+            if column_name:
+                for col in column_name:
+                    df[col] = df[col].apply(round_value)
+        elif cell_radio:
+            if cell_iloc:
+                for (row, col) in cell_iloc:
+                    df.iat[row, col] = round_value(df.iat[row, col])
+
+        if not cell_radio:
+            df = pd.concat([df_head, df], ignore_index=True)
+        table.model().df = df
+        table.model().layoutChanged.emit()
+
+    def split_df(self, df, table, delimiter):
+        column = self.get_current_column(table)
+
+        if not column:
+            return
+
+        split_columns = df[column].str.split(delimiter, expand=True)
+
+        if split_columns.shape[1] > 1:
+            col_index = df.columns.get_loc(column) + 1
+            for i in range(split_columns.shape[1]):
+                new_col_name = f"{column}_{i+1}"
+                df.insert(col_index + i, new_col_name, split_columns[i])
+            df.drop(column, axis=1, inplace=True)
+        else:
+            print("Couldn't split on selected delimiter.")
+
+        table.model().df = df
+        table.model().layoutChanged.emit()
+
+    def case_df(self, df, table, case, df_radio, col_radio, cell_radio):
+        if not cell_radio:
+            df_head = df.iloc[:2].copy()
+            df = df.iloc[2:].copy()
+    
+        column_names = self.get_current_columns_multiple(table)
+        cell_iloc = self.get_current_cell_iloc(table)
+
+        if df_radio:
+            for col in df.columns:
+                if all(isinstance(x, str) for x in df[col] if pd.notna(x)):
+                    if case == "Upper Case":
+                        df[col] = df[col].apply(lambda x: x.upper() if isinstance(x, str) else x)
+                    elif case == "Lower Case":
+                        df[col] = df[col].apply(lambda x: x.lower() if isinstance(x, str) else x)
+                    elif case == "Capitalise":
+                        df[col] = df[col].apply(lambda x: x.capitalize() if isinstance(x, str) else x)
+        elif col_radio:
+            if column_names:
+                for col in column_names:
+                    if all(isinstance(x, str) for x in df[col] if pd.notna(x)):
+                        if case == "Upper Case":
+                            df[col] = df[col].apply(lambda x: x.upper() if isinstance(x, str) else x)
+                        elif case == "Lower Case":
+                            df[col] = df[col].apply(lambda x: x.lower() if isinstance(x, str) else x)
+                        elif case == "Capitalise":
+                            df[col] = df[col].apply(lambda x: x.capitalize() if isinstance(x, str) else x)
+        elif cell_radio:
+            if cell_iloc:
+                for (row, col) in cell_iloc:
+                    if isinstance(df.iat[row, col], str): # this is shit and needs to change - numbers could be stored as strings
+                        if case == "Upper Case":
+                            df.iat[row, col] = df.iat[row, col].upper() if isinstance(df.iat[row, col], str) else df.iat[row, col]
+                        elif case == "Lower Case":
+                            df.iat[row, col] = df.iat[row, col].lower() if isinstance(df.iat[row, col], str) else df.iat[row, col]
+                        elif case == "Capitalise":
+                            df.iat[row, col] = df.iat[row, col].capitalize() if isinstance(df.iat[row, col], str) else df.iat[row, col]
+
+        if not cell_radio:
+            df = pd.concat([df_head, df], ignore_index=True)
+        table.model().df = df
+        table.model().layoutChanged.emit()
+
+    def calc_df(self, df, table, calculation, value, df_radio, col_radio, cell_radio):
+        if not cell_radio:
+            df_head = df.iloc[:2].copy()
+            df = df.iloc[2:].copy()
+    
+        column_names = self.get_current_columns_multiple(table)
+        cell_iloc = self.get_current_cell_iloc(table)
+
+        def apply_calculation(column):
+            if calculation == "Multiply":
+                return column * value
+            elif calculation == "Divide":
+                return column / value if value != 0 else None
+            elif calculation == "Add":
+                return column + value
+            elif calculation == "Subtract":
+                return column - value
+            elif calculation == "Average":
+                return column
+
+        def convert_and_apply(column):
+            numeric_col = pd.to_numeric(column, errors='coerce')
+            if numeric_col.notna().any():
+                return apply_calculation(numeric_col)
+            return column
+
+        if df_radio:
+            for col in df.columns:
+                df[col] = convert_and_apply(df[col])
+
+        elif col_radio:
+            if column_names:
+                for col in column_names:
+                    df[col] = convert_and_apply(df[col])
+                if calculation == "Average":
+                    avg_type = self.display_combo_popup(items=['Rows', 'Columns'], title="", label="Average on:", win_title="Average Type")
+                    if not avg_type:
+                        return
+                    avg_col, ok = QtWidgets.QInputDialog.getText(None, 'Column Name', 'Average Column Name:')
+                    if not ok:
+                        avg_col = f"Averages for ({', '.join(column_names)})"
+
+                    if avg_type == "Rows":
+                        df[avg_col] = df[column_names].mean(axis=1)
+                    elif avg_type == "Columns":
+                        if all(df[col].dtype.kind in 'biufc' for col in column_names):
+                            df[avg_col] = np.nanmean(df[column_names].values.flatten()) # ignore nan for avg of all cols
+                            
+        elif cell_radio:
+            if cell_iloc:
+                values = []
+                for (row, col) in cell_iloc:
+                    converted_value = pd.to_numeric(df.iat[row, col], errors='coerce')
+                    if pd.notna(converted_value):
+                        if calculation != "Average":
+                            df.iat[row, col] = apply_calculation(converted_value)
+                        else:
+                            values.append(converted_value)
+                if calculation == "Average" and values:
+                    overall_average = sum(values) / len(values)
+                    involved_rows = set(row for row, col in cell_iloc)
+                    avg_col, ok = QtWidgets.QInputDialog.getText(None, 'Column Name', 'Average Column Name:')
+                    if not ok:
+                        avg_col = f"Cell Averages for ({', '.join(column_names)})"
+                    for row in involved_rows:
+                        df.at[row, avg_col] = overall_average
+
+        if not cell_radio:
+            df = pd.concat([df_head, df], ignore_index=True)
+        table.model().df = df
+        table.model().layoutChanged.emit()
+
+    #//==============================================================================
+    # HELPER FUNCTIONS
+    #//==============================================================================
+
+    def validate_text_type(self, text):
+        text = text.strip()
+        try:
+            float_value = float(text)
+            if float_value.is_integer():
+                return int(float_value)
+            return float_value
+        except ValueError:
+            return text
+        
+
+    def get_current_column(self, table):
+        index = table.selectionModel().currentIndex()
+        if index.isValid():
+            column = index.column()
+            column_name = table.model().headerData(column, QtCore.Qt.Orientation.Horizontal, QtCore.Qt.ItemDataRole.DisplayRole)
+            return column_name
+        return False
+    
+
+    def get_current_columns_multiple(self, table):
+        index = table.selectionModel().currentIndex()
+        if index.isValid():
+            unique_columns = set(index.column() for index in table.selectionModel().selectedIndexes())
+            column_names = [table.model().headerData(column, QtCore.Qt.Orientation.Horizontal, QtCore.Qt.ItemDataRole.DisplayRole) for column in unique_columns]
+            return column_names
+        return False
+
+
+    def get_current_cell_iloc(self, table):
+        indexes = table.selectionModel().selectedIndexes()
+        if not indexes:
+            return False
+        iloc = list(set((index.row(), index.column()) for index in indexes))
+        return iloc
+    
+
+    def get_current_files(self):
+        files = []
+        for index in range(self.file_combo.count()):
+            files.append(self.file_combo.itemText(index))
+        return files
+    
+
+    def get_delimiter(self):
+        if self.delimit_combo.currentText() == "Comma":
+            return ","
+        elif self.delimit_combo.currentText() == "Hyphen":
+            return "-"
+        elif self.delimit_combo.currentText() == "Underscore":
+            return "_"
+        elif self.delimit_combo.currentText() == "Space":
+            return " "
+        elif self.delimit_combo.currentText() == "Decimal":
+            return "."
+        elif self.delimit_combo.currentText() == "Colon":
+            return ":"
+        elif self.delimit_combo.currentText() == "Semi-colon":
+            return ";"
+        
+    def display_combo_popup(self, items, title, label, win_title):
+        combo_popup = ComboPopup(items=items, text_title=title, text_label=label, win_title=win_title)
+        combo_popup.show()
+        loop = QtCore.QEventLoop()
+        combo_popup.finished.connect(loop.quit)
+        loop.exec()
+        return combo_popup._value if combo_popup._value else None
+    
+
+class ComboPopup(QtWidgets.QWidget):
+    '''Popup with a ComboBox, Push Button and titles for labels and window so it can be re-used'''
+    
+    finished = QtCore.pyqtSignal(str)
+
+    def __init__(self, items, text_title, text_label, win_title):
+        super().__init__()
+        uic.loadUi("common/assets/ui/combo_popup.ui", self)
+        self.text_title.setVisible(False)
+        self.resize(self.width(), self.minimumSizeHint().height())
+        self.setWindowIcon(QtGui.QIcon("common/images/geo.ico"))
+        self.setWindowFlags(QtCore.Qt.WindowType.WindowStaysOnTopHint) # Force top level
+        self.setWindowTitle(win_title)
+        self._text_label = text_label
+        self._text_title = text_title
+        self._items = items
+        self._value: str = ''
+        self.get_value.clicked.connect(self.return_value)
+        self.set_label()
+        self.set_title()
+        self.populate_combo()
+
+    def set_label(self):
+        self.text_label.setText(self._text_label)
+
+    def set_title(self):
+        pass
+        #self.text_title.setText(self._text_title)
+
+    def populate_combo(self):
+        for val in self._items:
+            if not val == '':
+                self.popup_combo.addItem(val)
+
+    def return_value(self):
+        self._value = self.popup_combo.currentText()
+        self.close()
+
+    def closeEvent(self, a0: QtGui.QCloseEvent) -> None:
+        return self.finished.emit(self._value)
+    

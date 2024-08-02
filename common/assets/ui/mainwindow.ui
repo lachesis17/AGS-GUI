@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>450</width>
-    <height>425</height>
+    <width>550</width>
+    <height>475</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -18,12 +18,12 @@
   </property>
   <property name="minimumSize">
    <size>
-    <width>450</width>
-    <height>425</height>
+    <width>550</width>
+    <height>475</height>
    </size>
   </property>
   <property name="windowTitle">
-   <string>AGS GUI v4.61</string>
+   <string>AGS GUI v4.62</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <property name="minimumSize">
@@ -32,7 +32,7 @@
      <height>420</height>
     </size>
    </property>
-   <layout class="QHBoxLayout" name="horizontalLayout_13">
+   <layout class="QVBoxLayout" name="verticalLayout_4">
     <item>
      <widget class="QTabWidget" name="tabWidget">
       <property name="sizePolicy">
@@ -255,7 +255,6 @@ QTabWidget::pane {
                       <font>
                        <family>Segoe UI</family>
                        <pointsize>9</pointsize>
-                       <weight>50</weight>
                        <italic>false</italic>
                        <bold>false</bold>
                       </font>
@@ -356,7 +355,6 @@ QPushButton:disabled {
                       <font>
                        <family>Segoe UI</family>
                        <pointsize>9</pointsize>
-                       <weight>50</weight>
                        <italic>false</italic>
                        <bold>false</bold>
                       </font>
@@ -444,7 +442,6 @@ QPushButton:disabled {
                       <font>
                        <family>Segoe UI</family>
                        <pointsize>9</pointsize>
-                       <weight>50</weight>
                        <italic>false</italic>
                        <bold>false</bold>
                       </font>
@@ -532,7 +529,6 @@ QPushButton:disabled {
                       <font>
                        <family>Segoe UI</family>
                        <pointsize>9</pointsize>
-                       <weight>50</weight>
                        <italic>false</italic>
                        <bold>false</bold>
                       </font>
@@ -739,7 +735,6 @@ QPushButton:disabled {
                       <font>
                        <family>Segoe UI</family>
                        <pointsize>9</pointsize>
-                       <weight>50</weight>
                        <italic>false</italic>
                        <bold>false</bold>
                       </font>
@@ -1001,7 +996,6 @@ QComboBox QAbstractItemView{
                       <font>
                        <family>Segoe UI</family>
                        <pointsize>9</pointsize>
-                       <weight>50</weight>
                        <italic>false</italic>
                        <bold>false</bold>
                       </font>
@@ -1155,7 +1149,6 @@ QPushButton:disabled {
                <font>
                 <family>Segoe UI</family>
                 <pointsize>9</pointsize>
-                <weight>75</weight>
                 <bold>true</bold>
                </font>
               </property>
@@ -1206,9 +1199,692 @@ QProgressBar::chunk {
        <attribute name="title">
         <string>View and Edit</string>
        </attribute>
-       <layout class="QHBoxLayout" name="horizontalLayout_20">
+       <layout class="QVBoxLayout" name="verticalLayout_9">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_11">
+          <property name="spacing">
+           <number>2</number>
+          </property>
+          <item>
+           <layout class="QGridLayout" name="gridLayout_8" rowstretch="0,0,0" columnstretch="1,1,1,1,1,1,1">
+            <item row="1" column="4">
+             <widget class="QPushButton" name="case_but">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+    border-radius: 6px;
+	font: 9pt &quot;Segoe UI&quot;;
+    background: #2b4768;
+    color: white;
+	padding:2px;
+}
+
+QPushButton:selected { 
+    color: black;
+}
+
+QPushButton:hover {
+    background: #6bb7dd;
+}
+
+QPushButton:disabled { 
+    color: #999999;
+}</string>
+              </property>
+              <property name="text">
+               <string>Text Case</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="4">
+             <widget class="QComboBox" name="case_combo">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QComboBox {
+	font: 9pt &quot;Segoe UI&quot;;	
+    background: #2b4768;
+    color: white;
+    border-radius: 6px;
+	padding: 2px;
+	padding-left: 6px;
+}
+
+QComboBox:selected {
+    color: black;
+}
+
+QComboBox:hover {
+    background: #6bb7dd;
+}
+
+QComboBox::drop-down {
+    subcontrol-origin: center;
+}
+
+QComboBox:disabled { 
+    color: #999999;
+}
+
+QComboBox:enabled { 
+    color: white;
+}
+
+QComboBox QAbstractItemView{
+	font: 9pt &quot;Segoe UI&quot;;	
+	background-color: #f0f0f0;
+	selection-background-color: #6bb7dd;
+    border-radius: 0px;
+	padding: 2px;
+}</string>
+              </property>
+              <item>
+               <property name="text">
+                <string>Upper Case</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Lower Case</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Capitalise</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QPushButton" name="format_but">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+    border-radius: 6px;
+	font: 9pt &quot;Segoe UI&quot;;
+    background: #2b4768;
+    color: white;
+	padding:2px;
+}
+
+QPushButton:selected { 
+    color: black;
+}
+
+QPushButton:hover {
+    background: #6bb7dd;
+}
+
+QPushButton:disabled { 
+    color: #999999;
+}</string>
+              </property>
+              <property name="text">
+               <string>Round</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="5">
+             <widget class="QComboBox" name="calc_combo">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QComboBox {
+	font: 9pt &quot;Segoe UI&quot;;	
+    background: #2b4768;
+    color: white;
+    border-radius: 6px;
+	padding: 2px;
+	padding-left: 6px;
+}
+
+QComboBox:selected {
+    color: black;
+}
+
+QComboBox:hover {
+    background: #6bb7dd;
+}
+
+QComboBox::drop-down {
+    subcontrol-origin: center;
+}
+
+QComboBox:disabled { 
+    color: #999999;
+}
+
+QComboBox:enabled { 
+    color: white;
+}
+
+QComboBox QAbstractItemView{
+	font: 9pt &quot;Segoe UI&quot;;	
+	background-color: #f0f0f0;
+	selection-background-color: #6bb7dd;
+    border-radius: 0px;
+	padding: 2px;
+}</string>
+              </property>
+              <item>
+               <property name="text">
+                <string>Multiply</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Divide</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Add</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Subtract</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Average</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QPushButton" name="split_but">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+    border-radius: 6px;
+	font: 9pt &quot;Segoe UI&quot;;
+    background: #2b4768;
+    color: white;
+	padding:2px;
+}
+
+QPushButton:selected { 
+    color: black;
+}
+
+QPushButton:hover {
+    background: #6bb7dd;
+}
+
+QPushButton:disabled { 
+    color: #999999;
+}</string>
+              </property>
+              <property name="text">
+               <string>Split</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="3">
+             <widget class="QLineEdit" name="replace_with_edit">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>1</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true"/>
+              </property>
+              <property name="placeholderText">
+               <string>Replace</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="6">
+             <widget class="QDoubleSpinBox" name="calc_spin">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QDoubleSpinBox{
+    border-radius: 6px;
+}</string>
+              </property>
+              <property name="minimum">
+               <double>-2000.000000000000000</double>
+              </property>
+              <property name="maximum">
+               <double>2000.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QComboBox" name="delimit_combo">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QComboBox {
+	font: 9pt &quot;Segoe UI&quot;;	
+    background: #2b4768;
+    color: white;
+    border-radius: 6px;
+	padding: 2px;
+	padding-left: 6px;
+}
+
+QComboBox:selected {
+    color: black;
+}
+
+QComboBox:hover {
+    background: #6bb7dd;
+}
+
+QComboBox::drop-down {
+    subcontrol-origin: center;
+}
+
+QComboBox:disabled { 
+    color: #999999;
+}
+
+QComboBox:enabled { 
+    color: white;
+}
+
+QComboBox QAbstractItemView{
+	font: 9pt &quot;Segoe UI&quot;;	
+	background-color: #f0f0f0;
+	selection-background-color: #6bb7dd;
+    border-radius: 0px;
+	padding: 2px;
+}</string>
+              </property>
+              <item>
+               <property name="text">
+                <string>Comma</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Hyphen</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Underscore</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Space</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Decimal</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Colon</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Semi-colon</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item row="2" column="2">
+             <widget class="QLineEdit" name="replace_find_edit">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>1</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true"/>
+              </property>
+              <property name="placeholderText">
+               <string>Find</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="2" colspan="2">
+             <widget class="QPushButton" name="replace_but">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+    border-radius: 6px;
+	font: 9pt &quot;Segoe UI&quot;;
+    background: #2b4768;
+    color: white;
+	padding:2px;
+}
+
+QPushButton:selected { 
+    color: black;
+}
+
+QPushButton:hover {
+    background: #6bb7dd;
+}
+
+QPushButton:disabled { 
+    color: #999999;
+}</string>
+              </property>
+              <property name="text">
+               <string>Replace</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QSpinBox" name="format_spin">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QSpinBox{
+    border-radius: 6px;
+}</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+              <property name="suffix">
+               <string> DP</string>
+              </property>
+              <property name="prefix">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="4" colspan="3">
+             <widget class="QPushButton" name="fill_but">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>This will fill all nan values as empty strings. If a column has only one unique value, it will fill the rest of the column with that value. If a column contains only Integers formatted as Floats, it will convert them to Integer and empty strings.</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+    border-radius: 6px;
+	font: 9pt &quot;Segoe UI&quot;;
+    background: #2b4768;
+    color: white;
+	padding:2px;
+}
+
+QPushButton:selected { 
+    color: black;
+}
+
+QPushButton:hover {
+    background: #6bb7dd;
+}
+
+QPushButton:disabled { 
+    color: #999999;
+}</string>
+              </property>
+              <property name="text">
+               <string>Fill DataFrame</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="5" colspan="2">
+             <widget class="QPushButton" name="calc_but">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+    border-radius: 6px;
+	font: 9pt &quot;Segoe UI&quot;;
+    background: #2b4768;
+    color: white;
+	padding:2px;
+}
+
+QPushButton:selected { 
+    color: black;
+}
+
+QPushButton:hover {
+    background: #6bb7dd;
+}
+
+QPushButton:disabled { 
+    color: #999999;
+}</string>
+              </property>
+              <property name="text">
+               <string>Calculate</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="0" colspan="4">
+             <widget class="QPushButton" name="fill_samples_but">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="toolTip">
+               <string>This will forward fill empty values in selected columns with the last non-nan value, which is perfect for sample data to match the length of arrays.</string>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QPushButton {
+    border-radius: 6px;
+	font: 9pt &quot;Segoe UI&quot;;
+    background: #2b4768;
+    color: white;
+	padding:2px;
+}
+
+QPushButton:selected { 
+    color: black;
+}
+
+QPushButton:hover {
+    background: #6bb7dd;
+}
+
+QPushButton:disabled { 
+    color: #999999;
+}</string>
+              </property>
+              <property name="text">
+               <string>Fill Selected Samples</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QGridLayout" name="gridLayout_10" columnstretch="0,0,0,0,0">
+            <property name="horizontalSpacing">
+             <number>12</number>
+            </property>
+            <item row="0" column="0">
+             <spacer name="horizontalSpacer_6">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::MinimumExpanding</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item row="0" column="3">
+             <widget class="QRadioButton" name="cell_radio">
+              <property name="minimumSize">
+               <size>
+                <width>80</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QRadioButton
+{
+padding-left: 2px;
+}</string>
+              </property>
+              <property name="text">
+               <string>Cell</string>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="2">
+             <widget class="QRadioButton" name="col_radio">
+              <property name="minimumSize">
+               <size>
+                <width>80</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QRadioButton
+{
+padding-left: 2px;
+}</string>
+              </property>
+              <property name="text">
+               <string>Column</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="1">
+             <widget class="QRadioButton" name="df_radio">
+              <property name="minimumSize">
+               <size>
+                <width>80</width>
+                <height>25</height>
+               </size>
+              </property>
+              <property name="styleSheet">
+               <string notr="true">QRadioButton
+{
+padding-left: 2px;
+}</string>
+              </property>
+              <property name="text">
+               <string>Dataframe</string>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="0" column="4">
+             <spacer name="horizontalSpacer_7">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::MinimumExpanding</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
         <item>
          <widget class="QSplitter" name="splitter">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>1</verstretch>
+           </sizepolicy>
+          </property>
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -1445,7 +2121,6 @@ QProgressBar::chunk {
                       <font>
                        <family>Segoe UI</family>
                        <pointsize>9</pointsize>
-                       <weight>50</weight>
                        <italic>false</italic>
                        <bold>false</bold>
                       </font>
@@ -1519,7 +2194,6 @@ QPushButton:disabled {
                       <font>
                        <family>Segoe UI</family>
                        <pointsize>9</pointsize>
-                       <weight>50</weight>
                        <italic>false</italic>
                        <bold>false</bold>
                       </font>
@@ -1614,7 +2288,6 @@ QPushButton:disabled {
                       <font>
                        <family>Segoe UI</family>
                        <pointsize>9</pointsize>
-                       <weight>50</weight>
                        <italic>false</italic>
                        <bold>false</bold>
                       </font>
@@ -1685,7 +2358,6 @@ QPushButton:disabled {
                       <font>
                        <family>Segoe UI</family>
                        <pointsize>9</pointsize>
-                       <weight>50</weight>
                        <italic>false</italic>
                        <bold>false</bold>
                       </font>
@@ -1832,7 +2504,6 @@ QPushButton:disabled {
                     <font>
                      <family>Segoe UI</family>
                      <pointsize>9</pointsize>
-                     <weight>50</weight>
                      <italic>false</italic>
                      <bold>false</bold>
                     </font>
@@ -1903,7 +2574,6 @@ QPushButton:disabled {
                     <font>
                      <family>Segoe UI</family>
                      <pointsize>9</pointsize>
-                     <weight>50</weight>
                      <italic>false</italic>
                      <bold>false</bold>
                     </font>
@@ -1983,7 +2653,7 @@ QPushButton:disabled {
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>450</width>
+     <width>550</width>
      <height>22</height>
     </rect>
    </property>
