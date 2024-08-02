@@ -35,10 +35,31 @@ class PandasModel(QAbstractTableModel):
         else:
             return self.df.shape[1]
 
+    def is_numeric(self, val):
+        try:
+            float(val)
+            return True
+        except (ValueError, TypeError):
+            return False
+
     def data(self, index, role: int):
-        if index.isValid():
-            if role == QtCore.Qt.DisplayRole or role == QtCore.Qt.EditRole:
-                return self.df.iloc[index.row(), index.column()]
+        if not index.isValid():
+            return None
+
+        if role in [QtCore.Qt.ItemDataRole.DisplayRole, QtCore.Qt.ItemDataRole.EditRole]:
+            x = self.df.iloc[index.row(), index.column()]
+            if isinstance(x, str):
+                return x
+            elif self.is_numeric(x):
+                if isinstance(x, int):
+                    return str(x) # don't put decimals on int
+                else:
+                    decimals = min(len(str(x).split('.')[-1]), 5) if '.' in str(x) else 0
+                    format_string = "{:." + str(decimals) + "f}" # show floats with their number decimal places, to a max of 5
+                    return format_string.format(x)
+            else:
+                return str(x)
+
         return None
 
     def setData(self, index, value, role):

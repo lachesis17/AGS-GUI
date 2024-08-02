@@ -4,7 +4,7 @@ from PyQt5.QtCore import QUrl, QEvent, QTimer, QSize, QObject, QThread, pyqtSign
 from PyQt5.QtGui import QResizeEvent
 from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent
 from common.pandas_table import PandasModel
-from common.util_functions import GintHandler, AGSHandler
+from common.util_functions import GintHandler, AGSHandler, DataframeProcessor
 from common.lab_functions import LabHandler
 import numpy as np
 import sys
@@ -22,7 +22,7 @@ pd.options.mode.chained_assignment = None
 QApplication.setHighDpiScaleFactorRoundingPolicy(QtCore.Qt.HighDpiScaleFactorRoundingPolicy.PassThrough) 
 QtCore.QCoreApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
 QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_UseHighDpiPixmaps, True)
-appid = 'ags_gui.v.4.5'
+appid = 'ags_gui.v.4.62'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid)
 
 class MainWindow(QtWidgets.QMainWindow):
@@ -95,6 +95,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.lab_handler._progress_current.connect(lambda x: self.update_progress_bar(x))
         self.error_handle.err.connect(self.error_handle.show_err)
         self.match_thread.finished.connect(self.lab_match_cleanup)
+
+        '''Processor'''
+        self.dataframe_processor = DataframeProcessor()
+        self.fill_but.clicked.connect(self.handle_fill_df)
+        self.fill_samples_but.clicked.connect(self.handle_fill_samples)
+        self.replace_but.clicked.connect(self.handle_replace)
+        self.format_but.clicked.connect(self.handle_format)
+        self.split_but.clicked.connect(self.handle_split)
+        self.case_but.clicked.connect(self.handle_case)
+        self.calc_but.clicked.connect(self.handle_calc)
         
         'set window size'
         self.installEventFilter(self)
@@ -247,6 +257,14 @@ AGS file loaded.''')
         self._tables_model.layoutChanged.emit()
         self.tables_table.resizeColumnsToContents()
 
+    def update_table_data(self):
+        index = self.headings_table.selectionModel().currentIndex()
+        self.headings_table.selectRow(index.row())
+        value = index.sibling(index.row(),0).data()
+        self.ags_handler.tables[value] = self.tables_table.model().df
+        self.tables_table.model().layoutChanged.emit()
+        self.tables_table.resizeColumnsToContents()
+
     def view_tableview(self):
         self.tabWidget.setCurrentIndex(1)
 
@@ -298,6 +316,99 @@ AGS file loaded.''')
         except Exception as e:
             print(e)
 
+
+    #=============================PROCESSOR=============================
+    def handle_fill_df(self):
+        df, table = self.handle_current_table()
+        if df is None:
+            return
+        self.dataframe_processor.fill_df(df, table)
+        self.update_table_data()
+
+    def handle_fill_samples(self):
+        df, table = self.handle_current_table()
+        if df is None:
+            return
+        self.dataframe_processor.sample_fill(df, table)
+        self.update_table_data()
+
+    def handle_replace(self):
+        df, table = self.handle_current_table()
+        if df is None:
+            return
+        find_text = self.replace_find_edit.text()
+        replace_text = self.replace_with_edit.text()
+        self.dataframe_processor.replace_df(df, table, find_text, replace_text,
+                                          df_radio=self.df_radio.isChecked(),
+                                          col_radio=self.col_radio.isChecked(),
+                                          cell_radio=self.cell_radio.isChecked())
+        self.update_table_data()
+
+    def handle_format(self):
+        df, table = self.handle_current_table()
+        if df is None:
+            return
+        decimal_places = self.format_spin.value()
+        self.dataframe_processor.format_df(df, table, decimal_places,
+                                           df_radio=self.df_radio.isChecked(),
+                                           col_radio=self.col_radio.isChecked(),
+                                           cell_radio=self.cell_radio.isChecked())
+        self.update_table_data()
+        
+    def handle_split(self):
+        df, table = self.handle_current_table()
+        if df is None:
+            return
+        self.dataframe_processor.split_df(df, table, delimiter=self.get_delimiter())
+        self.update_table_data()
+
+    def handle_case(self):
+        df, table = self.handle_current_table()
+        if df is None:
+            return
+        case = self.case_combo.currentText()
+        self.dataframe_processor.case_df(df, table, case,
+                                          df_radio=self.df_radio.isChecked(),
+                                          col_radio=self.col_radio.isChecked(),
+                                          cell_radio=self.cell_radio.isChecked())
+        self.update_table_data()
+
+    def handle_calc(self):
+        df, table = self.handle_current_table()
+        if df is None:
+            return
+        calculation = self.calc_combo.currentText()
+        value = self.calc_spin.value()
+        self.dataframe_processor.calc_df(df, table, calculation, value,
+                                          df_radio=self.df_radio.isChecked(),
+                                          col_radio=self.col_radio.isChecked(),
+                                          cell_radio=self.cell_radio.isChecked())
+        self.update_table_data()
+
+    def handle_current_table(self):
+        if self.tables_table.model() is None:
+            return
+        else:
+            df = self.tables_table.model().df.copy()
+            table = self.tables_table
+
+        return df, table
+
+    def get_delimiter(self):
+        if self.delimit_combo.currentText() == "Comma":
+            return ","
+        elif self.delimit_combo.currentText() == "Hyphen":
+            return "-"
+        elif self.delimit_combo.currentText() == "Underscore":
+            return "_"
+        elif self.delimit_combo.currentText() == "Space":
+            return " "
+        elif self.delimit_combo.currentText() == "Decimal":
+            return "."
+        elif self.delimit_combo.currentText() == "Colon":
+            return ":"
+        elif self.delimit_combo.currentText() == "Semi-colon":
+            return ";"
 
     def handle_tables(self):
         self.get_ags_tables()
@@ -689,8 +800,9 @@ def except_hook(cls, exception, traceback):
     sys.__excepthook__(cls, exception, traceback)
 
 def main():
+    sys.excepthook = except_hook
     app = QtWidgets.QApplication([sys.argv])
-    #QtGui.QFontDatabase.addApplicationFont("assets/fonts/Roboto.ttf")
+    app.setWindowIcon(QtGui.QIcon("common/images/geo.ico"))
     window = MainWindow()
     window.show()
     sys.exit(app.exec())
