@@ -167,7 +167,7 @@ class PandasView(QTableView):
             index = self.headers.logicalIndexAt(position)
             col_name = model.df.columns[index]
             if _action == rename:
-                new_header = QInputDialog.getText(self," ","New header name:")
+                new_header = QInputDialog.getText(self,f" ","New header name:", text=f"{col_name}")
                 if new_header[1]:
                     model.df.rename(columns={f'{col_name}':f'{new_header[0]}'}, inplace=True)
                     self.resizeColumnsToContents()
