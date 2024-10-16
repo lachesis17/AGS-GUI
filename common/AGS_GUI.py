@@ -182,6 +182,9 @@ AGS file loaded.''')
         elif self.get_selected_lab() == "Geolabs (50HZ Fugro)":
             print('[purple][bold]Geolabs (50HZ Fugro) AGS[/purple][/bold] selected to match to gINT.')
             self.match_unique_id_geolabs_fugro()
+        elif self.get_selected_lab() == "Geolabs 50hz Phase 2":
+            rprint('[purple][bold]Geolabs AGS 50hz Phase 2[/purple][/bold] selected to match to gINT.')
+            self.match_unique_id_geolabs_50hz2()
         elif self.get_selected_lab() == "Sinotech TW":
             rprint('[purple][bold]Sinotech (Taiwan) AGS[/purple][/bold] selected to match to gINT.')
             self.match_unique_id_sinotech()
@@ -511,6 +514,22 @@ please wait...''')
 
         self.handle_tables()
         self.match_thread.func = self.lab_handler.match_unique_id_geolabs_fugro
+        self.match_thread.start()
+
+    #===GEOLABS 50HZ PHASE 2===
+    def match_unique_id_geolabs_50hz2(self):
+        self.disable_buttons()
+        self.get_gint()
+
+        if not self.check_gint():
+            return
+
+        self.set_text('''Matching Geolabs AGS to gINT, 
+please wait...''')
+        rprint(f"Matching [purple][b]Geolabs AGS 50hz2[/purple][/b] to gINT... [white][i]{self.gint_handler.gint_location}") 
+
+        self.handle_tables()
+        self.match_thread.func = self.lab_handler.match_unique_id_geolabs_50hz2
         self.match_thread.start()
 
     #===SOILS PEZ===

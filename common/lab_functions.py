@@ -679,6 +679,106 @@ Did you select the correct gINT or AGS?''')
         self.check_matched_to_gint()
 
 
+    def match_unique_id_geolabs_50hz2(self):
+        self.matched = False
+        self.error = False
+        progress = 0
+        progress_total = (len(self.tables.keys()) - 2) * 100
+        self._progress_max.emit(progress_total)
+        self._progress_current.emit(progress)   
+
+        try:
+            self.spec['Depth'] = self.spec['Depth'].map('{:,.2f}'.format)
+            self.spec['Depth'] = self.spec['Depth'].astype(str)
+            self.spec['match_id'] = self.spec['PointID']
+            self.spec['match_id'] += self.spec['Depth']
+
+            for table in self.ags_tables:
+                self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
+                self.tables[table]['match_id'] += self.tables[table]['SPEC_DPTH']
+
+            self.filter_spec()
+
+            for table in self.ags_tables:
+                rprint(f"[yellow]Matching [bold]{table}[/bold]...[yellow]")
+
+                for tablerow in range(2,len(self.tables[table])):
+                    for gintrow in range(0,self.spec.shape[0]):
+                        if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
+                            self.matched = True
+                            self.tables[table]['LOCA_ID'][tablerow] = self.spec['PointID'][gintrow]
+                            self.tables[table]['SAMP_ID'][tablerow] = self.spec['SAMP_ID'][gintrow]
+                            self.tables[table]['SAMP_REF'][tablerow] = self.spec['SAMP_REF'][gintrow]
+                            self.tables[table]['SAMP_TYPE'][tablerow] = self.spec['SAMP_TYPE'][gintrow]
+                            self.tables[table]['SPEC_REF'][tablerow] = self.spec['SPEC_REF'][gintrow]
+                            self.tables[table]['SAMP_TOP'][tablerow] = format(float(self.spec['SAMP_Depth'][gintrow]),'.2f')
+                            self.tables[table]['SPEC_DPTH'][tablerow] = self.spec['Depth'][gintrow]
+
+                            for x in self.tables[table].keys():
+                                if "LAB" in x:
+                                    self.tables[table][x][tablerow] = "Geolabs Limited"
+                try:
+                    '''PTST'''
+                    if table == 'PTST':
+                        for tablerow in range(2,len(self.tables[table])):
+                            if "#" in str(self.tables[table]['PTST_PDEN'][tablerow].lower()):
+                                self.tables[table]['PTST_PDEN'][tablerow] = str(self.tables[table]['PTST_PDEN'][tablerow]).rsplit('#', 2)[1]
+                            if "undisturbed" in str(self.tables[table]['PTST_COND'][tablerow].lower()):
+                                self.tables[table]['PTST_COND'][tablerow] = "UNDISTURBED"
+                            if "remoulded" in str(self.tables[table]['PTST_COND'][tablerow].lower()):
+                                self.tables[table]['PTST_COND'][tablerow] = "REMOULDED"
+                            if str(self.tables[table]['PTST_TESN'][tablerow]) == '':
+                                self.tables[table]['PTST_TESN'][tablerow] = "1"
+
+
+                    '''TRIG & TRIT'''
+                    if table == 'TRIG' or table == 'TRIT':
+                        if 'Depth' not in self.tables[table]:
+                            self.tables[table].insert(8,'Depth','')
+                        if table == 'TRIT':
+                            for tablerow in range(2,len(self.tables[table])):
+                                if self.tables[table]['TRIT_DEVF'][tablerow]:
+                                    self.tables[table]['TRIT_DEVF'][tablerow] = round(float(self.tables[table]['TRIT_DEVF'][tablerow]))
+                                if self.tables[table]['TRIT_TESN'][tablerow] == '':
+                                    self.tables[table]['TRIT_TESN'][tablerow] = 1
+                        for tablerow in range(2,len(self.tables[table])):
+                            for gintrow in range(0,self.spec.shape[0]):
+                                if self.tables[table]['match_id'][tablerow] == self.spec['match_id'][gintrow]:
+                                    if self.tables['TRIG']['TRIG_COND'][tablerow] == 'REMOULDED':
+                                        self.tables[table]['Depth'][tablerow] = round(float(self.spec['Depth'][gintrow]) + 0.01,2)
+                                    else:
+                                        self.tables[table]['Depth'][tablerow] = self.spec['Depth'][gintrow]
+
+
+                    '''CONG'''
+                    if table == 'CONG':
+                        for tablerow in range(2,len(self.tables[table])):
+                            if "#" in str(self.tables[table]['CONG_PDEN'][tablerow].lower()):
+                                self.tables[table]['CONG_PDEN'][tablerow] = str(self.tables[table]['CONG_PDEN'][tablerow]).rsplit('#', 2)[1]
+
+                    '''LVAN'''
+                    if table == 'LVAN':
+                        for tablerow in range(2,len(self.tables[table])):
+                            if self.tables[table]['LVAN_VNPK'][tablerow]:
+                                self.tables[table]['LVAN_VNPK'][tablerow] = round(float(self.tables[table]['LVAN_VNPK'][tablerow]))
+                            if self.tables[table]['LVAN_VNRM'][tablerow]:
+                                self.tables[table]['LVAN_VNRM'][tablerow] = round(float(self.tables[table]['LVAN_VNRM'][tablerow]))
+
+
+
+                except Exception as e:
+                    rprint(f'[red][b]ERROR[b][/red] in [red]{table}[/red]: Error: {e}')
+
+                progress += 100
+                self._progress_current.emit(progress)  
+
+        except Exception as e:
+            rprint(f"[red]ERROR[/red] matching in [red]{table}[/red]... Please check the data. Error: [white]{str(e)}[/white]")
+            pass
+
+        self.check_matched_to_gint()
+
+
     def match_unique_id_soils_pez(self):
         self.matched = False
         self.error = False
@@ -1283,8 +1383,10 @@ Did you select the correct gINT or AGS?''')
             self.spec['match_id'] += self.spec['Depth']
 
             for table in self.ags_tables:
-                self.tables[table]['LOCA_ID'] = self.tables[table]['LOCA_ID'].str.split("-", n=1, expand=True)[0]
-                
+                if self.tables[table]['LOCA_ID'].str.contains('UK24-ARD', na=False).any():
+                    self.tables[table]['LOCA_ID'] = self.tables[table]['LOCA_ID'].str.split("-P", n=1, expand=True)[0]
+                else:
+                    self.tables[table]['LOCA_ID'] = self.tables[table]['LOCA_ID'].str.split("-", n=1, expand=True)[0]
                 self.tables[table]['match_id'] = self.tables[table]['LOCA_ID']
                 self.tables[table]['match_id'] += self.tables[table]['SPEC_DPTH']
 
